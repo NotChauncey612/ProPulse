@@ -27,7 +27,14 @@ class Users(commands.Cog):
     def get_profile(self, member: discord.Member):
         uid = str(member.id)
         if uid not in self.users:
-            self.users[uid] = {'gold': 0, 'cards': [], 'radianite': 0}
+            self.users[uid] = {
+                'gold': 0,
+                'radianite': 0, 
+                'last_practice': None, 
+                'last_daily': None, 
+                'packs': [], 
+                'cards': []
+                }
             self.save_users()
         return self.users[uid]
 

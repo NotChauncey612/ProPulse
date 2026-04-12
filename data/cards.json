@@ -3,40 +3,35 @@
     "id": "doran_lck_2026",
     "player_id": "doran",
     "team": "T1",
-    "set": "LCK",
-    "year": 2026,
+    "set": "LCK 2026",
     "image_url": ""
   },
   {
     "id": "oner_lck_2026",
     "player_id": "oner",
     "team": "T1",
-    "set": "LCK",
-    "year": 2026,
+    "set": "LCK 2026",
     "image_url": ""
   },
   {
     "id": "faker_lck_2026",
     "player_id": "faker",
     "team": "T1",
-    "set": "LCK",
-    "year": 2026,
+    "set": "LCK 2026",
     "image_url": ""
   },
   {
     "id": "peyz_lck_2026",
     "player_id": "peyz",
     "team": "T1",
-    "set": "LCK",
-    "year": 2026,
+    "set": "LCK 2026",
     "image_url": ""
   },
   {
     "id": "keria_lck_2026",
     "player_id": "keria",
     "team": "T1",
-    "set": "LCK",
-    "year": 2026,
+    "set": "LCK 2026",
     "image_url": ""
   }
 ]
