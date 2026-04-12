@@ -1,0 +1,37 @@
+[
+  {
+    "id": "doran",
+    "name": "Doran",
+    "game": "League of Legends",
+    "region": "LCK",
+    "role": "Top"
+  },
+  {
+    "id": "oner",
+    "name": "Oner",
+    "game": "League of Legends",
+    "region": "LCK",
+    "role": "Jungle"
+  },
+  {
+    "id": "faker",
+    "name": "Faker",
+    "game": "League of Legends",
+    "region": "LCK",
+    "role": "Mid"
+  },
+  {
+    "id": "peyz",
+    "name": "Peyz",
+    "game": "League of Legends",
+    "region": "LCK",
+    "role": "ADC"
+  },
+  {
+    "id": "keria",
+    "name": "Keria",
+    "game": "League of Legends",
+    "region": "LCK",
+    "role": "Support"
+  }
+]

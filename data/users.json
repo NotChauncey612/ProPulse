@@ -1,0 +1,64 @@
+{
+    "272473699909763072": {
+        "gold": 38,
+        "cards": [
+            {
+                "instance_id": "48404da2-5427-4bbd-89d7-35b4c1fe96fb",
+                "card_id": "doran_lck_2026",
+                "rarity": "Silver",
+                "pulled_at": "2026-04-12T06:03:24.298329"
+            },
+            {
+                "instance_id": "7e6a741a-9ca6-4443-9f66-bcaf85da4cc9",
+                "card_id": "keria_lck_2026",
+                "rarity": "Immortal",
+                "pulled_at": "2026-04-12T06:19:05.742149"
+            },
+            {
+                "instance_id": "dc15eddc-ec04-4ded-a1eb-b1b268cba66f",
+                "card_id": "faker_lck_2026",
+                "rarity": "Diamond",
+                "pulled_at": "2026-04-12T06:19:13.337354"
+            },
+            {
+                "instance_id": "09bca49a-6c59-46ad-b4af-c5862b2b987e",
+                "card_id": "doran_lck_2026",
+                "rarity": "Silver",
+                "pulled_at": "2026-04-12T06:19:39.676180"
+            },
+            {
+                "instance_id": "42e01810-5242-4a7a-a73d-ccc7ec0e4034",
+                "card_id": "peyz_lck_2026",
+                "rarity": "Silver",
+                "pulled_at": "2026-04-12T06:21:44.865446"
+            },
+            {
+                "instance_id": "153316f5-14b6-4c1a-af03-7a7f7f314daa",
+                "card_id": "doran_lck_2026",
+                "rarity": "Gold",
+                "pulled_at": "2026-04-12T06:21:46.832572"
+            },
+            {
+                "instance_id": "18bd1766-4c57-4a94-bd80-fc54b419049c",
+                "card_id": "doran_lck_2026",
+                "rarity": "Silver",
+                "pulled_at": "2026-04-12T06:23:44.637724"
+            },
+            {
+                "instance_id": "537f8dd1-7c9f-472f-a0ea-eb023f54e213",
+                "card_id": "doran_lck_2026",
+                "rarity": "Immortal",
+                "pulled_at": "2026-04-12T06:33:29.385208"
+            },
+            {
+                "instance_id": "8269b05b-6e03-4be2-8448-0c29a6d172df",
+                "card_id": "keria_lck_2026",
+                "rarity": "Gold",
+                "pulled_at": "2026-04-12T06:33:53.984829"
+            }
+        ],
+        "radianite": 5,
+        "last_practice": "2026-04-12T05:27:13.505057",
+        "last_daily": "2026-04-12T05:27:17.075769"
+    }
+}

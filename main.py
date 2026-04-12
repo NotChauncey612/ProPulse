@@ -1,42 +1,72 @@
+# Made on 4/11/26 by Chauncey
 
-```python
 import os
+import asyncio
+
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
-# Utility to load/save JSON data
-import json
+load_dotenv()
 
-def load_json(filepath):
-    try:
-        with open(filepath, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
+TOKEN = os.getenv("BOT_TOKEN")
+if not TOKEN:
+    raise RuntimeError("Environment variable BOT_TOKEN is not set")
 
-def save_json(filepath, data):
-    with open(filepath, 'w') as f:
-        json.dump(data, f, indent=4)
-
-# Set up intents and bot instance
-tokens = os.getenv('BOT_TOKEN')
 intents = discord.Intents.default()
-intents.members = True  # needed for on_member_join
-bot = commands.Bot(command_prefix='!', intents=intents)
+intents.members = True
+intents.message_content = True
+
+bot = commands.Bot(
+    command_prefix=".",
+    intents=intents,
+    help_command=None,
+)
+
+initial_extensions = [
+    "classes.users",
+    "classes.cards",
+    "classes.auction",
+]
+
 
 @bot.event
 async def on_ready():
-    print(f"Bot logged in as {bot.user}")
+    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
+    print("Bot is ready.")
 
-# Dynamically load all Cogs
-initial_extensions = [
-    'cogs.user_manager',
-    'cogs.card_manager',
-    'cogs.auction',
-    'cogs.trade'
-]
 
-if __name__ == '__main__':
+@bot.event
+async def on_command_error(ctx: commands.Context, error: Exception):
+    if isinstance(error, commands.CommandNotFound):
+        return
+
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("You are missing a required argument for that command.")
+        return
+
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("You do not have permission to use that command.")
+        return
+
+    print(f"Unhandled command error: {error}")
+    await ctx.send("Something went wrong while running that command.")
+
+
+async def load_extensions():
     for ext in initial_extensions:
-        bot.load_extension(ext)
-    bot.run(tokens)
+        try:
+            await bot.load_extension(ext)
+            print(f"Loaded extension: {ext}")
+        except Exception as e:
+            print(f"Failed to load extension {ext}: {e}")
+
+
+async def main():
+    async with bot:
+        await load_extensions()
+        await bot.start(TOKEN)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
