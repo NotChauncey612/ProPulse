@@ -1,10 +1,74 @@
 {
-    "lck_basic": {
-        "set": "LCK 2026",
-        "cards": 3
-    },
-    "lck_premium": {
-        "set": "LCK 2026",
-        "cards": 5
-    }
+    "packs": [
+      {
+        "pack_id": "pack_lck_26",
+        "name": "LCK '26",
+        "game": "LoL",
+        "set": "LoL '26",
+        "type": "league",
+        "league": "LCK",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_lec_26",
+        "name": "LEC '26",
+        "game": "LoL",
+        "set": "LoL '26",
+        "type": "league",
+        "league": "LEC",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_lcs_26",
+        "name": "LCS '26",
+        "game": "LoL",
+        "set": "LoL '26",
+        "type": "league",
+        "league": "LCS",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_lpl_26",
+        "name": "LPL '26",
+        "game": "LoL",
+        "set": "LoL '26",
+        "type": "league",
+        "league": "LPL",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_lcp_26",
+        "name": "LCP '26",
+        "game": "LoL",
+        "set": "LoL '26",
+        "type": "league",
+        "league": "LCP",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_cblol_26",
+        "name": "CBLOL '26",
+        "game": "LoL",
+        "set": "LoL '26",
+        "type": "league",
+        "league": "CBLOL",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_all_26",
+        "name": "LoL '26",
+        "game": "LoL",
+        "set": "LoL '26",
+        "type": "mixed",
+        "leagues": ["LCK", "LEC", "LCS", "LPL", "LCP", "CBLOL"],
+        "price": 100,
+        "cards_per_pack": 7
+      }
+    ]
 }

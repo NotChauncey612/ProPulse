@@ -1,37 +1,486 @@
-[
-  {
-    "id": "doran_lck_2026",
-    "player_id": "doran",
-    "team": "T1",
-    "set": "LCK 2026",
-    "image_url": ""
-  },
-  {
-    "id": "oner_lck_2026",
-    "player_id": "oner",
-    "team": "T1",
-    "set": "LCK 2026",
-    "image_url": ""
-  },
-  {
-    "id": "faker_lck_2026",
-    "player_id": "faker",
-    "team": "T1",
-    "set": "LCK 2026",
-    "image_url": ""
-  },
-  {
-    "id": "peyz_lck_2026",
-    "player_id": "peyz",
-    "team": "T1",
-    "set": "LCK 2026",
-    "image_url": ""
-  },
-  {
-    "id": "keria_lck_2026",
-    "player_id": "keria",
-    "team": "T1",
-    "set": "LCK 2026",
-    "image_url": ""
+{
+  "games": {
+    "League of Legends": {
+      "sets": {
+        "LOL '26": {
+          "leagues": {
+            "LCK": {
+              "teams": {
+                "BNK FEARX": {
+                  "cards": [
+                    { "card_id": "2026_lck_bfx_clear", "ign": "Clear", "team": "BNK FEARX", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bfx_raptor", "ign": "Raptor", "team": "BNK FEARX", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bfx_vicla", "ign": "VicLa", "team": "BNK FEARX", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bfx_daystar", "ign": "Daystar", "team": "BNK FEARX", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bfx_kellin", "ign": "Kellin", "team": "BNK FEARX", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "DN SOOPers": {
+                  "cards": [
+                    { "card_id": "2026_lck_dns_dudu", "ign": "DuDu", "team": "DN SOOPers", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dns_pyosik", "ign": "Pyosik", "team": "DN SOOPers", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dns_clozer", "ign": "Clozer", "team": "DN SOOPers", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dns_deokdam", "ign": "deokdam", "team": "DN SOOPers", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dns_peter", "ign": "Peter", "team": "DN SOOPers", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "Dplus KIA": {
+                  "cards": [
+                    { "card_id": "2026_lck_dk_siwoo", "ign": "Siwoo", "team": "Dplus KIA", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dk_lucid", "ign": "Lucid", "team": "Dplus KIA", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dk_showmaker", "ign": "ShowMaker", "team": "Dplus KIA", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dk_smash", "ign": "Smash", "team": "Dplus KIA", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_dk_career", "ign": "Career", "team": "Dplus KIA", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "Gen.G": {
+                  "cards": [
+                    { "card_id": "2026_lck_gen_kiin", "ign": "Kiin", "team": "Gen.G", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_gen_canyon", "ign": "Canyon", "team": "Gen.G", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_gen_chovy", "ign": "Chovy", "team": "Gen.G", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_gen_ruler", "ign": "Ruler", "team": "Gen.G", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_gen_duro", "ign": "Duro", "team": "Gen.G", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "HANJIN BRION": {
+                  "cards": [
+                    { "card_id": "2026_lck_bro_casting", "ign": "Casting", "team": "HANJIN BRION", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bro_gideon", "ign": "GIDEON", "team": "HANJIN BRION", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bro_loki", "ign": "Loki", "team": "HANJIN BRION", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bro_teddy", "ign": "Teddy", "team": "HANJIN BRION", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_bro_namgung", "ign": "Namgung", "team": "HANJIN BRION", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "Hanwha Life Esports": {
+                  "cards": [
+                    { "card_id": "2026_lck_hle_zeus", "ign": "Zeus", "team": "Hanwha Life Esports", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_hle_kanavi", "ign": "Kanavi", "team": "Hanwha Life Esports", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_hle_zeka", "ign": "Zeka", "team": "Hanwha Life Esports", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_hle_gumayusi", "ign": "Gumayusi", "team": "Hanwha Life Esports", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_hle_delight", "ign": "Delight", "team": "Hanwha Life Esports", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "Kiwoom DRX": {
+                  "cards": [
+                    { "card_id": "2026_lck_drx_rich", "ign": "Rich", "team": "Kiwoom DRX", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_drx_willer", "ign": "Willer", "team": "Kiwoom DRX", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_drx_ucal", "ign": "Ucal", "team": "Kiwoom DRX", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_drx_jiwoo", "ign": "Jiwoo", "team": "Kiwoom DRX", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_drx_andil", "ign": "Andil", "team": "Kiwoom DRX", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "KT Rolster": {
+                  "cards": [
+                    { "card_id": "2026_lck_kt_perfect", "ign": "PerfecT", "team": "KT Rolster", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_kt_cuzz", "ign": "Cuzz", "team": "KT Rolster", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_kt_bdd", "ign": "Bdd", "team": "KT Rolster", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_kt_aiming", "ign": "Aiming", "team": "KT Rolster", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_kt_effort", "ign": "Effort", "team": "KT Rolster", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "Nongshim RedForce": {
+                  "cards": [
+                    { "card_id": "2026_lck_ns_kingen", "ign": "Kingen", "team": "Nongshim RedForce", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_ns_sponge", "ign": "Sponge", "team": "Nongshim RedForce", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_ns_scout", "ign": "Scout", "team": "Nongshim RedForce", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_ns_taeyoon", "ign": "Taeyoon", "team": "Nongshim RedForce", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_ns_lehends", "ign": "Lehends", "team": "Nongshim RedForce", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                },
+                "T1": {
+                  "cards": [
+                    { "card_id": "2026_lck_t1_doran", "ign": "Doran", "team": "T1", "role": "TOP", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_t1_oner", "ign": "Oner", "team": "T1", "role": "JNG", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_t1_faker", "ign": "Faker", "team": "T1", "role": "MID", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_t1_peyz", "ign": "Peyz", "team": "T1", "role": "BOT", "league": "LCK", "set": "LOL '26", "image": "" },
+                    { "card_id": "2026_lck_t1_keria", "ign": "Keria", "team": "T1", "role": "SUP", "league": "LCK", "set": "LOL '26", "image": "" }
+                  ]
+                }
+              }
+            },
+            "LEC": {
+              "teams": {
+                "Fnatic": {
+                  "cards": [
+                    { "card_id": "2026_lec_fnc_empyros", "ign": "Empyros", "team": "Fnatic", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_fnc_razork", "ign": "Razork", "team": "Fnatic", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_fnc_vladi", "ign": "Vladi", "team": "Fnatic", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_fnc_upset", "ign": "Upset", "team": "Fnatic", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_fnc_lospa", "ign": "Lospa", "team": "Fnatic", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "G2 Esports": {
+                  "cards": [
+                    { "card_id": "2026_lec_g2_brokenblade", "ign": "BrokenBlade", "team": "G2 Esports", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_g2_skewmond", "ign": "SkewMond", "team": "G2 Esports", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_g2_caps", "ign": "Caps", "team": "G2 Esports", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_g2_hanssama", "ign": "Hans Sama", "team": "G2 Esports", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_g2_labrov", "ign": "Labrov", "team": "G2 Esports", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "GIANTX": {
+                  "cards": [
+                    { "card_id": "2026_lec_gx_lot", "ign": "Lot", "team": "GIANTX", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_gx_isma", "ign": "ISMA", "team": "GIANTX", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_gx_jackies", "ign": "Jackies", "team": "GIANTX", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_gx_noah", "ign": "Noah", "team": "GIANTX", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_gx_jun", "ign": "Jun", "team": "GIANTX", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Karmine Corp": {
+                  "cards": [
+                    { "card_id": "2026_lec_kc_canna", "ign": "Canna", "team": "Karmine Corp", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_kc_yike", "ign": "Yike", "team": "Karmine Corp", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_kc_kyeahoo", "ign": "kyeahoo", "team": "Karmine Corp", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_kc_caliste", "ign": "Caliste", "team": "Karmine Corp", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_kc_busio", "ign": "Busio", "team": "Karmine Corp", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Movistar KOI": {
+                  "cards": [
+                    { "card_id": "2026_lec_mkoi_myrwn", "ign": "Myrwn", "team": "Movistar KOI", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_mkoi_elyoya", "ign": "Elyoya", "team": "Movistar KOI", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_mkoi_jojopyun", "ign": "Jojopyun", "team": "Movistar KOI", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_mkoi_supa", "ign": "Supa", "team": "Movistar KOI", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_mkoi_alvaro", "ign": "Alvaro", "team": "Movistar KOI", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Natus Vincere": {
+                  "cards": [
+                    { "card_id": "2026_lec_navi_maynter", "ign": "Maynter", "team": "Natus Vincere", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_navi_rhilech", "ign": "Rhilech", "team": "Natus Vincere", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_navi_poby", "ign": "Poby", "team": "Natus Vincere", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_navi_samd", "ign": "SamD", "team": "Natus Vincere", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_navi_parus", "ign": "Parus", "team": "Natus Vincere", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Shifters": {
+                  "cards": [
+                    { "card_id": "2026_lec_sft_rooster", "ign": "Rooster", "team": "Shifters", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sft_boukada", "ign": "Boukada", "team": "Shifters", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sft_nuc", "ign": "nuc", "team": "Shifters", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sft_paduck", "ign": "Paduck", "team": "Shifters", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sft_trymbi", "ign": "Trymbi", "team": "Shifters", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "SK Gaming": {
+                  "cards": [
+                    { "card_id": "2026_lec_sk_wunder", "ign": "Wunder", "team": "SK Gaming", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sk_skeanz", "ign": "Skeanz", "team": "SK Gaming", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sk_lider", "ign": "LIDER", "team": "SK Gaming", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sk_jopa", "ign": "Jopa", "team": "SK Gaming", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_sk_mikyx", "ign": "Mikyx", "team": "SK Gaming", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Team Heretics": {
+                  "cards": [
+                    { "card_id": "2026_lec_th_tracyn", "ign": "Tracyn", "team": "Team Heretics", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_th_sheo", "ign": "Sheo", "team": "Team Heretics", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_th_serin", "ign": "Serin", "team": "Team Heretics", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_th_ice", "ign": "Ice", "team": "Team Heretics", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_th_stend", "ign": "Stend", "team": "Team Heretics", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Team Vitality": {
+                  "cards": [
+                    { "card_id": "2026_lec_vit_naaknako", "ign": "Naak Nako", "team": "Team Vitality", "role": "TOP", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_vit_lyncas", "ign": "Lyncas", "team": "Team Vitality", "role": "JNG", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_vit_humanoid", "ign": "Humanoid", "team": "Team Vitality", "role": "MID", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_vit_carzzy", "ign": "Carzzy", "team": "Team Vitality", "role": "BOT", "league": "LEC", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lec_vit_fleshy", "ign": "Fleshy", "team": "Team Vitality", "role": "SUP", "league": "LEC", "set": "LoL '26", "image": "" }
+                  ]
+                }
+              }
+            },
+            "LCS": {
+              "teams": {
+                "Cloud9": {
+                  "cards": [
+                    { "card_id": "2026_lcs_c9_thanatos", "ign": "Thanatos", "team": "Cloud9", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_c9_blaber", "ign": "Blaber", "team": "Cloud9", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_c9_apa", "ign": "APA", "team": "Cloud9", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_c9_zven", "ign": "Zven", "team": "Cloud9", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_c9_vulcan", "ign": "Vulcan", "team": "Cloud9", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Dignitas": {
+                  "cards": [
+                    { "card_id": "2026_lcs_dig_photon", "ign": "Photon", "team": "Dignitas", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dig_exyu", "ign": "eXyu", "team": "Dignitas", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dig_palafox", "ign": "Palafox", "team": "Dignitas", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dig_fbi", "ign": "FBI", "team": "Dignitas", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dig_ignar", "ign": "Ignar", "team": "Dignitas", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Disguised": {
+                  "cards": [
+                    { "card_id": "2026_lcs_dsg_castle", "ign": "Castle", "team": "Disguised", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dsg_kryra", "ign": "KryRa", "team": "Disguised", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dsg_callme", "ign": "Callme", "team": "Disguised", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dsg_sajed", "ign": "sajed", "team": "Disguised", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_dsg_lyonz", "ign": "Lyonz", "team": "Disguised", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "FlyQuest": {
+                  "cards": [
+                    { "card_id": "2026_lcs_fly_gakgos", "ign": "Gakgos", "team": "FlyQuest", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_fly_gryffinn", "ign": "Gryffinn", "team": "FlyQuest", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_fly_quad", "ign": "Quad", "team": "FlyQuest", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_fly_massu", "ign": "Massu", "team": "FlyQuest", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_fly_cryogen", "ign": "Cryogen", "team": "FlyQuest", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "LYON": {
+                  "cards": [
+                    { "card_id": "2026_lcs_lyon_dhokla", "ign": "Dhokla", "team": "LYON", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_lyon_inspired", "ign": "Inspired", "team": "LYON", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_lyon_saint", "ign": "Saint", "team": "LYON", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_lyon_berserker", "ign": "Berserker", "team": "LYON", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_lyon_isles", "ign": "Isles", "team": "LYON", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Sentinels": {
+                  "cards": [
+                    { "card_id": "2026_lcs_sen_impact", "ign": "Impact", "team": "Sentinels", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sen_hambak", "ign": "HamBak", "team": "Sentinels", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sen_darkwings", "ign": "DARKWINGS", "team": "Sentinels", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sen_rahel", "ign": "Rahel", "team": "Sentinels", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sen_huhi", "ign": "huhi", "team": "Sentinels", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Shopify Rebellion": {
+                  "cards": [
+                    { "card_id": "2026_lcs_sr_fudge", "ign": "Fudge", "team": "Shopify Rebellion", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sr_contractz", "ign": "Contractz", "team": "Shopify Rebellion", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sr_zinie", "ign": "Zinie", "team": "Shopify Rebellion", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sr_bvoy", "ign": "Bvoy", "team": "Shopify Rebellion", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_sr_ceos", "ign": "Ceos", "team": "Shopify Rebellion", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Team Liquid": {
+                  "cards": [
+                    { "card_id": "2026_lcs_tl_morgan", "ign": "Morgan", "team": "Team Liquid", "role": "TOP", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_tl_josedeodo", "ign": "Josedeodo", "team": "Team Liquid", "role": "JNG", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_tl_quid", "ign": "Quid", "team": "Team Liquid", "role": "MID", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_tl_yeon", "ign": "Yeon", "team": "Team Liquid", "role": "BOT", "league": "LCS", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcs_tl_corejj", "ign": "CoreJJ", "team": "Team Liquid", "role": "SUP", "league": "LCS", "set": "LoL '26", "image": "" }
+                  ]
+                }
+              }
+            },
+            "LPL": {
+              "teams": {
+                "Bilibili Gaming": {
+                  "cards": [
+                    { "card_id": "2026_lpl_blg_bin", "ign": "Bin", "team": "Bilibili Gaming", "role": "TOP", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_blg_xun", "ign": "Xun", "team": "Bilibili Gaming", "role": "JNG", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_blg_knight", "ign": "knight", "team": "Bilibili Gaming", "role": "MID", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_blg_elk", "ign": "Elk", "team": "Bilibili Gaming", "role": "BOT", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_blg_on", "ign": "ON", "team": "Bilibili Gaming", "role": "SUP", "league": "LPL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "JD Gaming": {
+                  "cards": [
+                    { "card_id": "2026_lpl_jdg_flandre", "ign": "Flandre", "team": "JD Gaming", "role": "TOP", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_jdg_kanavi", "ign": "Kanavi", "team": "JD Gaming", "role": "JNG", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_jdg_yagao", "ign": "Yagao", "team": "JD Gaming", "role": "MID", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_jdg_ruler", "ign": "Ruler", "team": "JD Gaming", "role": "BOT", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_jdg_missing", "ign": "Missing", "team": "JD Gaming", "role": "SUP", "league": "LPL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Top Esports": {
+                  "cards": [
+                    { "card_id": "2026_lpl_tes_369", "ign": "369", "team": "Top Esports", "role": "TOP", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_tes_tian", "ign": "Tian", "team": "Top Esports", "role": "JNG", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_tes_creme", "ign": "Creme", "team": "Top Esports", "role": "MID", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_tes_jackeylove", "ign": "JackeyLove", "team": "Top Esports", "role": "BOT", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_tes_meiko", "ign": "Meiko", "team": "Top Esports", "role": "SUP", "league": "LPL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "LNG Esports": {
+                  "cards": [
+                    { "card_id": "2026_lpl_lng_zika", "ign": "Zika", "team": "LNG Esports", "role": "TOP", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_lng_tarzan", "ign": "Tarzan", "team": "LNG Esports", "role": "JNG", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_lng_scout", "ign": "Scout", "team": "LNG Esports", "role": "MID", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_lng_gala", "ign": "GALA", "team": "LNG Esports", "role": "BOT", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_lng_hang", "ign": "Hang", "team": "LNG Esports", "role": "SUP", "league": "LPL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Weibo Gaming": {
+                  "cards": [
+                    { "card_id": "2026_lpl_wbg_theshy", "ign": "TheShy", "team": "Weibo Gaming", "role": "TOP", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_wbg_karsa", "ign": "Karsa", "team": "Weibo Gaming", "role": "JNG", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_wbg_xiaohu", "ign": "Xiaohu", "team": "Weibo Gaming", "role": "MID", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_wbg_light", "ign": "Light", "team": "Weibo Gaming", "role": "BOT", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_wbg_crisp", "ign": "Crisp", "team": "Weibo Gaming", "role": "SUP", "league": "LPL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Royal Never Give Up": {
+                  "cards": [
+                    { "card_id": "2026_lpl_rng_breathe", "ign": "Breathe", "team": "Royal Never Give Up", "role": "TOP", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_rng_wei", "ign": "Wei", "team": "Royal Never Give Up", "role": "JNG", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_rng_tangyuan", "ign": "Tangyuan", "team": "Royal Never Give Up", "role": "MID", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_rng_lp", "ign": "LP", "team": "Royal Never Give Up", "role": "BOT", "league": "LPL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lpl_rng_ming", "ign": "Ming", "team": "Royal Never Give Up", "role": "SUP", "league": "LPL", "set": "LoL '26", "image": "" }
+                  ]
+                }
+              }
+            },
+            "LCP": {
+              "teams": {
+                "CTBC Flying Oyster": {
+                  "cards": [
+                    { "card_id": "2026_lcp_cfo_rest", "ign": "Rest", "team": "CTBC Flying Oyster", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_cfo_shad0w", "ign": "Shad0w", "team": "CTBC Flying Oyster", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_cfo_pungyeon", "ign": "Pungyeon", "team": "CTBC Flying Oyster", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_cfo_doggo", "ign": "Doggo", "team": "CTBC Flying Oyster", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_cfo_2274", "ign": "2274", "team": "CTBC Flying Oyster", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "DetonatioN FocusMe": {
+                  "cards": [
+                    { "card_id": "2026_lcp_dfm_rayfarky", "ign": "RayFarky", "team": "DetonatioN FocusMe", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dfm_momo", "ign": "Momo", "team": "DetonatioN FocusMe", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dfm_citrus", "ign": "Citrus", "team": "DetonatioN FocusMe", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dfm_keine", "ign": "Keine", "team": "DetonatioN FocusMe", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dfm_kakkun", "ign": "Kakkun", "team": "DetonatioN FocusMe", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Deep Cross Gaming": {
+                  "cards": [
+                    { "card_id": "2026_lcp_dcg_flauren", "ign": "Flauren", "team": "Deep Cross Gaming", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dcg_pop9", "ign": "POP9", "team": "Deep Cross Gaming", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dcg_hongsuo", "ign": "HongSuo", "team": "Deep Cross Gaming", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dcg_feng", "ign": "Feng", "team": "Deep Cross Gaming", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_dcg_shiauc", "ign": "ShiauC", "team": "Deep Cross Gaming", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Fukuoka SoftBank HAWKS gaming": {
+                  "cards": [
+                    { "card_id": "2026_lcp_shg_evi", "ign": "Evi", "team": "Fukuoka SoftBank HAWKS gaming", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_shg_van", "ign": "Van", "team": "Fukuoka SoftBank HAWKS gaming", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_shg_aria", "ign": "Aria", "team": "Fukuoka SoftBank HAWKS gaming", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_shg_marble", "ign": "Marble", "team": "Fukuoka SoftBank HAWKS gaming", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_shg_vsta", "ign": "Vsta", "team": "Fukuoka SoftBank HAWKS gaming", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "GAM Esports": {
+                  "cards": [
+                    { "card_id": "2026_lcp_gam_kiaya", "ign": "Kiaya", "team": "GAM Esports", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gam_draktharr", "ign": "Draktharr", "team": "GAM Esports", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gam_aress", "ign": "Aress", "team": "GAM Esports", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gam_artemis", "ign": "Artemis", "team": "GAM Esports", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gam_taki", "ign": "Taki", "team": "GAM Esports", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Ground Zero Gaming": {
+                  "cards": [
+                    { "card_id": "2026_lcp_gzg_1jiang", "ign": "1Jiang", "team": "Ground Zero Gaming", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gzg_husha", "ign": "Husha", "team": "Ground Zero Gaming", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gzg_jimien", "ign": "JimieN", "team": "Ground Zero Gaming", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gzg_shunn", "ign": "Shunn", "team": "Ground Zero Gaming", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_gzg_orca", "ign": "Orca", "team": "Ground Zero Gaming", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "MVK Esports": {
+                  "cards": [
+                    { "card_id": "2026_lcp_mvk_kratos", "ign": "Kratos", "team": "MVK Esports", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_mvk_gury", "ign": "Gury", "team": "MVK Esports", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_mvk_sofm", "ign": "SofM", "team": "MVK Esports", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_mvk_kati", "ign": "Kati", "team": "MVK Esports", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_mvk_seany", "ign": "Seany", "team": "MVK Esports", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Team Secret Whales": {
+                  "cards": [
+                    { "card_id": "2026_lcp_tsw_pun", "ign": "Pun", "team": "Team Secret Whales", "role": "TOP", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_tsw_hiro02", "ign": "Hiro02", "team": "Team Secret Whales", "role": "JNG", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_tsw_hizto", "ign": "Hizto", "team": "Team Secret Whales", "role": "MID", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_tsw_dire", "ign": "Dire", "team": "Team Secret Whales", "role": "BOT", "league": "LCP", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_lcp_tsw_yume", "ign": "Yume", "team": "Team Secret Whales", "role": "SUP", "league": "LCP", "set": "LoL '26", "image": "" }
+                  ]
+                }
+              }
+            },
+            "CBLOL": {
+              "teams": {
+                "LOUD": {
+                  "cards": [
+                    { "card_id": "2026_cblol_loud_robo", "ign": "Robo", "team": "LOUD", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_loud_croc", "ign": "Croc", "team": "LOUD", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_loud_tinowns", "ign": "tinowns", "team": "LOUD", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_loud_route", "ign": "Route", "team": "LOUD", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_loud_ceos", "ign": "Ceos", "team": "LOUD", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "paiN Gaming": {
+                  "cards": [
+                    { "card_id": "2026_cblol_pain_robo", "ign": "Robo", "team": "paiN Gaming", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_pain_cariok", "ign": "CarioK", "team": "paiN Gaming", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_pain_dynquedo", "ign": "Dynquedo", "team": "paiN Gaming", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_pain_titaN", "ign": "TitaN", "team": "paiN Gaming", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_pain_kuri", "ign": "Kuri", "team": "paiN Gaming", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "FURIA": {
+                  "cards": [
+                    { "card_id": "2026_cblol_furia_fnb", "ign": "fNb", "team": "FURIA", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_furia_wiz", "ign": "Wiz", "team": "FURIA", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_furia_envy", "ign": "Envy", "team": "FURIA", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_furia_netz", "ign": "Netz", "team": "FURIA", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_furia_jojo", "ign": "JoJo", "team": "FURIA", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "RED Canids": {
+                  "cards": [
+                    { "card_id": "2026_cblol_red_guigo", "ign": "Guigo", "team": "RED Canids", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_red_avenger", "ign": "Aegis", "team": "RED Canids", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_red_grevthar", "ign": "Grevthar", "team": "RED Canids", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_red_brance", "ign": "Brance", "team": "RED Canids", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_red_hiago", "ign": "Hiago", "team": "RED Canids", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Vivo Keyd Stars": {
+                  "cards": [
+                    { "card_id": "2026_cblol_vks_boal", "ign": "Boal", "team": "Vivo Keyd Stars", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_vks_greensnake", "ign": "Greensnake", "team": "Vivo Keyd Stars", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_vks_lep", "ign": "Lep", "team": "Vivo Keyd Stars", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_vks_toucouille", "ign": "Toucouille", "team": "Vivo Keyd Stars", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_vks_prodelta", "ign": "ProDelta", "team": "Vivo Keyd Stars", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Fluxo": {
+                  "cards": [
+                    { "card_id": "2026_cblol_fluxo_tay", "ign": "Tay", "team": "Fluxo", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_fluxo_shini", "ign": "Shini", "team": "Fluxo", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_fluxo_envy", "ign": "Envy", "team": "Fluxo", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_fluxo_neto", "ign": "Netuno", "team": "Fluxo", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_fluxo_scuro", "ign": "Scuro", "team": "Fluxo", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "INTZ": {
+                  "cards": [
+                    { "card_id": "2026_cblol_intz_yampi", "ign": "Yampi", "team": "INTZ", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_intz_drakehero", "ign": "DrakeHero", "team": "INTZ", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_intz_faerie", "ign": "FaeRie", "team": "INTZ", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_intz_matsukaze", "ign": "Matsukaze", "team": "INTZ", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_intz_jojo", "ign": "JoJo", "team": "INTZ", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                },
+                "Liberty": {
+                  "cards": [
+                    { "card_id": "2026_cblol_lbr_scary", "ign": "Scary", "team": "Liberty", "role": "TOP", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_lbr_wizer", "ign": "Wizer", "team": "Liberty", "role": "JNG", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_lbr_hauz", "ign": "Hauz", "team": "Liberty", "role": "MID", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_lbr_absolut", "ign": "Absolut", "team": "Liberty", "role": "BOT", "league": "CBLOL", "set": "LoL '26", "image": "" },
+                    { "card_id": "2026_cblol_lbr_cavalo", "ign": "Cavalo", "team": "Liberty", "role": "SUP", "league": "CBLOL", "set": "LoL '26", "image": "" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
-]
+}
