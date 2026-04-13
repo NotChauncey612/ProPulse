@@ -162,7 +162,8 @@ class Cards(commands.Cog):
         if len(digits) >= 4:
             return {digits[-4:], digits[-2:]}
         if len(digits) >= 2:
-            return {digits[-2:]}
+            yy = digits[-2:]
+            return {yy, f"20{yy}"}
         return set()
 
     def build_card_aliases(self):
