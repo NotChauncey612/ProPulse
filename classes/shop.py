@@ -105,6 +105,25 @@ class PackSelect(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         selected_pack_id = self.values[0]
         pack_data = self.packs_by_id[selected_pack_id]
+        users_cog = interaction.client.get_cog("Users")
+        profile = users_cog.get_profile(interaction.user) if users_cog else None
+        settings = profile.get("settings", {}) if profile else {}
+        should_confirm = settings.get("confirm_pack_buy", True)
+
+        if not should_confirm and users_cog:
+            price = pack_data.get("price", 0)
+            if profile["gold"] < price:
+                await interaction.response.send_message("❌ You don't have enough gold to purchase that.", ephemeral=True)
+                return
+            profile["gold"] -= price
+            profile.setdefault("packs", [])
+            profile["packs"].append(pack_data.get("pack_id"))
+            users_cog.save_users()
+            await interaction.response.send_message(
+                f"✅ Purchased **{pack_data.get('name', 'Unknown Pack')}** for {price} gold.",
+                ephemeral=True
+            )
+            return
 
         embed = discord.Embed(
             title="Confirm Purchase",

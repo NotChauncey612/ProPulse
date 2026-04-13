@@ -1,6 +1,6 @@
 {
     "272473699909763072": {
-        "gold": 9999999043,
+        "gold": 9999993943,
         "cards": [
             {
                 "instance_id": "48404da2-5427-4bbd-89d7-35b4c1fe96fb",
@@ -221,8 +221,16 @@
             "lck_premium",
             "lck_premium",
             "pack_all_26",
+            "pack_all_26",
             "pack_all_26"
-        ]
+        ],
+        "discord_username": "chauncey612",
+        "settings": {
+            "alert_daily_practice": true,
+            "dm_auction_notis": true,
+            "confirm_auction_buy": true,
+            "confirm_pack_buy": true
+        }
     },
     "534170875293859840": {
         "gold": 480,
@@ -329,5 +337,22 @@
                 }
             }
         ]
+    },
+    "766143687980744706": {
+        "gold": 3900,
+        "radianite": 0,
+        "last_practice": null,
+        "last_daily": null,
+        "packs": [
+            "pack_all_26"
+        ],
+        "cards": [],
+        "discord_username": "irep3922",
+        "settings": {
+            "alert_daily_practice": true,
+            "dm_auction_notis": true,
+            "confirm_auction_buy": true,
+            "confirm_pack_buy": true
+        }
     }
 }

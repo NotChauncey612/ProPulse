@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
@@ -30,6 +30,24 @@ class Trades(commands.Cog):
     def save_trades(self, trades):
         with open(TRADES_PATH, "w") as f:
             json.dump(trades, f, indent=4)
+
+    async def refresh_trade_message(self, trade_id):
+        trade = self.active_trades.get(trade_id)
+        if not trade:
+            return
+        message_id = trade.get("message_id")
+        channel_id = trade.get("channel_id")
+        if not message_id or not channel_id:
+            return
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            return
+        try:
+            message = await channel.fetch_message(message_id)
+            view = TradeView(self, trade_id)
+            await message.edit(embed=view.build_embed(), view=view)
+        except Exception:
+            return
 
     # -----------------
     # COMMAND
@@ -141,13 +159,18 @@ class TradeRequestView(discord.ui.View):
             "confirmed": {
                 str(self.sender.id): False,
                 str(self.receiver.id): False
-            }
+            },
+            "can_confirm_at": datetime.utcnow().isoformat()
         }
 
         await interaction.response.send_message(
             "Trade started.",
             view=TradeView(self.cog, trade_id)
         )
+        msg = await interaction.original_response()
+        self.cog.active_trades[trade_id]["message_id"] = msg.id
+        self.cog.active_trades[trade_id]["channel_id"] = msg.channel.id
+        await self.cog.refresh_trade_message(trade_id)
 
     @discord.ui.button(label="Decline", style=discord.ButtonStyle.red)
     async def decline(self, interaction, button):
@@ -195,6 +218,13 @@ class TradeView(discord.ui.View):
             inline=True
         )
 
+        can_confirm_at = datetime.fromisoformat(trade.get("can_confirm_at", datetime.utcnow().isoformat()))
+        seconds_left = max(0, int((can_confirm_at - datetime.utcnow()).total_seconds()))
+        if seconds_left > 0:
+            embed.set_footer(text=f"Confirm unlocks in {seconds_left}s after latest change.")
+        else:
+            embed.set_footer(text="Both sides can confirm now.")
+
         return embed
 
     # ---------- BUTTONS ----------
@@ -221,6 +251,11 @@ class TradeView(discord.ui.View):
     async def confirm(self, interaction, button):
         trade = self.get_trade()
         uid = str(interaction.user.id)
+        can_confirm_at = datetime.fromisoformat(trade.get("can_confirm_at", datetime.utcnow().isoformat()))
+        if datetime.utcnow() < can_confirm_at:
+            wait = int((can_confirm_at - datetime.utcnow()).total_seconds()) + 1
+            await interaction.response.send_message(f"Please wait {wait}s before confirming.", ephemeral=True)
+            return
 
         trade["confirmed"][uid] = True
 
@@ -235,6 +270,7 @@ class TradeView(discord.ui.View):
                 "Waiting for other user.",
                 ephemeral=True
             )
+            await self.cog.refresh_trade_message(self.trade_id)
 
 
 # -----------------
@@ -262,9 +298,12 @@ class AddCardModal(discord.ui.Modal, title="Add Card"):
         uid = str(interaction.user.id)
 
         trade["offers"][uid]["cards"].append(owned_card)
-        trade["confirmed"][uid] = False
+        trade["confirmed"][trade["user1"]] = False
+        trade["confirmed"][trade["user2"]] = False
+        trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
 
         await interaction.response.send_message("Card added.", ephemeral=True)
+        await self.cog.refresh_trade_message(self.trade_id)
 
 
 class AddPackModal(discord.ui.Modal, title="Add Pack"):
@@ -287,9 +326,12 @@ class AddPackModal(discord.ui.Modal, title="Add Pack"):
         uid = str(interaction.user.id)
 
         trade["offers"][uid]["packs"].append(pack)
-        trade["confirmed"][uid] = False
+        trade["confirmed"][trade["user1"]] = False
+        trade["confirmed"][trade["user2"]] = False
+        trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
 
         await interaction.response.send_message("Pack added.", ephemeral=True)
+        await self.cog.refresh_trade_message(self.trade_id)
 
 
 class AddGoldModal(discord.ui.Modal, title="Add Gold"):
@@ -314,9 +356,12 @@ class AddGoldModal(discord.ui.Modal, title="Add Gold"):
         uid = str(interaction.user.id)
 
         trade["offers"][uid]["gold"] = amount
-        trade["confirmed"][uid] = False
+        trade["confirmed"][trade["user1"]] = False
+        trade["confirmed"][trade["user2"]] = False
+        trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
 
         await interaction.response.send_message("Gold added.", ephemeral=True)
+        await self.cog.refresh_trade_message(self.trade_id)
 
 
 # -----------------

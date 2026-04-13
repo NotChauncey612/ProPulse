@@ -33,9 +33,14 @@ class Users(commands.Cog):
                 'last_practice': None, 
                 'last_daily': None, 
                 'packs': [], 
-                'cards': []
+                'cards': [],
+                'discord_username': member.name,
+                'settings': self.default_settings()
                 }
             self.save_users()
+        else:
+            self.users[uid]["discord_username"] = member.name
+            self.users[uid].setdefault("settings", self.default_settings())
         return self.users[uid]
 
     def get_profile_by_id(self, user_id):
@@ -47,10 +52,22 @@ class Users(commands.Cog):
                 'last_practice': None,
                 'last_daily': None,
                 'packs': [],
-                'cards': []
+                'cards': [],
+                'discord_username': None,
+                'settings': self.default_settings()
             }
             self.save_users()
+        else:
+            self.users[uid].setdefault("settings", self.default_settings())
         return self.users[uid]
+
+    def default_settings(self):
+        return {
+            "alert_daily_practice": True,
+            "dm_auction_notis": True,
+            "confirm_auction_buy": True,
+            "confirm_pack_buy": True
+        }
 
 
     # Commands 
@@ -76,8 +93,19 @@ class Users(commands.Cog):
         embed.add_field(name="Gold", value=str(profile["gold"]), inline=True)
         embed.add_field(name="Radianite", value=str(profile["radianite"]), inline=True)
         embed.add_field(name="Cards Owned", value=str(len(profile["cards"])), inline=True)
+        settings = profile.get("settings", self.default_settings())
+        embed.add_field(
+            name="Alerts/Confirmations",
+            value=(
+                f"Practice/Daily Alerts: {'ON' if settings['alert_daily_practice'] else 'OFF'}\n"
+                f"Auction DMs: {'ON' if settings['dm_auction_notis'] else 'OFF'}\n"
+                f"Auction Confirm Buy: {'ON' if settings['confirm_auction_buy'] else 'OFF'}\n"
+                f"Pack Confirm Buy: {'ON' if settings['confirm_pack_buy'] else 'OFF'}"
+            ),
+            inline=False
+        )
 
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, view=ProfileSettingsView(self, ctx.author.id, str(member.id)))
 
     # CD (cooldown) command to show how long until user can practice or claim daily again
     @commands.command()
@@ -133,6 +161,8 @@ class Users(commands.Cog):
         self.save_users()
 
         await ctx.send(f"You practiced and earned {reward} gold.")
+        if user.get("settings", self.default_settings()).get("alert_daily_practice"):
+            self.bot.loop.create_task(self.notify_ready(ctx.author, "practice", 10 * 60))
 
     # Daily command to earn gold once every 24 hours
     @commands.command()
@@ -159,6 +189,56 @@ class Users(commands.Cog):
         self.save_users()
 
         await ctx.send(f"You claimed your daily reward and earned {reward} gold and 5 radianite.")
+        if user.get("settings", self.default_settings()).get("alert_daily_practice"):
+            self.bot.loop.create_task(self.notify_ready(ctx.author, "daily", 24 * 60 * 60))
+
+    async def notify_ready(self, member: discord.Member, action: str, wait_seconds: int):
+        await discord.utils.sleep_until(datetime.utcnow() + timedelta(seconds=wait_seconds))
+        try:
+            await member.send(f"🔔 Your **{action}** is ready again.")
+        except Exception:
+            pass
+
+
+class ProfileSettingsView(discord.ui.View):
+    def __init__(self, users_cog: Users, requester_id: int, target_uid: str):
+        super().__init__(timeout=180)
+        self.users_cog = users_cog
+        self.requester_id = requester_id
+        self.target_uid = target_uid
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.requester_id:
+            await interaction.response.send_message("You can only edit your own settings.", ephemeral=True)
+            return False
+        return True
+
+    def toggle(self, key):
+        profile = self.users_cog.get_profile_by_id(self.target_uid)
+        settings = profile.setdefault("settings", self.users_cog.default_settings())
+        settings[key] = not settings.get(key, True)
+        self.users_cog.save_users()
+        return settings[key]
+
+    @discord.ui.button(label="Toggle Daily/Practice Alerts", style=discord.ButtonStyle.secondary)
+    async def toggle_alerts(self, interaction: discord.Interaction, button: discord.ui.Button):
+        state = self.toggle("alert_daily_practice")
+        await interaction.response.send_message(f"Daily/Practice alerts are now {'ON' if state else 'OFF'}.", ephemeral=True)
+
+    @discord.ui.button(label="Toggle Auction DMs", style=discord.ButtonStyle.secondary)
+    async def toggle_auction_dms(self, interaction: discord.Interaction, button: discord.ui.Button):
+        state = self.toggle("dm_auction_notis")
+        await interaction.response.send_message(f"Auction DMs are now {'ON' if state else 'OFF'}.", ephemeral=True)
+
+    @discord.ui.button(label="Toggle Auction Confirm", style=discord.ButtonStyle.secondary)
+    async def toggle_auction_confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        state = self.toggle("confirm_auction_buy")
+        await interaction.response.send_message(f"Auction purchase confirmation is now {'ON' if state else 'OFF'}.", ephemeral=True)
+
+    @discord.ui.button(label="Toggle Pack Confirm", style=discord.ButtonStyle.secondary)
+    async def toggle_pack_confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        state = self.toggle("confirm_pack_buy")
+        await interaction.response.send_message(f"Pack purchase confirmation is now {'ON' if state else 'OFF'}.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Users(bot))
