@@ -38,6 +38,20 @@ class Users(commands.Cog):
             self.save_users()
         return self.users[uid]
 
+    def get_profile_by_id(self, user_id):
+        uid = str(user_id)
+        if uid not in self.users:
+            self.users[uid] = {
+                'gold': 0,
+                'radianite': 0,
+                'last_practice': None,
+                'last_daily': None,
+                'packs': [],
+                'cards': []
+            }
+            self.save_users()
+        return self.users[uid]
+
 
     # Commands 
 

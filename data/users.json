@@ -1,6 +1,6 @@
 {
     "272473699909763072": {
-        "gold": 43,
+        "gold": 9999999643,
         "cards": [
             {
                 "instance_id": "48404da2-5427-4bbd-89d7-35b4c1fe96fb",
@@ -133,6 +133,90 @@
                 "card_id": "keria_lck_2026",
                 "rarity": "Diamond",
                 "pulled_on": "2026-04-12T10:27:37.279924"
+            },
+            {
+                "instance_id": "51c44c16-6032-434c-849f-e2aa25e79a03",
+                "card_id": "2026_lec_vit_carzzy",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T08:23:02.984857"
+            },
+            {
+                "instance_id": "8a7b6a75-fa94-45a5-99d4-93f28ea6c143",
+                "card_id": "2026_cblol_lbr_wizer",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T08:23:02.985521"
+            },
+            {
+                "instance_id": "72840ea3-6f11-4c15-878a-3f703a66ceb1",
+                "card_id": "2026_lcs_sr_zinie",
+                "rarity": "Gold",
+                "pulled_on": "2026-04-13T08:23:02.986058"
+            },
+            {
+                "instance_id": "d2eace1f-90b6-4e98-ba2d-0dded3461758",
+                "card_id": "2026_lec_vit_carzzy",
+                "rarity": "Gold",
+                "pulled_on": "2026-04-13T08:23:02.986603"
+            },
+            {
+                "instance_id": "fd48a183-f597-40f4-a37a-165dba132a3a",
+                "card_id": "2026_lpl_rng_breathe",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-13T08:23:02.987096"
+            },
+            {
+                "instance_id": "517c38a8-12cf-4bff-9ec2-f58ba6ba401b",
+                "card_id": "2026_lcp_gam_draktharr",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-13T08:23:02.987595"
+            },
+            {
+                "instance_id": "b88f9235-3090-4b9c-b988-4b7631a6b34f",
+                "card_id": "2026_lcp_dfm_kakkun",
+                "rarity": "Immortal",
+                "pulled_on": "2026-04-13T08:23:02.988094"
+            },
+            {
+                "instance_id": "df2ea3d7-8aaa-4b30-b5dd-a59d3b05f58b",
+                "card_id": "2026_cblol_red_brance",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T08:46:06.925212"
+            },
+            {
+                "instance_id": "851ef4b3-5eff-4621-9481-fb6ad50b2251",
+                "card_id": "2026_lcs_tl_josedeodo",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T08:46:06.925863"
+            },
+            {
+                "instance_id": "6761d940-63c6-4c03-bfb7-d1f936d23578",
+                "card_id": "2026_lcp_mvk_sofm",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T08:46:06.926411"
+            },
+            {
+                "instance_id": "ebae8df5-a6f4-424d-8ec3-37e9001e44d1",
+                "card_id": "2026_lec_sft_paduck",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-13T08:46:06.926980"
+            },
+            {
+                "instance_id": "5da4c82f-351b-4276-8c4a-edeafd891b94",
+                "card_id": "2026_cblol_red_grevthar",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T08:46:06.927540"
+            },
+            {
+                "instance_id": "0571f093-0325-4685-b856-e57024a51579",
+                "card_id": "2026_lec_g2_labrov",
+                "rarity": "Gold",
+                "pulled_on": "2026-04-13T08:46:06.928103"
+            },
+            {
+                "instance_id": "b7c08619-b8fc-4eef-a814-e7592c9128a2",
+                "card_id": "2026_cblol_red_guigo",
+                "rarity": "Gold",
+                "pulled_on": "2026-04-13T08:46:06.928670"
             }
         ],
         "radianite": 5,
@@ -142,7 +226,8 @@
             "lck_premium",
             "lck_premium",
             "lck_premium",
-            "lck_premium"
+            "pack_all_26",
+            "pack_all_26"
         ]
     }
 }

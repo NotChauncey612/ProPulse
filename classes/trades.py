@@ -20,7 +20,10 @@ class Trades(commands.Cog):
     def load_trades(self):
         try:
             with open(TRADES_PATH, "r") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+                return []
         except:
             return []
 

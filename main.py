@@ -27,6 +27,8 @@ initial_extensions = [
     "classes.users",
     "classes.cards",
     "classes.auction",
+    "classes.shop",
+    "classes.trades",
 ]
 
 

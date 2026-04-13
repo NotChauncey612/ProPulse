@@ -88,8 +88,9 @@ class Cards(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.players = self.load_json(PLAYERS_PATH, default=[])
-        self.cards = self.load_json(CARDS_PATH, default=[])
-        self.packs = self.load_json(PACKS_PATH, default={})
+        self.cards = self.load_cards()
+        self.card_aliases = self.build_card_aliases()
+        self.packs = self.load_packs()
 
     # -----------------
     # JSON helpers
@@ -109,6 +110,101 @@ class Cards(commands.Cog):
         with open(USERS_PATH, "w", encoding="utf-8") as f:
             json.dump(users_data, f, indent=4)
 
+    def load_cards(self):
+        raw = self.load_json(CARDS_PATH, default={})
+
+        # Legacy format: [{"id": "...", "player_id": "...", ...}]
+        if isinstance(raw, list):
+            indexed = {}
+            for entry in raw:
+                if not isinstance(entry, dict):
+                    continue
+                card_id = entry.get("card_id") or entry.get("id")
+                if card_id:
+                    indexed[card_id] = entry
+            return indexed
+
+        indexed = {}
+        games = raw.get("games", {}) if isinstance(raw, dict) else {}
+
+        for game_name, game_data in games.items():
+            sets = game_data.get("sets", {}) if isinstance(game_data, dict) else {}
+            for set_name, set_data in sets.items():
+                leagues = set_data.get("leagues", {}) if isinstance(set_data, dict) else {}
+                for league_name, league_data in leagues.items():
+                    teams = league_data.get("teams", {}) if isinstance(league_data, dict) else {}
+                    for team_name, team_data in teams.items():
+                        cards = team_data.get("cards", []) if isinstance(team_data, dict) else []
+                        for card in cards:
+                            if not isinstance(card, dict):
+                                continue
+                            card_id = card.get("card_id")
+                            if not card_id:
+                                continue
+
+                            normalized = dict(card)
+                            normalized.setdefault("game", game_name)
+                            normalized.setdefault("set", set_name)
+                            normalized.setdefault("league", league_name)
+                            normalized.setdefault("team", team_name)
+                            normalized.setdefault("image_url", normalized.get("image", ""))
+                            normalized.setdefault("id", card_id)
+                            normalized.setdefault("player_id", card_id)
+                            indexed[card_id] = normalized
+
+        return indexed
+
+    def _slug(self, value):
+        return "".join(ch for ch in str(value).lower() if ch.isalnum())
+
+    def _set_year_tokens(self, set_name):
+        digits = "".join(ch for ch in str(set_name) if ch.isdigit())
+        if len(digits) >= 4:
+            return {digits[-4:], digits[-2:]}
+        if len(digits) >= 2:
+            return {digits[-2:]}
+        return set()
+
+    def build_card_aliases(self):
+        aliases = {}
+
+        for card_id, card in self.cards.items():
+            ign = self._slug(card.get("ign", ""))
+            league = self._slug(card.get("league", ""))
+            game = self._slug(card.get("game", ""))
+            years = self._set_year_tokens(card.get("set", ""))
+
+            if ign and league:
+                for year in years:
+                    aliases[f"{ign}_{league}_{year}"] = card_id
+
+            if ign and game:
+                for year in years:
+                    aliases[f"{ign}_{game}_{year}"] = card_id
+
+            aliases[self._slug(card_id)] = card_id
+
+        return aliases
+
+    def load_packs(self):
+        data = self.load_json(PACKS_PATH, default={})
+
+        if isinstance(data, dict) and "packs" in data:
+            packs = data["packs"]
+        elif isinstance(data, list):
+            packs = data
+        else:
+            packs = []
+
+        indexed = {}
+        for pack in packs:
+            if not isinstance(pack, dict):
+                continue
+            pack_id = pack.get("pack_id")
+            if pack_id:
+                indexed[pack_id] = pack
+        return indexed
+
     # -----------------
     # Lookup helpers
     # -----------------
@@ -120,10 +216,27 @@ class Cards(commands.Cog):
         return None
 
     def get_card_by_id(self, card_id):
-        for card in self.cards:
-            if card.get("id") == card_id:
-                return card
+        if card_id in self.cards:
+            return self.cards[card_id]
+
+        alias_target = self.card_aliases.get(str(card_id).lower()) or self.card_aliases.get(self._slug(card_id))
+        if alias_target:
+            return self.cards.get(alias_target)
         return None
+
+    def get_player_for_card(self, card_data):
+        if not card_data:
+            return None
+
+        legacy_player = self.get_player_by_id(card_data.get("player_id"))
+        if legacy_player:
+            return legacy_player
+
+        return {
+            "id": card_data.get("card_id", card_data.get("id", "unknown")),
+            "name": card_data.get("ign", "Unknown"),
+            "role": card_data.get("role", "Unknown")
+        }
 
     def get_user_data(self, user_id):
         users = self.load_users()
@@ -145,13 +258,22 @@ class Cards(commands.Cog):
             return "Immortal"
         return "Radiant"
 
-    def create_card_instance(self, card_id):
-        return {
+    def create_card_instance(self, card_id, card_data=None):
+        instance = {
             "instance_id": str(uuid.uuid4()),
             "card_id": card_id,
             "rarity": self.roll_rarity(),
             "pulled_on": datetime.utcnow().isoformat()
         }
+        if card_data:
+            instance["snapshot"] = {
+                "ign": card_data.get("ign", "Unknown"),
+                "team": card_data.get("team", "Unknown"),
+                "set": card_data.get("set", "Unknown Set"),
+                "league": card_data.get("league", "Unknown"),
+                "image_url": card_data.get("image_url", card_data.get("image", ""))
+            }
+        return instance
 
     def add_card_to_user(self, users, user_id, card_instance):
         uid = str(user_id)
@@ -168,13 +290,13 @@ class Cards(commands.Cog):
         if not self.cards:
             return None, None, None, "No cards are loaded."
 
-        chosen_card = random.choice(self.cards)
-        player = self.get_player_by_id(chosen_card.get("player_id"))
+        chosen_card = random.choice(list(self.cards.values()))
+        player = self.get_player_for_card(chosen_card)
 
         if player is None:
             return None, None, None, "Card data is missing a valid player."
 
-        card_instance = self.create_card_instance(chosen_card["id"])
+        card_instance = self.create_card_instance(chosen_card["card_id"], chosen_card)
         self.add_card_to_user(users, user_id, card_instance)
 
         return card_instance, chosen_card, player, None
@@ -209,10 +331,12 @@ class Cards(commands.Cog):
 
     def card_matches_filters(self, owned_card, filters):
         card_data = self.get_card_by_id(owned_card.get("card_id"))
+        if not card_data and owned_card.get("snapshot"):
+            card_data = owned_card["snapshot"]
         if not card_data:
             return False
 
-        player = self.get_player_by_id(card_data.get("player_id"))
+        player = self.get_player_for_card(card_data)
         if not player:
             return False
 
@@ -256,10 +380,12 @@ class Cards(commands.Cog):
 
     def format_inventory_line(self, index, owned_card):
         card_data = self.get_card_by_id(owned_card.get("card_id"))
+        if not card_data and owned_card.get("snapshot"):
+            card_data = owned_card["snapshot"]
         if not card_data:
             return f"{index}. Unknown Card"
 
-        player = self.get_player_by_id(card_data.get("player_id"))
+        player = self.get_player_for_card(card_data)
         if not player:
             return f"{index}. Unknown Player"
 
@@ -274,11 +400,13 @@ class Cards(commands.Cog):
 
         for index, owned_card in indexed_cards:
             card_data = self.get_card_by_id(owned_card.get("card_id"))
+            if not card_data and owned_card.get("snapshot"):
+                card_data = owned_card["snapshot"]
             if not card_data:
                 lines.append(f"{index}. Unknown Card")
                 continue
 
-            player = self.get_player_by_id(card_data.get("player_id"))
+            player = self.get_player_for_card(card_data)
             if not player:
                 lines.append(f"{index}. Unknown Player")
                 continue
@@ -330,11 +458,13 @@ class Cards(commands.Cog):
 
         owned_card = owned_cards[inventory_number - 1]
         card_data = self.get_card_by_id(owned_card.get("card_id"))
+        if not card_data and owned_card.get("snapshot"):
+            card_data = owned_card["snapshot"]
 
         if not card_data:
-            return None, None, None, "That card's data could not be found."
+            return None, None, None, "That card's data could not be found. (Legacy card without snapshot)"
 
-        player = self.get_player_by_id(card_data.get("player_id"))
+        player = self.get_player_for_card(card_data)
 
         if not player:
             return None, None, None, "That card's player data could not be found."
@@ -383,7 +513,7 @@ class Cards(commands.Cog):
     # -----------------
 
     def open_pack(self, user_id, pack_name):
-        pack = self.packs.get(pack_name.lower())
+        pack = self.packs.get(pack_name)
 
         if not pack:
             return None, "Pack not found."
@@ -392,10 +522,21 @@ class Cards(commands.Cog):
         if user_data is None:
             return None, "You need to create a profile first with `.join`."
 
-        set_name = pack["set"]
-        num_cards = pack["cards"]
+        set_name = pack.get("set")
+        league = pack.get("league")
+        leagues = pack.get("leagues", [])
+        num_cards = pack.get("cards_per_pack", 0)
 
-        pool = [card for card in self.cards if card.get("set") == set_name]
+        pool = []
+        for card in self.cards.values():
+            if set_name and card.get("set") != set_name:
+                continue
+            if league and card.get("league") != league:
+                continue
+            if leagues and card.get("league") not in leagues:
+                continue
+            pool.append(card)
+
         if not pool:
             return None, "No cards found for that set."
 
@@ -403,9 +544,9 @@ class Cards(commands.Cog):
 
         for _ in range(num_cards):
             chosen_card = random.choice(pool)
-            player = self.get_player_by_id(chosen_card.get("player_id"))
+            player = self.get_player_for_card(chosen_card)
 
-            card_instance = self.create_card_instance(chosen_card["id"])
+            card_instance = self.create_card_instance(chosen_card["card_id"], chosen_card)
             self.add_card_to_user(users, user_id, card_instance)
 
             results.append((card_instance, chosen_card, player))
@@ -504,10 +645,10 @@ class Cards(commands.Cog):
             packs = []
         user_data["packs"] = packs
 
-        pack_names = list(self.packs.keys())
+        pack_ids = list(self.packs.keys())
 
         for _ in range(amount):
-            chosen = random.choice(pack_names)
+            chosen = random.choice(pack_ids)
             packs.append(chosen)
 
         self.save_users(users)
@@ -519,6 +660,10 @@ class Cards(commands.Cog):
     @commands.command()
     async def open(self, ctx, arg):
         users, user_data = self.get_user_data(ctx.author.id)
+        if user_data is None:
+            await ctx.send("You need to create a profile first with `.join`.")
+            return
+
         user_packs = user_data.get("packs", [])
 
         if not user_packs:
@@ -533,22 +678,28 @@ class Cards(commands.Cog):
                 await ctx.send("Invalid pack number.")
                 return
 
-            pack_name = user_packs.pop(index - 1)
+            pack_id = user_packs.pop(index - 1)
 
         # name case
         else:
-            arg = arg.lower()
+            arg_lower = arg.lower()
+            pack_id = None
+            for owned_pack_id in user_packs:
+                pack = self.packs.get(owned_pack_id)
+                pack_name = pack.get("name", "") if pack else ""
+                if owned_pack_id.lower() == arg_lower or pack_name.lower() == arg_lower:
+                    pack_id = owned_pack_id
+                    break
 
-            if arg not in user_packs:
+            if pack_id is None:
                 await ctx.send("You don't have that pack.")
                 return
 
-            user_packs.remove(arg)
-            pack_name = arg
+            user_packs.remove(pack_id)
 
         self.save_users(users)
 
-        results, error = self.open_pack(ctx.author.id, pack_name)
+        results, error = self.open_pack(ctx.author.id, pack_id)
 
         if error:
             await ctx.send(error)
@@ -558,6 +709,7 @@ class Cards(commands.Cog):
         for inst, card, player in results:
             lines.append(f"{player['name']} • {card['team']} • {inst['rarity']}")
 
+        pack_name = self.packs.get(pack_id, {}).get("name", pack_id)
         embed = discord.Embed(
             title=f"{ctx.author.display_name} opened {pack_name}",
             description="\n".join(lines),
@@ -572,6 +724,9 @@ class Cards(commands.Cog):
     @commands.command()
     async def packs(self, ctx):
         users, user_data = self.get_user_data(ctx.author.id)
+        if user_data is None:
+            await ctx.send("You need to create a profile first with `.join`.")
+            return
 
         user_packs = user_data.get("packs", [])
 
@@ -581,8 +736,10 @@ class Cards(commands.Cog):
 
         lines = []
 
-        for i, pack_name in enumerate(user_packs, start=1):
-            lines.append(f"{i}. {pack_name}")
+        for i, pack_id in enumerate(user_packs, start=1):
+            pack = self.packs.get(pack_id, {})
+            display_name = pack.get("name", pack_id)
+            lines.append(f"{i}. {display_name} ({pack_id})")
 
         embed = discord.Embed(
             title=f"{ctx.author.display_name}'s Packs",
