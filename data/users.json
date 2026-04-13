@@ -1,6 +1,6 @@
 {
     "272473699909763072": {
-        "gold": 9999999643,
+        "gold": 9999999043,
         "cards": [
             {
                 "instance_id": "48404da2-5427-4bbd-89d7-35b4c1fe96fb",
@@ -13,12 +13,6 @@
                 "card_id": "keria_lck_2026",
                 "rarity": "Immortal",
                 "pulled_on": "2026-04-12T06:19:05.742149"
-            },
-            {
-                "instance_id": "dc15eddc-ec04-4ded-a1eb-b1b268cba66f",
-                "card_id": "faker_lck_2026",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-12T06:19:13.337354"
             },
             {
                 "instance_id": "09bca49a-6c59-46ad-b4af-c5862b2b987e",
@@ -228,6 +222,112 @@
             "lck_premium",
             "pack_all_26",
             "pack_all_26"
+        ]
+    },
+    "534170875293859840": {
+        "gold": 480,
+        "radianite": 0,
+        "last_practice": null,
+        "last_daily": null,
+        "packs": [],
+        "cards": [
+            {
+                "instance_id": "dc15eddc-ec04-4ded-a1eb-b1b268cba66f",
+                "card_id": "faker_lck_2026",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-12T06:19:13.337354"
+            },
+            {
+                "instance_id": "094acfe4-ec73-4845-afeb-b8a2138466b9",
+                "card_id": "2026_lcs_tl_josedeodo",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T17:01:34.829981",
+                "snapshot": {
+                    "ign": "Josedeodo",
+                    "team": "Team Liquid",
+                    "set": "LoL '26",
+                    "league": "LCS",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "adb4edc6-83d0-4f9d-9da8-797d66b70720",
+                "card_id": "2026_lcs_c9_vulcan",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T17:01:34.830698",
+                "snapshot": {
+                    "ign": "Vulcan",
+                    "team": "Cloud9",
+                    "set": "LoL '26",
+                    "league": "LCS",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "4f311467-021d-4f6f-93da-cbd2cc9adb25",
+                "card_id": "2026_lcp_mvk_gury",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-13T17:01:34.831306",
+                "snapshot": {
+                    "ign": "Gury",
+                    "team": "MVK Esports",
+                    "set": "LoL '26",
+                    "league": "LCP",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "2f17886d-b8d1-424b-b11b-a89bcf4480a7",
+                "card_id": "2026_lcs_dsg_castle",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-13T17:01:34.831938",
+                "snapshot": {
+                    "ign": "Castle",
+                    "team": "Disguised",
+                    "set": "LoL '26",
+                    "league": "LCS",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "4f9fc176-0dd8-427c-8c1e-3e73cc3d40a4",
+                "card_id": "2026_lpl_blg_bin",
+                "rarity": "Silver",
+                "pulled_on": "2026-04-13T17:01:34.832645",
+                "snapshot": {
+                    "ign": "Bin",
+                    "team": "Bilibili Gaming",
+                    "set": "LoL '26",
+                    "league": "LPL",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "bc48cb0d-6671-4e09-8a1b-46c2735da412",
+                "card_id": "2026_lec_kc_busio",
+                "rarity": "Gold",
+                "pulled_on": "2026-04-13T17:01:34.833297",
+                "snapshot": {
+                    "ign": "Busio",
+                    "team": "Karmine Corp",
+                    "set": "LoL '26",
+                    "league": "LEC",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "36690a23-a04e-4000-96ea-172b3b961902",
+                "card_id": "2026_lpl_blg_xun",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-13T17:01:34.833994",
+                "snapshot": {
+                    "ign": "Xun",
+                    "team": "Bilibili Gaming",
+                    "set": "LoL '26",
+                    "league": "LPL",
+                    "image_url": ""
+                }
+            }
         ]
     }
 }

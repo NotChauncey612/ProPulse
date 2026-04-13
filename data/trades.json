@@ -1,1 +1,25 @@
-{}
+[
+    {
+        "trade_id": "b4e0cb2e-9d0e-43bd-842a-3c84f1a153c9",
+        "user1_id": "534170875293859840",
+        "user2_id": "272473699909763072",
+        "user1_offer": {
+            "cards": [],
+            "packs": [],
+            "gold": 0
+        },
+        "user2_offer": {
+            "cards": [
+                {
+                    "instance_id": "dc15eddc-ec04-4ded-a1eb-b1b268cba66f",
+                    "card_id": "faker_lck_2026",
+                    "rarity": "Diamond",
+                    "pulled_on": "2026-04-12T06:19:13.337354"
+                }
+            ],
+            "packs": [],
+            "gold": 500
+        },
+        "completed_at": "2026-04-13T16:54:03.470124"
+    }
+]
