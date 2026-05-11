@@ -1,294 +1,345 @@
 {
     "272473699909763072": {
-        "gold": 9999993943,
+        "gold": 900050,
         "cards": [
             {
                 "instance_id": "48404da2-5427-4bbd-89d7-35b4c1fe96fb",
-                "card_id": "doran_lck_2026",
+                "card_id": "2026_lck_t1_doran",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T06:03:24.298329"
+                "pulled_on": "2026-04-12T06:03:24.298329",
+                "snapshot": {
+                    "ign": "Doran",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "7e6a741a-9ca6-4443-9f66-bcaf85da4cc9",
-                "card_id": "keria_lck_2026",
+                "card_id": "2026_lck_t1_keria",
                 "rarity": "Immortal",
-                "pulled_on": "2026-04-12T06:19:05.742149"
+                "pulled_on": "2026-04-12T06:19:05.742149",
+                "snapshot": {
+                    "ign": "Keria",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "dc15eddc-ec04-4ded-a1eb-b1b268cba66f",
+                "card_id": "2026_lck_t1_faker",
+                "rarity": "Diamond",
+                "pulled_on": "2026-04-12T06:19:13.337354",
+                "snapshot": {
+                    "ign": "Faker",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "09bca49a-6c59-46ad-b4af-c5862b2b987e",
-                "card_id": "doran_lck_2026",
+                "card_id": "2026_lck_t1_doran",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T06:19:39.676180"
+                "pulled_on": "2026-04-12T06:19:39.676180",
+                "snapshot": {
+                    "ign": "Doran",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "42e01810-5242-4a7a-a73d-ccc7ec0e4034",
-                "card_id": "peyz_lck_2026",
+                "card_id": "2026_lck_t1_peyz",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T06:21:44.865446"
+                "pulled_on": "2026-04-12T06:21:44.865446",
+                "snapshot": {
+                    "ign": "Peyz",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "153316f5-14b6-4c1a-af03-7a7f7f314daa",
-                "card_id": "doran_lck_2026",
+                "card_id": "2026_lck_t1_doran",
                 "rarity": "Gold",
-                "pulled_on": "2026-04-12T06:21:46.832572"
+                "pulled_on": "2026-04-12T06:21:46.832572",
+                "snapshot": {
+                    "ign": "Doran",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "18bd1766-4c57-4a94-bd80-fc54b419049c",
-                "card_id": "doran_lck_2026",
+                "card_id": "2026_lck_t1_doran",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T06:23:44.637724"
+                "pulled_on": "2026-04-12T06:23:44.637724",
+                "snapshot": {
+                    "ign": "Doran",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "537f8dd1-7c9f-472f-a0ea-eb023f54e213",
-                "card_id": "doran_lck_2026",
+                "card_id": "2026_lck_t1_doran",
                 "rarity": "Immortal",
-                "pulled_on": "2026-04-12T06:33:29.385208"
+                "pulled_on": "2026-04-12T06:33:29.385208",
+                "snapshot": {
+                    "ign": "Doran",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "8269b05b-6e03-4be2-8448-0c29a6d172df",
-                "card_id": "keria_lck_2026",
+                "card_id": "2026_lck_t1_keria",
                 "rarity": "Gold",
-                "pulled_on": "2026-04-12T06:33:53.984829"
+                "pulled_on": "2026-04-12T06:33:53.984829",
+                "snapshot": {
+                    "ign": "Keria",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "feeed167-4ab2-4d77-8ce0-06b9eb624be7",
-                "card_id": "peyz_lck_2026",
+                "card_id": "2026_lck_t1_peyz",
                 "rarity": "Diamond",
-                "pulled_on": "2026-04-12T09:33:55.620682"
+                "pulled_on": "2026-04-12T09:33:55.620682",
+                "snapshot": {
+                    "ign": "Peyz",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "46f24fa0-ab18-4c6b-9a0b-6466bc3b5d29",
-                "card_id": "peyz_lck_2026",
+                "card_id": "2026_lck_t1_peyz",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T09:33:55.621210"
+                "pulled_on": "2026-04-12T09:33:55.621210",
+                "snapshot": {
+                    "ign": "Peyz",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "058e280c-6c42-4979-859c-aea60d252b06",
-                "card_id": "keria_lck_2026",
+                "card_id": "2026_lck_t1_keria",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T09:33:55.621604"
+                "pulled_on": "2026-04-12T09:33:55.621604",
+                "snapshot": {
+                    "ign": "Keria",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "deab5bf6-ff19-4e29-b71b-98a32e6a4e1b",
-                "card_id": "doran_lck_2026",
+                "card_id": "2026_lck_t1_doran",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T10:27:14.995756"
+                "pulled_on": "2026-04-12T10:27:14.995756",
+                "snapshot": {
+                    "ign": "Doran",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "b4ecfb41-b24a-43ef-bbd8-55c53f0f2040",
-                "card_id": "oner_lck_2026",
+                "card_id": "2026_lck_t1_oner",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T10:27:14.996231"
+                "pulled_on": "2026-04-12T10:27:14.996231",
+                "snapshot": {
+                    "ign": "Oner",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "f41dafb3-6902-40b7-a1a6-7baf99bb7aa5",
-                "card_id": "doran_lck_2026",
+                "card_id": "2026_lck_t1_doran",
                 "rarity": "Immortal",
-                "pulled_on": "2026-04-12T10:27:14.996713"
+                "pulled_on": "2026-04-12T10:27:14.996713",
+                "snapshot": {
+                    "ign": "Doran",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "d0385648-592f-480e-9000-55e51fe8f1e2",
-                "card_id": "faker_lck_2026",
+                "card_id": "2026_lck_t1_faker",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T10:27:14.997180"
+                "pulled_on": "2026-04-12T10:27:14.997180",
+                "snapshot": {
+                    "ign": "Faker",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "198eb79e-adb2-43f8-9649-4c53f6a0c341",
-                "card_id": "oner_lck_2026",
+                "card_id": "2026_lck_t1_oner",
                 "rarity": "Diamond",
-                "pulled_on": "2026-04-12T10:27:14.997633"
+                "pulled_on": "2026-04-12T10:27:14.997633",
+                "snapshot": {
+                    "ign": "Oner",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "fca890ac-b932-4773-90bb-8a0376e9544f",
-                "card_id": "oner_lck_2026",
+                "card_id": "2026_lck_t1_oner",
                 "rarity": "Gold",
-                "pulled_on": "2026-04-12T10:27:37.277973"
+                "pulled_on": "2026-04-12T10:27:37.277973",
+                "snapshot": {
+                    "ign": "Oner",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "b1ebbc96-8f53-4db3-b43d-9965a7d62b7d",
-                "card_id": "keria_lck_2026",
+                "card_id": "2026_lck_t1_keria",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-12T10:27:37.278536"
+                "pulled_on": "2026-04-12T10:27:37.278536",
+                "snapshot": {
+                    "ign": "Keria",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "680eb3b7-3b5d-4ee0-a358-eb9a35d1ed01",
-                "card_id": "peyz_lck_2026",
+                "card_id": "2026_lck_t1_peyz",
                 "rarity": "Gold",
-                "pulled_on": "2026-04-12T10:27:37.278993"
+                "pulled_on": "2026-04-12T10:27:37.278993",
+                "snapshot": {
+                    "ign": "Peyz",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "58a4d7aa-aa08-4a14-8c26-b9d317ce02a6",
-                "card_id": "peyz_lck_2026",
+                "card_id": "2026_lck_t1_peyz",
                 "rarity": "Diamond",
-                "pulled_on": "2026-04-12T10:27:37.279460"
+                "pulled_on": "2026-04-12T10:27:37.279460",
+                "snapshot": {
+                    "ign": "Peyz",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
                 "instance_id": "8121dc10-ec4d-404a-ac9c-490ae3524207",
-                "card_id": "keria_lck_2026",
+                "card_id": "2026_lck_t1_keria",
                 "rarity": "Diamond",
-                "pulled_on": "2026-04-12T10:27:37.279924"
+                "pulled_on": "2026-04-12T10:27:37.279924",
+                "snapshot": {
+                    "ign": "Keria",
+                    "team": "T1",
+                    "set": "LOL '26",
+                    "league": "LCK",
+                    "image_url": ""
+                }
             },
             {
-                "instance_id": "51c44c16-6032-434c-849f-e2aa25e79a03",
-                "card_id": "2026_lec_vit_carzzy",
-                "rarity": "Silver",
-                "pulled_on": "2026-04-13T08:23:02.984857"
-            },
-            {
-                "instance_id": "8a7b6a75-fa94-45a5-99d4-93f28ea6c143",
-                "card_id": "2026_cblol_lbr_wizer",
-                "rarity": "Silver",
-                "pulled_on": "2026-04-13T08:23:02.985521"
-            },
-            {
-                "instance_id": "72840ea3-6f11-4c15-878a-3f703a66ceb1",
-                "card_id": "2026_lcs_sr_zinie",
+                "instance_id": "b3398a91-4840-4371-8ea0-8df6819d82a8",
+                "card_id": "2026_cblol_lbr_scary",
                 "rarity": "Gold",
-                "pulled_on": "2026-04-13T08:23:02.986058"
+                "pulled_on": "2026-05-11T03:57:18.087940",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Scary",
+                    "team": "Liberty",
+                    "set": "LoL '26",
+                    "league": "CBLOL",
+                    "image_url": ""
+                }
             },
             {
-                "instance_id": "d2eace1f-90b6-4e98-ba2d-0dded3461758",
-                "card_id": "2026_lec_vit_carzzy",
-                "rarity": "Gold",
-                "pulled_on": "2026-04-13T08:23:02.986603"
-            },
-            {
-                "instance_id": "fd48a183-f597-40f4-a37a-165dba132a3a",
-                "card_id": "2026_lpl_rng_breathe",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-13T08:23:02.987096"
-            },
-            {
-                "instance_id": "517c38a8-12cf-4bff-9ec2-f58ba6ba401b",
-                "card_id": "2026_lcp_gam_draktharr",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-13T08:23:02.987595"
-            },
-            {
-                "instance_id": "b88f9235-3090-4b9c-b988-4b7631a6b34f",
-                "card_id": "2026_lcp_dfm_kakkun",
-                "rarity": "Immortal",
-                "pulled_on": "2026-04-13T08:23:02.988094"
-            },
-            {
-                "instance_id": "df2ea3d7-8aaa-4b30-b5dd-a59d3b05f58b",
-                "card_id": "2026_cblol_red_brance",
-                "rarity": "Silver",
-                "pulled_on": "2026-04-13T08:46:06.925212"
-            },
-            {
-                "instance_id": "851ef4b3-5eff-4621-9481-fb6ad50b2251",
-                "card_id": "2026_lcs_tl_josedeodo",
-                "rarity": "Silver",
-                "pulled_on": "2026-04-13T08:46:06.925863"
-            },
-            {
-                "instance_id": "6761d940-63c6-4c03-bfb7-d1f936d23578",
-                "card_id": "2026_lcp_mvk_sofm",
-                "rarity": "Silver",
-                "pulled_on": "2026-04-13T08:46:06.926411"
-            },
-            {
-                "instance_id": "ebae8df5-a6f4-424d-8ec3-37e9001e44d1",
-                "card_id": "2026_lec_sft_paduck",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-13T08:46:06.926980"
-            },
-            {
-                "instance_id": "5da4c82f-351b-4276-8c4a-edeafd891b94",
-                "card_id": "2026_cblol_red_grevthar",
-                "rarity": "Silver",
-                "pulled_on": "2026-04-13T08:46:06.927540"
-            },
-            {
-                "instance_id": "0571f093-0325-4685-b856-e57024a51579",
+                "instance_id": "17c91fee-0bf6-4f9f-bf65-dc3437252a20",
                 "card_id": "2026_lec_g2_labrov",
-                "rarity": "Gold",
-                "pulled_on": "2026-04-13T08:46:06.928103"
-            },
-            {
-                "instance_id": "b7c08619-b8fc-4eef-a814-e7592c9128a2",
-                "card_id": "2026_cblol_red_guigo",
-                "rarity": "Gold",
-                "pulled_on": "2026-04-13T08:46:06.928670"
-            }
-        ],
-        "radianite": 5,
-        "last_practice": "2026-04-12T10:07:29.610405",
-        "last_daily": "2026-04-12T05:27:17.075769",
-        "packs": [
-            "lck_premium",
-            "lck_premium",
-            "lck_premium",
-            "pack_all_26",
-            "pack_all_26",
-            "pack_all_26"
-        ],
-        "discord_username": "chauncey612",
-        "settings": {
-            "alert_daily_practice": true,
-            "dm_auction_notis": true,
-            "confirm_auction_buy": true,
-            "confirm_pack_buy": true
-        }
-    },
-    "534170875293859840": {
-        "gold": 480,
-        "radianite": 0,
-        "last_practice": null,
-        "last_daily": null,
-        "packs": [],
-        "cards": [
-            {
-                "instance_id": "dc15eddc-ec04-4ded-a1eb-b1b268cba66f",
-                "card_id": "faker_lck_2026",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-12T06:19:13.337354"
-            },
-            {
-                "instance_id": "094acfe4-ec73-4845-afeb-b8a2138466b9",
-                "card_id": "2026_lcs_tl_josedeodo",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-13T17:01:34.829981",
+                "pulled_on": "2026-05-11T03:57:18.088907",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
                 "snapshot": {
-                    "ign": "Josedeodo",
-                    "team": "Team Liquid",
+                    "ign": "Labrov",
+                    "team": "G2 Esports",
+                    "set": "LoL '26",
+                    "league": "LEC",
+                    "image_url": ""
+                }
+            },
+            {
+                "instance_id": "c45a5eb8-d9a9-4f89-a4a2-af2c7c082220",
+                "card_id": "2026_lcs_dsg_sajed",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-11T03:57:18.089706",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "sajed",
+                    "team": "Disguised",
                     "set": "LoL '26",
                     "league": "LCS",
                     "image_url": ""
                 }
             },
             {
-                "instance_id": "adb4edc6-83d0-4f9d-9da8-797d66b70720",
-                "card_id": "2026_lcs_c9_vulcan",
-                "rarity": "Silver",
-                "pulled_on": "2026-04-13T17:01:34.830698",
-                "snapshot": {
-                    "ign": "Vulcan",
-                    "team": "Cloud9",
-                    "set": "LoL '26",
-                    "league": "LCS",
-                    "image_url": ""
-                }
-            },
-            {
-                "instance_id": "4f311467-021d-4f6f-93da-cbd2cc9adb25",
-                "card_id": "2026_lcp_mvk_gury",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-13T17:01:34.831306",
-                "snapshot": {
-                    "ign": "Gury",
-                    "team": "MVK Esports",
-                    "set": "LoL '26",
-                    "league": "LCP",
-                    "image_url": ""
-                }
-            },
-            {
-                "instance_id": "2f17886d-b8d1-424b-b11b-a89bcf4480a7",
+                "instance_id": "b3b4277c-d0a9-4cbb-9e94-e5360b7c1aa5",
                 "card_id": "2026_lcs_dsg_castle",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-13T17:01:34.831938",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-11T03:57:18.090496",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
                 "snapshot": {
                     "ign": "Castle",
                     "team": "Disguised",
@@ -298,56 +349,74 @@
                 }
             },
             {
-                "instance_id": "4f9fc176-0dd8-427c-8c1e-3e73cc3d40a4",
-                "card_id": "2026_lpl_blg_bin",
+                "instance_id": "b0aaf85f-d58d-44f0-87c7-1e7072cf8565",
+                "card_id": "2026_cblol_red_hiago",
                 "rarity": "Silver",
-                "pulled_on": "2026-04-13T17:01:34.832645",
+                "pulled_on": "2026-05-11T03:57:18.091296",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
                 "snapshot": {
-                    "ign": "Bin",
-                    "team": "Bilibili Gaming",
+                    "ign": "Hiago",
+                    "team": "RED Canids",
                     "set": "LoL '26",
-                    "league": "LPL",
+                    "league": "CBLOL",
                     "image_url": ""
                 }
             },
             {
-                "instance_id": "bc48cb0d-6671-4e09-8a1b-46c2735da412",
-                "card_id": "2026_lec_kc_busio",
+                "instance_id": "02b68e44-de01-41fd-957c-a8213ded3f93",
+                "card_id": "2026_lcp_dcg_feng",
                 "rarity": "Gold",
-                "pulled_on": "2026-04-13T17:01:34.833297",
+                "pulled_on": "2026-05-11T03:57:18.092112",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
                 "snapshot": {
-                    "ign": "Busio",
-                    "team": "Karmine Corp",
+                    "ign": "Feng",
+                    "team": "Deep Cross Gaming",
                     "set": "LoL '26",
-                    "league": "LEC",
+                    "league": "LCP",
                     "image_url": ""
                 }
             },
             {
-                "instance_id": "36690a23-a04e-4000-96ea-172b3b961902",
-                "card_id": "2026_lpl_blg_xun",
-                "rarity": "Diamond",
-                "pulled_on": "2026-04-13T17:01:34.833994",
+                "instance_id": "4f9cd5e5-fcdd-4f3e-ba6d-f624c3fe04ac",
+                "card_id": "2026_lcp_mvk_gury",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-11T03:57:18.092976",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
                 "snapshot": {
-                    "ign": "Xun",
-                    "team": "Bilibili Gaming",
+                    "ign": "Gury",
+                    "team": "MVK Esports",
                     "set": "LoL '26",
-                    "league": "LPL",
+                    "league": "LCP",
                     "image_url": ""
                 }
             }
-        ]
-    },
-    "766143687980744706": {
-        "gold": 3900,
-        "radianite": 0,
-        "last_practice": null,
-        "last_daily": null,
-        "packs": [
-            "pack_all_26"
         ],
+        "radianite": 5,
+        "last_practice": "2026-05-11T03:53:10.219864",
+        "last_daily": "2026-04-12T05:27:17.075769",
+        "packs": [
+            "pack_all_26",
+            null
+        ],
+        "discord_username": "chauncey612",
+        "settings": {
+            "alert_daily_practice": false,
+            "dm_auction_notis": true,
+            "confirm_auction_buy": true,
+            "confirm_pack_buy": true
+        }
+    },
+    "656332144909746177": {
+        "gold": 5,
+        "radianite": 0,
+        "last_practice": "2026-05-11T03:53:24.500900",
+        "last_daily": null,
+        "packs": [],
         "cards": [],
-        "discord_username": "irep3922",
+        "discord_username": "erikd943",
         "settings": {
             "alert_daily_practice": true,
             "dm_auction_notis": true,

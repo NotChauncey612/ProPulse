@@ -259,13 +259,16 @@ class Cards(commands.Cog):
             return "Immortal"
         return "Radiant"
 
-    def create_card_instance(self, card_id, card_data=None):
+    def create_card_instance(self, card_id, card_data=None, pulled_by_user=None):
         instance = {
             "instance_id": str(uuid.uuid4()),
             "card_id": card_id,
             "rarity": self.roll_rarity(),
             "pulled_on": datetime.utcnow().isoformat()
         }
+        if pulled_by_user is not None:
+            instance["pulled_by_id"] = str(pulled_by_user.id)
+            instance["pulled_by_username"] = pulled_by_user.name
         if card_data:
             instance["snapshot"] = {
                 "ign": card_data.get("ign", "Unknown"),
@@ -279,10 +282,32 @@ class Cards(commands.Cog):
     def add_card_to_user(self, users, user_id, card_instance):
         uid = str(user_id)
         users[uid].setdefault("cards", [])
-        users[uid]["cards"].append(card_instance)
+        slots = users[uid]["cards"]
+        placed = False
+        for i, existing in enumerate(slots):
+            if existing is None:
+                slots[i] = card_instance
+                placed = True
+                break
+        if not placed:
+            slots.append(card_instance)
         self.save_users(users)
 
-    def pull_random_card_for_user(self, user_id):
+    def remove_card_from_user(self, users, user_id, card_instance):
+        uid = str(user_id)
+        slots = users.get(uid, {}).get("cards", [])
+        target_id = card_instance.get("instance_id")
+        for i, existing in enumerate(slots):
+            if not isinstance(existing, dict):
+                continue
+            if existing.get("instance_id") == target_id:
+                slots[i] = None
+                self.save_users(users)
+                return True
+        return False
+
+    def pull_random_card_for_user(self, user):
+        user_id = user.id
         users, user_data = self.get_user_data(user_id)
 
         if user_data is None:
@@ -297,7 +322,7 @@ class Cards(commands.Cog):
         if player is None:
             return None, None, None, "Card data is missing a valid player."
 
-        card_instance = self.create_card_instance(chosen_card["card_id"], chosen_card)
+        card_instance = self.create_card_instance(chosen_card["card_id"], chosen_card, user)
         self.add_card_to_user(users, user_id, card_instance)
 
         return card_instance, chosen_card, player, None
@@ -308,7 +333,7 @@ class Cards(commands.Cog):
 
     def parse_inventory_filters(self, args):
         filters = {}
-        valid_flags = {"-team", "-rarity", "-player", "-set", "-role"}
+        valid_flags = {"-team", "-rarity", "-player", "-set", "-role", "-league"}
 
         i = 0
         while i < len(args):
@@ -360,6 +385,10 @@ class Cards(commands.Cog):
         if "set" in filters:
             if card_data.get("set", "").lower() != filters["set"].lower():
                 return False
+
+        if "league" in filters:
+            if card_data.get("league", "").lower() != filters["league"].lower():
+                return False
         
         if "role" in filters:
             if filters["role"].lower() not in player.get("role", "").lower():
@@ -369,11 +398,13 @@ class Cards(commands.Cog):
 
     def filter_owned_cards(self, owned_cards, filters):
         if not filters:
-            return list(enumerate(owned_cards, start=1))
+            return [(idx, card) for idx, card in enumerate(owned_cards, start=1) if isinstance(card, dict)]
 
         filtered = []
 
         for index, owned in enumerate(owned_cards, start=1):
+            if not isinstance(owned, dict):
+                continue
             if self.card_matches_filters(owned, filters):
                 filtered.append((index, owned))
 
@@ -394,7 +425,7 @@ class Cards(commands.Cog):
         set_name = card_data.get("set", "Unknown Set")
         rarity = owned_card.get("rarity", "Unknown Rarity")
 
-        return f"{index}. {player_name} {set_name} {rarity}"
+        return f"{self.format_inventory_index(index)} {self.get_rarity_symbol(rarity)} {player_name} {set_name}"
 
     def build_inventory_lines(self, indexed_cards):
         lines = []
@@ -416,7 +447,7 @@ class Cards(commands.Cog):
             set_name = card_data.get("set", "Unknown Set")
             rarity = owned_card.get("rarity", "Unknown Rarity")
 
-            lines.append(f"{index}. {player_name} {set_name} {rarity}")
+            lines.append(f"{self.format_inventory_index(index)} {self.get_rarity_symbol(rarity)} {player_name} {set_name}")
 
         return lines
 
@@ -425,6 +456,19 @@ class Cards(commands.Cog):
             return None
         return " • ".join(f"{key.capitalize()}: {value}" for key, value in filters.items())
 
+    def format_inventory_index(self, index):
+        return f"`#{index}`"
+
+    def get_rarity_symbol(self, rarity):
+        symbols = {
+            "Silver": "⚪",
+            "Gold": "🟡",
+            "Diamond": "🟣",
+            "Immortal": "🔴",
+            "Radiant": "🟠"
+        }
+        return symbols.get(rarity, "⚫")
+
     def get_filtered_inventory(self, user_id, args):
         users, user_data = self.get_user_data(user_id)
 
@@ -432,7 +476,8 @@ class Cards(commands.Cog):
             return None, None, "You need to create a profile first with `.join`."
 
         owned_cards = user_data.get("cards", [])
-        if not owned_cards:
+        valid_cards = [c for c in owned_cards if isinstance(c, dict)]
+        if not valid_cards:
             return None, None, "Your inventory is empty."
 
         filters = self.parse_inventory_filters(args)
@@ -450,14 +495,11 @@ class Cards(commands.Cog):
             return None, None, None, "You need to create a profile first with `.join`."
 
         owned_cards = user_data.get("cards", [])
-
-        if not owned_cards:
-            return None, None, None, "Your inventory is empty."
-
         if inventory_number < 1 or inventory_number > len(owned_cards):
             return None, None, None, "That inventory number does not exist."
-
         owned_card = owned_cards[inventory_number - 1]
+        if not isinstance(owned_card, dict):
+            return None, None, None, "Your inventory is empty."
         card_data = self.get_card_by_id(owned_card.get("card_id"))
         if not card_data and owned_card.get("snapshot"):
             card_data = owned_card["snapshot"]
@@ -513,7 +555,7 @@ class Cards(commands.Cog):
     # Pack Helpers
     # -----------------
 
-    def open_pack(self, user_id, pack_name):
+    def open_pack(self, user_id, pack_name, pulled_by_user=None):
         pack = self.packs.get(pack_name)
 
         if not pack:
@@ -547,7 +589,7 @@ class Cards(commands.Cog):
             chosen_card = random.choice(pool)
             player = self.get_player_for_card(chosen_card)
 
-            card_instance = self.create_card_instance(chosen_card["card_id"], chosen_card)
+            card_instance = self.create_card_instance(chosen_card["card_id"], chosen_card, pulled_by_user)
             self.add_card_to_user(users, user_id, card_instance)
 
             results.append((card_instance, chosen_card, player))
@@ -562,7 +604,7 @@ class Cards(commands.Cog):
     # Testing command to pull a card without cooldowns or costs
     @commands.command()
     async def pull(self, ctx):
-        card_instance, card_data, player, error = self.pull_random_card_for_user(ctx.author.id)
+        card_instance, card_data, player, error = self.pull_random_card_for_user(ctx.author)
 
         if error:
             await ctx.send(error)
@@ -572,7 +614,7 @@ class Cards(commands.Cog):
             player=player,
             card_data=card_data,
             card_instance=card_instance,
-            pulled_by_name=ctx.author.display_name
+            pulled_by_name=ctx.author.name
         )
         await ctx.send(embed=embed)
 
@@ -614,7 +656,7 @@ class Cards(commands.Cog):
             player=player,
             card_data=card_data,
             card_instance=owned_card,
-            pulled_by_name=ctx.author.display_name
+            pulled_by_name=owned_card.get("pulled_by_username", ctx.author.name)
         )
 
         pulled_on = owned_card.get("pulled_on")
@@ -623,7 +665,7 @@ class Cards(commands.Cog):
             formatted = dt.strftime("%B %d, %Y")
             embed.add_field(name="Pulled on", value=formatted, inline=False)
 
-        embed.set_footer(text=f"Pulled by {ctx.author.display_name}")
+        embed.set_footer(text=f"Pulled by {owned_card.get('pulled_by_username', ctx.author.name)}")
 
         await ctx.send(embed=embed)
 
@@ -650,7 +692,14 @@ class Cards(commands.Cog):
 
         for _ in range(amount):
             chosen = random.choice(pack_ids)
-            packs.append(chosen)
+            placed = False
+            for i, existing in enumerate(packs):
+                if existing is None:
+                    packs[i] = chosen
+                    placed = True
+                    break
+            if not placed:
+                packs.append(chosen)
 
         self.save_users(users)
 
@@ -679,13 +728,19 @@ class Cards(commands.Cog):
                 await ctx.send("Invalid pack number.")
                 return
 
-            pack_id = user_packs.pop(index - 1)
+            pack_id = user_packs[index - 1]
+            if pack_id is None:
+                await ctx.send("That pack slot is empty.")
+                return
+            user_packs[index - 1] = None
 
         # name case
         else:
             arg_lower = arg.lower()
             pack_id = None
             for owned_pack_id in user_packs:
+                if owned_pack_id is None:
+                    continue
                 pack = self.packs.get(owned_pack_id)
                 pack_name = pack.get("name", "") if pack else ""
                 if owned_pack_id.lower() == arg_lower or pack_name.lower() == arg_lower:
@@ -696,11 +751,14 @@ class Cards(commands.Cog):
                 await ctx.send("You don't have that pack.")
                 return
 
-            user_packs.remove(pack_id)
+            for i, existing in enumerate(user_packs):
+                if existing == pack_id:
+                    user_packs[i] = None
+                    break
 
         self.save_users(users)
 
-        results, error = self.open_pack(ctx.author.id, pack_id)
+        results, error = self.open_pack(ctx.author.id, pack_id, ctx.author)
 
         if error:
             await ctx.send(error)
@@ -731,16 +789,19 @@ class Cards(commands.Cog):
 
         user_packs = user_data.get("packs", [])
 
-        if not user_packs:
+        if not any(p is not None for p in user_packs):
             await ctx.send("You have no packs.")
             return
 
         lines = []
 
         for i, pack_id in enumerate(user_packs, start=1):
-            pack = self.packs.get(pack_id, {})
-            display_name = pack.get("name", pack_id)
-            lines.append(f"{i}. {display_name} ({pack_id})")
+            if pack_id is None:
+                lines.append(f"{i}. [Empty]")
+            else:
+                pack = self.packs.get(pack_id, {})
+                display_name = pack.get("name", pack_id)
+                lines.append(f"{i}. {display_name} ({pack_id})")
 
         embed = discord.Embed(
             title=f"{ctx.author.display_name}'s Packs",

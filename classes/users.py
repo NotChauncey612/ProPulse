@@ -72,11 +72,34 @@ class Users(commands.Cog):
 
     # Commands 
 
-    # Join command to create a profile for the user
+    # Help command to list available commands and filters
     @commands.command()
-    async def join(self, ctx):
-        profile = self.get_profile(ctx.author)
-        await ctx.send(f"Welcome, **{ctx.author.display_name}**! Your profile has been created.")
+    async def help(self, ctx):
+        await ctx.send(
+            "**Available Commands**\n\n"
+            "**User**\n"
+            "`.help` - Show this command list.\n"
+            "`.profile [@user]` - View a profile. Your own profile includes settings buttons.\n"
+            "`.cd` - Check practice and daily cooldowns.\n"
+            "`.practice` - Earn gold every 10 minutes.\n"
+            "`.daily` - Earn gold and radianite every 24 hours.\n\n"
+            "**Collection**\n"
+            "`.inventory [filters]` or `.inv [filters]` - View your cards.\n"
+            "Inventory filters: `-player <name/id>`, `-team <team>`, `-rarity <rarity>`, `-set <set>`, `-league <league>`, `-role <role>`.\n"
+            "Example: `.inv -team T1 -rarity Gold -role mid`\n"
+            "`.view <inventory #>` - View one card from your inventory.\n"
+            "`.packs` - View your unopened packs.\n"
+            "`.open <pack #|pack id|pack name>` - Open a pack.\n"
+            "`.pull` - Pull a random card for testing.\n"
+            "`.getpack [amount]` - Get random pack(s) for testing.\n\n"
+            "**Economy**\n"
+            "`.shop` - View packs for sale and buy packs.\n"
+            "`.auction [filters]` - View auctions, then select one to bid or buy now.\n"
+            "Auction filters: `-player <name>`, `-team <team>`, `-rarity <rarity>`, `-set <set>`.\n"
+            "`.auction -sell <inventory #>` - Auction one of your cards.\n"
+            "`.auction -sellpack <pack #>` - Auction one of your packs.\n"
+            "`.trade @user` - Start a trade with another user."
+        )
 
     # Profile command to show user's balance and cards owned
     @commands.command()
@@ -105,7 +128,8 @@ class Users(commands.Cog):
             inline=False
         )
 
-        await ctx.send(embed=embed, view=ProfileSettingsView(self, ctx.author.id, str(member.id)))
+        view = ProfileSettingsView(self, ctx.author.id, str(member.id)) if member.id == ctx.author.id else None
+        await ctx.send(embed=embed, view=view)
 
     # CD (cooldown) command to show how long until user can practice or claim daily again
     @commands.command()
@@ -160,9 +184,9 @@ class Users(commands.Cog):
 
         self.save_users()
 
-        await ctx.send(f"You practiced and earned {reward} gold.")
+        await ctx.send(f"{ctx.author.mention} You practiced and earned {reward} gold.")
         if user.get("settings", self.default_settings()).get("alert_daily_practice"):
-            self.bot.loop.create_task(self.notify_ready(ctx.author, "practice", 10 * 60))
+            self.bot.loop.create_task(self.notify_ready(ctx.channel.id, ctx.author.id, "practice", 10 * 60))
 
     # Daily command to earn gold once every 24 hours
     @commands.command()
@@ -188,24 +212,34 @@ class Users(commands.Cog):
 
         self.save_users()
 
-        await ctx.send(f"You claimed your daily reward and earned {reward} gold and 5 radianite.")
+        await ctx.send(f"{ctx.author.mention} You claimed your daily reward and earned {reward} gold and 5 radianite.")
         if user.get("settings", self.default_settings()).get("alert_daily_practice"):
-            self.bot.loop.create_task(self.notify_ready(ctx.author, "daily", 24 * 60 * 60))
+            self.bot.loop.create_task(self.notify_ready(ctx.channel.id, ctx.author.id, "daily", 24 * 60 * 60))
 
-    async def notify_ready(self, member: discord.Member, action: str, wait_seconds: int):
+    async def notify_ready(self, channel_id: int, user_id: int, action: str, wait_seconds: int):
         await discord.utils.sleep_until(datetime.utcnow() + timedelta(seconds=wait_seconds))
         try:
-            await member.send(f"🔔 Your **{action}** is ready again.")
+            channel = self.bot.get_channel(channel_id)
+            if channel:
+                await channel.send(f"<@{user_id}> your **{action}** is ready.")
         except Exception:
             pass
 
 
 class ProfileSettingsView(discord.ui.View):
+    BUTTON_SETTINGS = {
+        "profile_settings:alert_daily_practice": "alert_daily_practice",
+        "profile_settings:dm_auction_notis": "dm_auction_notis",
+        "profile_settings:confirm_auction_buy": "confirm_auction_buy",
+        "profile_settings:confirm_pack_buy": "confirm_pack_buy",
+    }
+
     def __init__(self, users_cog: Users, requester_id: int, target_uid: str):
         super().__init__(timeout=180)
         self.users_cog = users_cog
         self.requester_id = requester_id
         self.target_uid = target_uid
+        self.refresh_button_styles()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.requester_id:
@@ -218,27 +252,43 @@ class ProfileSettingsView(discord.ui.View):
         settings = profile.setdefault("settings", self.users_cog.default_settings())
         settings[key] = not settings.get(key, True)
         self.users_cog.save_users()
+        self.refresh_button_styles()
         return settings[key]
 
-    @discord.ui.button(label="Toggle Daily/Practice Alerts", style=discord.ButtonStyle.secondary)
+    def get_settings(self):
+        profile = self.users_cog.get_profile_by_id(self.target_uid)
+        return profile.setdefault("settings", self.users_cog.default_settings())
+
+    def refresh_button_styles(self):
+        settings = self.get_settings()
+        for item in self.children:
+            key = self.BUTTON_SETTINGS.get(getattr(item, "custom_id", None))
+            if key:
+                item.style = discord.ButtonStyle.success if settings.get(key, True) else discord.ButtonStyle.danger
+
+    async def send_toggle_response(self, interaction: discord.Interaction, message: str):
+        await interaction.response.send_message(message, ephemeral=True)
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="Toggle Daily/Practice Alerts", style=discord.ButtonStyle.secondary, custom_id="profile_settings:alert_daily_practice")
     async def toggle_alerts(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("alert_daily_practice")
-        await interaction.response.send_message(f"Daily/Practice alerts are now {'ON' if state else 'OFF'}.", ephemeral=True)
+        await self.send_toggle_response(interaction, f"Daily/Practice alerts are now {'ON' if state else 'OFF'}.")
 
-    @discord.ui.button(label="Toggle Auction DMs", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Toggle Auction DMs", style=discord.ButtonStyle.secondary, custom_id="profile_settings:dm_auction_notis")
     async def toggle_auction_dms(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("dm_auction_notis")
-        await interaction.response.send_message(f"Auction DMs are now {'ON' if state else 'OFF'}.", ephemeral=True)
+        await self.send_toggle_response(interaction, f"Auction DMs are now {'ON' if state else 'OFF'}.")
 
-    @discord.ui.button(label="Toggle Auction Confirm", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Toggle Auction Confirm", style=discord.ButtonStyle.secondary, custom_id="profile_settings:confirm_auction_buy")
     async def toggle_auction_confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("confirm_auction_buy")
-        await interaction.response.send_message(f"Auction purchase confirmation is now {'ON' if state else 'OFF'}.", ephemeral=True)
+        await self.send_toggle_response(interaction, f"Auction purchase confirmation is now {'ON' if state else 'OFF'}.")
 
-    @discord.ui.button(label="Toggle Pack Confirm", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Toggle Pack Confirm", style=discord.ButtonStyle.secondary, custom_id="profile_settings:confirm_pack_buy")
     async def toggle_pack_confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("confirm_pack_buy")
-        await interaction.response.send_message(f"Pack purchase confirmation is now {'ON' if state else 'OFF'}.", ephemeral=True)
+        await self.send_toggle_response(interaction, f"Pack purchase confirmation is now {'ON' if state else 'OFF'}.")
 
 async def setup(bot):
     await bot.add_cog(Users(bot))

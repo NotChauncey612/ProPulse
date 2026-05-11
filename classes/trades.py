@@ -58,6 +58,11 @@ class Trades(commands.Cog):
         if member.id == ctx.author.id:
             await ctx.send("You cannot trade yourself.")
             return
+        for t in self.active_trades.values():
+            ids = {t.get("user1"), t.get("user2")}
+            if str(ctx.author.id) in ids or str(member.id) in ids:
+                await ctx.send("One of those users is already in an active trade.")
+                return
 
         view = TradeRequestView(self, ctx.author, member)
 
@@ -95,22 +100,53 @@ class Trades(commands.Cog):
         p1["gold"] += o2["gold"]
 
         # --- CARDS ---
+        def remove_card_slot(profile, card):
+            target = card.get("instance_id")
+            for i, existing in enumerate(profile.get("cards", [])):
+                if isinstance(existing, dict) and existing.get("instance_id") == target:
+                    profile["cards"][i] = None
+                    return True
+            return False
+
+        def add_card_slot(profile, card):
+            profile.setdefault("cards", [])
+            for i, existing in enumerate(profile["cards"]):
+                if existing is None:
+                    profile["cards"][i] = card
+                    return
+            profile["cards"].append(card)
+
         for card in o1["cards"]:
-            p1["cards"].remove(card)
-            p2["cards"].append(card)
+            remove_card_slot(p1, card)
+            add_card_slot(p2, card)
 
         for card in o2["cards"]:
-            p2["cards"].remove(card)
-            p1["cards"].append(card)
+            remove_card_slot(p2, card)
+            add_card_slot(p1, card)
 
         # --- PACKS ---
+        def remove_pack_slot(profile, pack):
+            for i, existing in enumerate(profile.get("packs", [])):
+                if existing == pack:
+                    profile["packs"][i] = None
+                    return True
+            return False
+
+        def add_pack_slot(profile, pack):
+            profile.setdefault("packs", [])
+            for i, existing in enumerate(profile["packs"]):
+                if existing is None:
+                    profile["packs"][i] = pack
+                    return
+            profile["packs"].append(pack)
+
         for pack in o1["packs"]:
-            p1["packs"].remove(pack)
-            p2["packs"].append(pack)
+            remove_pack_slot(p1, pack)
+            add_pack_slot(p2, pack)
 
         for pack in o2["packs"]:
-            p2["packs"].remove(pack)
-            p1["packs"].append(pack)
+            remove_pack_slot(p2, pack)
+            add_pack_slot(p1, pack)
 
         users_cog.save_users()
 
@@ -146,6 +182,10 @@ class TradeRequestView(discord.ui.View):
     async def accept(self, interaction, button):
         if interaction.user != self.receiver:
             return
+        if getattr(self, "accepted", False):
+            await interaction.response.send_message("This trade request has already been handled.", ephemeral=True)
+            return
+        self.accepted = True
 
         trade_id = str(uuid.uuid4())
 
@@ -163,11 +203,8 @@ class TradeRequestView(discord.ui.View):
             "can_confirm_at": datetime.utcnow().isoformat()
         }
 
-        await interaction.response.send_message(
-            "Trade started.",
-            view=TradeView(self.cog, trade_id)
-        )
-        msg = await interaction.original_response()
+        await interaction.response.edit_message(content="Trade request accepted.", view=None)
+        msg = await interaction.channel.send("Trade started.", embed=TradeView(self.cog, trade_id).build_embed(), view=TradeView(self.cog, trade_id))
         self.cog.active_trades[trade_id]["message_id"] = msg.id
         self.cog.active_trades[trade_id]["channel_id"] = msg.channel.id
         await self.cog.refresh_trade_message(trade_id)
@@ -192,6 +229,14 @@ class TradeView(discord.ui.View):
 
     def get_trade(self):
         return self.cog.active_trades[self.trade_id]
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        trade = self.get_trade()
+        allowed = {trade["user1"], trade["user2"]}
+        if str(interaction.user.id) not in allowed:
+            await interaction.response.send_message("Only trade participants can use these buttons.", ephemeral=True)
+            return False
+        return True
 
     def build_embed(self):
         trade = self.get_trade()
@@ -272,6 +317,15 @@ class TradeView(discord.ui.View):
             )
             await self.cog.refresh_trade_message(self.trade_id)
 
+    @discord.ui.button(label="Cancel Trade", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction, button):
+        trade = self.get_trade()
+        if str(interaction.user.id) not in {trade["user1"], trade["user2"]}:
+            await interaction.response.send_message("Only trade participants can cancel.", ephemeral=True)
+            return
+        del self.cog.active_trades[self.trade_id]
+        await interaction.response.edit_message(content="❌ Trade cancelled.", embed=None, view=None)
+
 
 # -----------------
 # MODALS
@@ -321,6 +375,9 @@ class AddPackModal(discord.ui.Modal, title="Add Pack"):
         index = int(self.index.value)
 
         pack = profile["packs"][index - 1]
+        if pack is None:
+            await interaction.response.send_message("That pack slot is empty.", ephemeral=True)
+            return
 
         trade = self.cog.active_trades[self.trade_id]
         uid = str(interaction.user.id)
@@ -363,10 +420,6 @@ class AddGoldModal(discord.ui.Modal, title="Add Gold"):
         await interaction.response.send_message("Gold added.", ephemeral=True)
         await self.cog.refresh_trade_message(self.trade_id)
 
-
-# -----------------
-# SETUP
-# -----------------
 
 async def setup(bot):
     await bot.add_cog(Trades(bot))

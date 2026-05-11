@@ -135,6 +135,70 @@ class Auction(commands.Cog):
 
         return "Auction not found."
 
+    def complete_buy_now(self, auction_id, buyer_id):
+        auctions = self.load_auctions()
+        users_cog = self.bot.get_cog("Users")
+        cards_cog = self.bot.get_cog("Cards")
+
+        target = None
+        remaining = []
+        for auc in auctions:
+            if auc["auction_id"] == auction_id:
+                target = auc
+            else:
+                remaining.append(auc)
+
+        if target is None:
+            return None, "Auction not found."
+
+        price = target.get("buy_now_price")
+        if not price:
+            return None, "No buy now price."
+
+        buyer_profile = users_cog.get_profile_by_id(str(buyer_id))
+        seller_profile = users_cog.get_profile_by_id(target["seller_id"])
+        if buyer_profile["gold"] < price:
+            return None, "Not enough gold."
+
+        buyer_profile["gold"] -= price
+        seller_profile["gold"] += price
+
+        item_name = "Unknown"
+        if target["item_type"] == "card":
+            users, user_data = cards_cog.get_user_data(buyer_id)
+            user_data.setdefault("cards", [])
+            cards_cog.add_card_to_user(users, buyer_id, target["card_instance"])
+            card_data = cards_cog.get_card_by_id(target["card_instance"].get("card_id")) or target["card_instance"].get("snapshot", {})
+            item_name = cards_cog.get_player_for_card(card_data).get("name", "Unknown Card")
+        else:
+            buyer_profile.setdefault("packs", [])
+            inserted = False
+            for i, p in enumerate(buyer_profile["packs"]):
+                if p is None:
+                    buyer_profile["packs"][i] = target["pack_name"]
+                    inserted = True
+                    break
+            if not inserted:
+                buyer_profile["packs"].append(target["pack_name"])
+            item_name = str(target["pack_name"]).replace("_", " ").title()
+
+        users_cog.save_users()
+        self.save_auctions(remaining)
+        history = self.load_history()
+        history.append({
+            "auction_id": target["auction_id"],
+            "item_type": target["item_type"],
+            "card_instance": target["card_instance"],
+            "pack_name": target["pack_name"],
+            "seller_id": target["seller_id"],
+            "winner_id": str(buyer_id),
+            "final_price": price,
+            "sold": True,
+            "ended_at": datetime.utcnow().isoformat()
+        })
+        self.save_history(history)
+        return item_name, None
+
     # -----------------
     # Filters
     # -----------------
@@ -200,13 +264,13 @@ class Auction(commands.Cog):
 
         for auc in auctions:
             if datetime.fromisoformat(auc["expires_at"]) <= now:
-                self.resolve_auction(auc)
+                await self.resolve_auction(auc)
             else:
                 remaining.append(auc)
 
         self.save_auctions(remaining)
 
-    def resolve_auction(self, auction):
+    async def resolve_auction(self, auction):
         users_cog = self.bot.get_cog("Users")
         cards_cog = self.bot.get_cog("Cards")
 
@@ -232,6 +296,26 @@ class Auction(commands.Cog):
             seller = users_cog.get_profile_by_id(auction["seller_id"])
             seller["gold"] += auction["current_bid"]
             users_cog.save_users()
+
+            winner_user = self.bot.get_user(int(winner)) if winner else None
+            seller_user = self.bot.get_user(int(auction["seller_id"]))
+            if winner_user and users_cog.get_profile_by_id(winner).get("settings", {}).get("dm_auction_notis", True):
+                try:
+                    await winner_user.send(f"🏆 You won auction `{auction['auction_id']}` for {auction['current_bid']} gold.")
+                except Exception:
+                    pass
+            if seller_user and users_cog.get_profile_by_id(auction["seller_id"]).get("settings", {}).get("dm_auction_notis", True):
+                try:
+                    await seller_user.send(f"💰 Your auction `{auction['auction_id']}` sold for {auction['current_bid']} gold.")
+                except Exception:
+                    pass
+        else:
+            seller_user = self.bot.get_user(int(auction["seller_id"]))
+            if seller_user and users_cog.get_profile_by_id(auction["seller_id"]).get("settings", {}).get("dm_auction_notis", True):
+                try:
+                    await seller_user.send(f"📦 Your auction `{auction['auction_id']}` ended with no bids. Item returned.")
+                except Exception:
+                    pass
 
         history.append({
             "auction_id": auction["auction_id"],
@@ -340,11 +424,13 @@ class SellModal(discord.ui.Modal, title="Create Auction"):
 
         if self.item_type == "card":
             users, user_data = cards_cog.get_user_data(self.user_id)
-            user_data["cards"].remove(self.item)
-            cards_cog.save_users(users)
+            cards_cog.remove_card_from_user(users, self.user_id, self.item)
         else:
             profile = users_cog.get_profile_by_id(str(self.user_id))
-            profile["packs"].remove(self.item)
+            for i, existing in enumerate(profile.get("packs", [])):
+                if existing == self.item:
+                    profile["packs"][i] = None
+                    break
             users_cog.save_users()
 
         self.cog.create_auction(self.user_id, self.item_type, self.item, start, buy)
@@ -394,18 +480,49 @@ class BuyView(discord.ui.View):
             await interaction.response.send_message("Not enough gold.", ephemeral=True)
             return
 
-        profile["gold"] -= price
+        settings = profile.get("settings", {})
+        if settings.get("confirm_auction_buy", True):
+            view = ConfirmAuctionBuyView(self.auction, self.cog)
+            await interaction.response.send_message("Confirm auction purchase:", view=view, ephemeral=True)
+            return
 
-        if self.auction["item_type"] == "card":
-            users, user_data = cards_cog.get_user_data(interaction.user.id)
-            user_data["cards"].append(self.auction["card_instance"])
-            cards_cog.save_users(users)
-        else:
-            profile.setdefault("packs", [])
-            profile["packs"].append(self.auction["pack_name"])
+        item_name = self.execute_buy_now(interaction.user.id, users_cog, cards_cog)
+        if item_name.startswith("Failed:"):
+            await interaction.response.send_message(item_name, ephemeral=True)
+            return
+        await interaction.response.send_message(f"✅ Purchased **{item_name}** for {price} gold!", ephemeral=True)
 
-        users_cog.save_users()
-        await interaction.response.send_message("✅ Purchased!", ephemeral=True)
+    def execute_buy_now(self, buyer_id: int, users_cog, cards_cog):
+        item_name, error = self.cog.complete_buy_now(self.auction["auction_id"], buyer_id)
+        if error:
+            return f"Failed: {error}"
+        return item_name
+
+
+class ConfirmAuctionBuyView(discord.ui.View):
+    def __init__(self, auction, cog):
+        super().__init__(timeout=30)
+        self.auction = auction
+        self.cog = cog
+
+    @discord.ui.button(label="Confirm Buy Now", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        users_cog = interaction.client.get_cog("Users")
+        cards_cog = interaction.client.get_cog("Cards")
+        profile = users_cog.get_profile(interaction.user)
+        price = self.auction["buy_now_price"]
+        if profile["gold"] < price:
+            await interaction.response.send_message("Not enough gold.", ephemeral=True)
+            return
+        item_name = BuyView(self.auction, self.cog).execute_buy_now(interaction.user.id, users_cog, cards_cog)
+        if item_name.startswith("Failed:"):
+            await interaction.response.edit_message(content=item_name, view=None)
+            return
+        await interaction.response.edit_message(content=f"✅ Purchased **{item_name}** for {price} gold!", view=None)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="Purchase cancelled.", view=None)
 
 
 class AuctionSelect(discord.ui.Select):

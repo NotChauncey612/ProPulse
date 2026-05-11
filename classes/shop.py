@@ -42,7 +42,7 @@ class ConfirmPurchaseView(discord.ui.View):
 
         if profile["gold"] < price:
             await interaction.response.send_message(
-                "❌ You don't have enough gold to purchase that.",
+                "Γ¥î You don't have enough gold to purchase that.",
                 ephemeral=True
             )
             return
@@ -57,8 +57,8 @@ class ConfirmPurchaseView(discord.ui.View):
                 title="Purchase Successful",
                 description=(
                     f"You bought **{pack_name}**\n\n"
-                    f"💰 -{price} gold\n"
-                    f"💼 Pack added to your inventory"
+                    f"≡ƒÆ░ -{price} gold\n"
+                    f"≡ƒÆ╝ Pack added to your inventory"
                 ),
                 color=discord.Color.green()
             ),
@@ -68,7 +68,7 @@ class ConfirmPurchaseView(discord.ui.View):
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.edit_message(
-            content="❌ Purchase cancelled.",
+            content="Γ¥î Purchase cancelled.",
             embed=None,
             view=None
         )
@@ -88,7 +88,7 @@ class PackSelect(discord.ui.Select):
                 discord.SelectOption(
                     label=pack.get("name", "Unknown Pack")[:100],
                     description=(
-                        f"{pack.get('cards_per_pack', 0)} cards • "
+                        f"{pack.get('cards_per_pack', 0)} cards ΓÇó "
                         f"{pack.get('price', 0)} gold"
                     )[:100],
                     value=pack["pack_id"]
@@ -113,14 +113,14 @@ class PackSelect(discord.ui.Select):
         if not should_confirm and users_cog:
             price = pack_data.get("price", 0)
             if profile["gold"] < price:
-                await interaction.response.send_message("❌ You don't have enough gold to purchase that.", ephemeral=True)
+                await interaction.response.send_message("Γ¥î You don't have enough gold to purchase that.", ephemeral=True)
                 return
             profile["gold"] -= price
             profile.setdefault("packs", [])
             profile["packs"].append(pack_data.get("pack_id"))
             users_cog.save_users()
             await interaction.response.send_message(
-                f"✅ Purchased **{pack_data.get('name', 'Unknown Pack')}** for {price} gold.",
+                f"Γ£à Purchased **{pack_data.get('name', 'Unknown Pack')}** for {price} gold.",
                 ephemeral=True
             )
             return
@@ -154,13 +154,47 @@ class Shop(commands.Cog):
 
     def create_embed(self, packs: list[dict]) -> discord.Embed:
         embed = discord.Embed(
-            title="🛒 Card Shop",
+            title="Card Shop",
+            description="Select a pack below to purchase.",
+            color=discord.Color.blue()
+        )
+
+        for index, pack in enumerate(packs):
+            league_text = pack.get("league")
+
+        if not league_text and pack.get("leagues"):
+            league_text = ", ".join(pack["leagues"])
+
+        value_lines = [
+            f"🎮 **Game:** {pack.get('game', 'Unknown')}",
+            f"📦 **Set:** {pack.get('set', 'Unknown')}",
+        ]
+
+        if league_text:
+            value_lines.append(f"🏆 **League:** {league_text}")
+
+        value_lines.extend([
+            f"🃏 **Cards:** {pack.get('cards_per_pack', 0)}",
+            f"💰 **Cost:** {pack.get('price', 0)} gold"
+        ])
+
+        embed.add_field(
+            name=pack.get("name", "Unknown Pack"),
+            value="\n".join(value_lines),
+            inline=False
+        )
+
+        return embed
+
+    def create_shop_embed(self, packs: list[dict]) -> discord.Embed:
+        embed = discord.Embed(
+            title="Card Shop",
             description="Select a pack below to purchase.",
             color=discord.Color.blue()
         )
 
         if not packs:
-            embed.description = "No packs are currently available."
+            embed.description = "No packs are available right now."
             return embed
 
         for pack in packs:
@@ -168,18 +202,22 @@ class Shop(commands.Cog):
             if not league_text and pack.get("leagues"):
                 league_text = ", ".join(pack["leagues"])
 
-            details = [
+            value_lines = [
                 f"Game: {pack.get('game', 'Unknown')}",
                 f"Set: {pack.get('set', 'Unknown')}",
+            ]
+
+            if league_text:
+                value_lines.append(f"League: {league_text}")
+
+            value_lines.extend([
                 f"Cards: {pack.get('cards_per_pack', 0)}",
                 f"Cost: {pack.get('price', 0)} gold"
-            ]
-            if league_text:
-                details.insert(2, f"League: {league_text}")
+            ])
 
             embed.add_field(
                 name=pack.get("name", "Unknown Pack"),
-                value="\n".join(details),
+                value="\n".join(value_lines),
                 inline=False
             )
 
@@ -188,7 +226,7 @@ class Shop(commands.Cog):
     @commands.command()
     async def shop(self, ctx):
         packs = load_packs()
-        embed = self.create_embed(packs)
+        embed = self.create_shop_embed(packs)
         view = ShopView(packs)
         await ctx.send(embed=embed, view=view)
 
