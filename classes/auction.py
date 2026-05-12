@@ -7,6 +7,11 @@ from discord.ext import commands, tasks
 
 AUCTIONS_PATH = "data/auctions.json"
 HISTORY_PATH = "data/auctions_history.json"
+DEFAULT_AUCTION_DAYS = 1
+MAX_AUCTION_DAYS = 7
+AUCTIONS_PER_PAGE = 12
+MAX_ACTIVE_AUCTIONS_PER_USER = 12
+CASH_EMOJI = "💵"
 
 
 class Auction(commands.Cog):
@@ -29,6 +34,13 @@ class Auction(commands.Cog):
     def save_auctions(self, auctions):
         with open(AUCTIONS_PATH, "w", encoding="utf-8") as f:
             json.dump(auctions, f, indent=4)
+
+    def get_active_auction_count(self, seller_id):
+        seller_id = str(seller_id)
+        return sum(1 for auction in self.load_auctions() if auction.get("seller_id") == seller_id)
+
+    def has_auction_room(self, seller_id):
+        return self.get_active_auction_count(seller_id) < MAX_ACTIVE_AUCTIONS_PER_USER
 
     def load_history(self):
         try:
@@ -53,18 +65,25 @@ class Auction(commands.Cog):
         if now >= end:
             return "Expired"
 
-        remaining = end - now
-        hours, remainder = divmod(int(remaining.total_seconds()), 3600)
-        minutes, _ = divmod(remainder, 60)
+        total_seconds = max(0, int((end - now).total_seconds()))
+        days, remainder = divmod(total_seconds, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
 
-        return f"{hours}h {minutes}m"
+        if days:
+            return f"{days}d {hours}h"
+        if hours:
+            return f"{hours}h {minutes}m"
+
+        return f"{minutes}m {seconds}s"
 
     # -----------------
     # Create Auction
     # -----------------
 
-    def create_auction(self, seller_id, item_type, item_data, start_price, buy_now):
+    def create_auction(self, seller_id, item_type, item_data, start_price, buy_now, duration_days=DEFAULT_AUCTION_DAYS):
         auctions = self.load_auctions()
+        now = datetime.utcnow()
 
         auction = {
             "auction_id": str(uuid.uuid4()),
@@ -76,8 +95,9 @@ class Auction(commands.Cog):
             "buy_now_price": buy_now,
             "current_bid": start_price,
             "highest_bidder": None,
-            "created_at": datetime.utcnow().isoformat(),
-            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            "created_at": now.isoformat(),
+            "duration_days": duration_days,
+            "expires_at": (now + timedelta(days=duration_days)).isoformat()
         }
 
         auctions.append(auction)
@@ -107,24 +127,24 @@ class Auction(commands.Cog):
             highest_bidder = auction["highest_bidder"]
 
             if amount < current_bid + min_increment:
-                return f"Minimum bid is {current_bid + min_increment}."
+                return f"Minimum bid is {CASH_EMOJI} {current_bid + min_increment} cash."
 
             profile = users_cog.get_profile_by_id(str(bidder_id))
 
             if highest_bidder == str(bidder_id):
                 diff = amount - current_bid
-                if profile["gold"] < diff:
-                    return "You don't have enough gold."
-                profile["gold"] -= diff
+                if profile["cash"] < diff:
+                    return "You don't have enough cash."
+                profile["cash"] -= diff
             else:
-                if profile["gold"] < amount:
-                    return "You don't have enough gold."
+                if profile["cash"] < amount:
+                    return "You don't have enough cash."
 
                 if highest_bidder:
                     prev = users_cog.get_profile_by_id(highest_bidder)
-                    prev["gold"] += current_bid
+                    prev["cash"] += current_bid
 
-                profile["gold"] -= amount
+                profile["cash"] -= amount
 
             auction["current_bid"] = amount
             auction["highest_bidder"] = str(bidder_id)
@@ -151,17 +171,20 @@ class Auction(commands.Cog):
         if target is None:
             return None, "Auction not found."
 
+        if str(buyer_id) == target["seller_id"]:
+            return None, "You cannot buy your own auction. Use Take Down if nobody has bid yet."
+
         price = target.get("buy_now_price")
         if not price:
             return None, "No buy now price."
 
         buyer_profile = users_cog.get_profile_by_id(str(buyer_id))
         seller_profile = users_cog.get_profile_by_id(target["seller_id"])
-        if buyer_profile["gold"] < price:
-            return None, "Not enough gold."
+        if buyer_profile["cash"] < price:
+            return None, "Not enough cash."
 
-        buyer_profile["gold"] -= price
-        seller_profile["gold"] += price
+        buyer_profile["cash"] -= price
+        seller_profile["cash"] += price
 
         item_name = "Unknown"
         if target["item_type"] == "card":
@@ -171,15 +194,7 @@ class Auction(commands.Cog):
             card_data = cards_cog.get_card_by_id(target["card_instance"].get("card_id")) or target["card_instance"].get("snapshot", {})
             item_name = cards_cog.get_player_for_card(card_data).get("name", "Unknown Card")
         else:
-            buyer_profile.setdefault("packs", [])
-            inserted = False
-            for i, p in enumerate(buyer_profile["packs"]):
-                if p is None:
-                    buyer_profile["packs"][i] = target["pack_name"]
-                    inserted = True
-                    break
-            if not inserted:
-                buyer_profile["packs"].append(target["pack_name"])
+            users_cog.add_pack_to_first_slot(buyer_profile, target["pack_name"])
             item_name = str(target["pack_name"]).replace("_", " ").title()
 
         users_cog.save_users()
@@ -199,22 +214,97 @@ class Auction(commands.Cog):
         self.save_history(history)
         return item_name, None
 
+    def cancel_auction(self, auction_id, seller_id):
+        auctions = self.load_auctions()
+        users_cog = self.bot.get_cog("Users")
+        cards_cog = self.bot.get_cog("Cards")
+
+        target = None
+        remaining = []
+        for auction in auctions:
+            if auction["auction_id"] == auction_id:
+                target = auction
+            else:
+                remaining.append(auction)
+
+        if target is None:
+            return None, "Auction not found."
+
+        if target.get("seller_id") != str(seller_id):
+            return None, "You can only take down your own auctions."
+
+        if target.get("highest_bidder"):
+            return None, "You cannot take down an auction after someone has bid on it."
+
+        item_name = "Unknown"
+        if target["item_type"] == "card":
+            users, user_data = cards_cog.get_user_data(seller_id)
+            if user_data is None:
+                return None, "Seller profile not found."
+            user_data.setdefault("cards", [])
+            cards_cog.add_card_to_user(users, seller_id, target["card_instance"])
+            card_data = cards_cog.get_card_by_id(target["card_instance"].get("card_id")) or target["card_instance"].get("snapshot", {})
+            item_name = cards_cog.get_player_for_card(card_data).get("name", "Unknown Card")
+        else:
+            profile = users_cog.get_profile_by_id(str(seller_id))
+            if profile is None:
+                return None, "Seller profile not found."
+            users_cog.add_pack_to_first_slot(profile, target["pack_name"])
+            users_cog.save_users()
+            item_name = str(target["pack_name"]).replace("_", " ").title()
+
+        self.save_auctions(remaining)
+        return item_name, None
+
     # -----------------
     # Filters
     # -----------------
 
     def parse_filters(self, args):
         filters = {}
-        valid = {"-team", "-rarity", "-player", "-set"}
+        sort = None
+        valid = {"-team", "-rarity", "-player", "-set", "-role", "-league"}
+        sort_flags = {"-sort", "-orderby", "-order"}
+        sort_aliases = {
+            "-lowestbid": "bid_asc",
+            "-highestbid": "bid_desc",
+            "-lowestbuy": "buy_asc",
+            "-highestbuy": "buy_desc",
+        }
 
         i = 0
         while i < len(args):
-            if args[i] in valid:
-                key = args[i][1:]
+            current = args[i].lower()
+
+            if current in sort_aliases:
+                sort = sort_aliases[current]
+                i += 1
+            elif current in sort_flags:
                 i += 1
                 value = []
 
-                while i < len(args) and args[i] not in valid:
+                while (
+                    i < len(args)
+                    and args[i].lower() not in valid
+                    and args[i].lower() not in sort_flags
+                    and args[i].lower() not in sort_aliases
+                ):
+                    value.append(args[i])
+                    i += 1
+
+                if value:
+                    sort = self.normalize_sort_value(" ".join(value))
+            elif current in valid:
+                key = current[1:]
+                i += 1
+                value = []
+
+                while (
+                    i < len(args)
+                    and args[i].lower() not in valid
+                    and args[i].lower() not in sort_flags
+                    and args[i].lower() not in sort_aliases
+                ):
                     value.append(args[i])
                     i += 1
 
@@ -223,20 +313,60 @@ class Auction(commands.Cog):
             else:
                 i += 1
 
-        return filters
+        return filters, sort
 
-    def auction_matches(self, auction, filters, cards_cog):
+    def normalize_sort_value(self, value):
+        normalized = value.lower().replace("-", " ").replace("_", " ").strip()
+        sort_values = {
+            "lowest bid": "bid_asc",
+            "low bid": "bid_asc",
+            "bid asc": "bid_asc",
+            "highest bid": "bid_desc",
+            "high bid": "bid_desc",
+            "bid desc": "bid_desc",
+            "lowest buy now": "buy_asc",
+            "lowest buy": "buy_asc",
+            "buy asc": "buy_asc",
+            "highest buy now": "buy_desc",
+            "highest buy": "buy_desc",
+            "buy desc": "buy_desc",
+            "lowestbid": "bid_asc",
+            "highestbid": "bid_desc",
+            "lowestbuy": "buy_asc",
+            "highestbuy": "buy_desc",
+            "lowest buynow": "buy_asc",
+            "highest buynow": "buy_desc",
+            "player": "player",
+            "team": "team",
+            "rarity": "rarity",
+            "set": "set",
+            "league": "league",
+            "role": "role",
+            "time": "time",
+        }
+        return sort_values.get(normalized)
+
+    def get_auction_card_context(self, auction, cards_cog):
         if auction["item_type"] != "card":
-            return True
+            return None, None, None
 
         card = auction["card_instance"]
         card_data = cards_cog.get_card_by_id(card.get("card_id"))
         if not card_data and card.get("snapshot"):
             card_data = card["snapshot"]
         if not card_data:
+            return card, None, None
+
+        return card, card_data, cards_cog.get_player_for_card(card_data)
+
+    def auction_matches(self, auction, filters, cards_cog):
+        if auction["item_type"] != "card":
+            return not filters
+
+        card, card_data, player = self.get_auction_card_context(auction, cards_cog)
+        if not card_data:
             return False
 
-        player = cards_cog.get_player_for_card(card_data)
         if not player:
             return False
 
@@ -244,12 +374,88 @@ class Auction(commands.Cog):
             return False
         if "rarity" in filters and card.get("rarity", "").lower() != filters["rarity"].lower():
             return False
-        if "player" in filters and player.get("name", "").lower() != filters["player"].lower():
-            return False
+        if "player" in filters:
+            target = filters["player"].lower()
+            player_name = player.get("name", "").lower()
+            player_id = player.get("id", "").lower()
+            if player_name != target and player_id != target:
+                return False
         if "set" in filters and card_data.get("set", "").lower() != filters["set"].lower():
+            return False
+        if "league" in filters and card_data.get("league", "").lower() != filters["league"].lower():
+            return False
+        if "role" in filters and filters["role"].lower() not in player.get("role", "").lower():
             return False
 
         return True
+
+    def sort_auctions(self, auctions, sort, cards_cog):
+        if not sort:
+            return auctions
+
+        def buy_now_value(auction):
+            return auction.get("buy_now_price") if auction.get("buy_now_price") is not None else float("inf")
+
+        def card_value(auction, field):
+            card, card_data, player = self.get_auction_card_context(auction, cards_cog)
+            if field == "rarity":
+                return (card or {}).get("rarity", "")
+            if field == "player":
+                return (player or {}).get("name", "")
+            if field == "role":
+                return (player or {}).get("role", "")
+            if field in {"team", "set", "league"}:
+                return (card_data or {}).get(field, "")
+            return ""
+
+        sorters = {
+            "bid_asc": lambda auction: auction.get("current_bid", 0),
+            "bid_desc": lambda auction: auction.get("current_bid", 0),
+            "buy_asc": buy_now_value,
+            "buy_desc": lambda auction: auction.get("buy_now_price") if auction.get("buy_now_price") is not None else -1,
+            "time": lambda auction: auction.get("expires_at", ""),
+            "rarity": lambda auction: card_value(auction, "rarity").lower(),
+            "player": lambda auction: card_value(auction, "player").lower(),
+            "team": lambda auction: card_value(auction, "team").lower(),
+            "set": lambda auction: card_value(auction, "set").lower(),
+            "league": lambda auction: card_value(auction, "league").lower(),
+            "role": lambda auction: card_value(auction, "role").lower(),
+        }
+
+        reverse = sort in {"bid_desc", "buy_desc"}
+        return sorted(auctions, key=sorters.get(sort, sorters["time"]), reverse=reverse)
+
+    def filter_and_sort_auctions(self, auctions, filters, sort, cards_cog):
+        filtered = [a for a in auctions if self.auction_matches(a, filters, cards_cog)]
+        return self.sort_auctions(filtered, sort, cards_cog)
+
+    def get_filter_options(self, auctions, filter_key, cards_cog):
+        values = {}
+
+        for auction in auctions:
+            if auction["item_type"] != "card":
+                continue
+
+            card, card_data, player = self.get_auction_card_context(auction, cards_cog)
+            if not card_data or not player:
+                continue
+
+            if filter_key == "player":
+                value = player.get("name", "")
+            elif filter_key == "rarity":
+                value = (card or {}).get("rarity", "")
+            elif filter_key == "role":
+                value = player.get("role", "")
+            elif filter_key in {"team", "set", "league"}:
+                value = card_data.get(filter_key, "")
+            else:
+                value = ""
+
+            value = str(value).strip()
+            if value:
+                values[value.lower()] = value
+
+        return sorted(values.values(), key=str.lower)[:25]
 
     # -----------------
     # Resolve Auctions
@@ -288,25 +494,24 @@ class Auction(commands.Cog):
                 cards_cog.save_users(users)
         else:
             profile = users_cog.get_profile_by_id(final_owner)
-            profile.setdefault("packs", [])
-            profile["packs"].append(auction["pack_name"])
+            users_cog.add_pack_to_first_slot(profile, auction["pack_name"])
             users_cog.save_users()
 
         if sold:
             seller = users_cog.get_profile_by_id(auction["seller_id"])
-            seller["gold"] += auction["current_bid"]
+            seller["cash"] += auction["current_bid"]
             users_cog.save_users()
 
             winner_user = self.bot.get_user(int(winner)) if winner else None
             seller_user = self.bot.get_user(int(auction["seller_id"]))
             if winner_user and users_cog.get_profile_by_id(winner).get("settings", {}).get("dm_auction_notis", True):
                 try:
-                    await winner_user.send(f"🏆 You won auction `{auction['auction_id']}` for {auction['current_bid']} gold.")
+                    await winner_user.send(f"🏆 You won auction `{auction['auction_id']}` for {CASH_EMOJI} {auction['current_bid']} cash.")
                 except Exception:
                     pass
             if seller_user and users_cog.get_profile_by_id(auction["seller_id"]).get("settings", {}).get("dm_auction_notis", True):
                 try:
-                    await seller_user.send(f"💰 Your auction `{auction['auction_id']}` sold for {auction['current_bid']} gold.")
+                    await seller_user.send(f"{CASH_EMOJI} Your auction `{auction['auction_id']}` sold for {auction['current_bid']} cash.")
                 except Exception:
                     pass
         else:
@@ -342,6 +547,10 @@ class Auction(commands.Cog):
 
         if args and args[0] == "-sell":
             index = int(args[1])
+            if not self.has_auction_room(ctx.author.id):
+                await ctx.send(f"You can only have {MAX_ACTIVE_AUCTIONS_PER_USER} active auctions at once.")
+                return
+
             owned_card, _, _, error = cards_cog.get_owned_card_by_inventory_number(ctx.author.id, index)
 
             if error:
@@ -356,6 +565,10 @@ class Auction(commands.Cog):
 
         if args and args[0] == "-sellpack":
             index = int(args[1])
+            if not self.has_auction_room(ctx.author.id):
+                await ctx.send(f"You can only have {MAX_ACTIVE_AUCTIONS_PER_USER} active auctions at once.")
+                return
+
             profile = users_cog.get_profile(ctx.author)
             packs = profile.get("packs", [])
 
@@ -364,14 +577,18 @@ class Auction(commands.Cog):
                 return
 
             pack_name = packs[index - 1]
-            await ctx.send("Fill this out to create your pack auction:", view=SellPackView(self, ctx.author.id, pack_name))
+            if pack_name is None:
+                await ctx.send("That pack slot is empty.")
+                return
+
+            await ctx.send("Fill this out to create your pack auction:", view=SellPackView(self, ctx.author.id, index - 1, pack_name))
             return
 
         auctions = self.load_auctions()
-        filters = self.parse_filters(args)
-        filtered = [a for a in auctions if self.auction_matches(a, filters, cards_cog)]
+        filters, sort = self.parse_filters(args)
+        filtered = self.filter_and_sort_auctions(auctions, filters, sort, cards_cog)
 
-        view = AuctionView(self, ctx.author.id, filtered)
+        view = AuctionView(self, ctx.author.id, filtered, filters, sort)
         await ctx.send(embed=view.build_embed(), view=view)
 
 
@@ -385,60 +602,99 @@ class SellView(discord.ui.View):
 
     @discord.ui.button(label="Create Auction", style=discord.ButtonStyle.green)
     async def open_modal(self, interaction: discord.Interaction, button):
+        if not self.cog.has_auction_room(self.user_id):
+            await interaction.response.send_message(
+                f"You can only have {MAX_ACTIVE_AUCTIONS_PER_USER} active auctions at once.",
+                ephemeral=True
+            )
+            return
         await interaction.response.send_modal(
             SellModal(self.cog, self.user_id, self.item, self.item_type)
         )
 
 
 class SellPackView(discord.ui.View):
-    def __init__(self, cog, user_id, pack_name):
+    def __init__(self, cog, user_id, pack_slot, pack_name):
         super().__init__()
         self.cog = cog
         self.user_id = user_id
+        self.pack_slot = pack_slot
         self.pack_name = pack_name
 
     @discord.ui.button(label="Create Pack Auction", style=discord.ButtonStyle.green)
     async def open_modal(self, interaction: discord.Interaction, button):
+        if not self.cog.has_auction_room(self.user_id):
+            await interaction.response.send_message(
+                f"You can only have {MAX_ACTIVE_AUCTIONS_PER_USER} active auctions at once.",
+                ephemeral=True
+            )
+            return
         await interaction.response.send_modal(
-            SellModal(self.cog, self.user_id, self.pack_name, "pack")
+            SellModal(self.cog, self.user_id, self.pack_name, "pack", self.pack_slot)
         )
 
 
 class SellModal(discord.ui.Modal, title="Create Auction"):
-    starting_price = discord.ui.TextInput(label="Starting Price")
-    buy_now_price = discord.ui.TextInput(label="Buy Now Price", required=False)
+    starting_price = discord.ui.TextInput(label="Starting Cash Price")
+    buy_now_price = discord.ui.TextInput(label="Buy Now Cash Price", required=False)
+    duration_days = discord.ui.TextInput(
+        label="Duration Days (1-7)",
+        placeholder="1",
+        required=False,
+        max_length=1
+    )
 
-    def __init__(self, cog, user_id, item, item_type):
+    def __init__(self, cog, user_id, item, item_type, pack_slot=None):
         super().__init__()
         self.cog = cog
         self.user_id = user_id
         self.item = item
         self.item_type = item_type
+        self.pack_slot = pack_slot
 
     async def on_submit(self, interaction: discord.Interaction):
-        start = int(self.starting_price.value)
-        buy = int(self.buy_now_price.value) if self.buy_now_price.value else None
+        try:
+            start = int(self.starting_price.value)
+            buy = int(self.buy_now_price.value) if self.buy_now_price.value else None
+            duration = int(self.duration_days.value) if self.duration_days.value else DEFAULT_AUCTION_DAYS
+        except ValueError:
+            await interaction.response.send_message("Prices and duration must be whole numbers.", ephemeral=True)
+            return
+
+        if duration < 1 or duration > MAX_AUCTION_DAYS:
+            await interaction.response.send_message(
+                f"Auction duration must be between 1 and {MAX_AUCTION_DAYS} days.",
+                ephemeral=True
+            )
+            return
 
         users_cog = interaction.client.get_cog("Users")
         cards_cog = interaction.client.get_cog("Cards")
+
+        if not self.cog.has_auction_room(self.user_id):
+            await interaction.response.send_message(
+                f"You can only have {MAX_ACTIVE_AUCTIONS_PER_USER} active auctions at once.",
+                ephemeral=True
+            )
+            return
 
         if self.item_type == "card":
             users, user_data = cards_cog.get_user_data(self.user_id)
             cards_cog.remove_card_from_user(users, self.user_id, self.item)
         else:
             profile = users_cog.get_profile_by_id(str(self.user_id))
-            for i, existing in enumerate(profile.get("packs", [])):
-                if existing == self.item:
-                    profile["packs"][i] = None
-                    break
+            removed = users_cog.remove_pack_at_slot(profile, self.pack_slot)
+            if removed != self.item:
+                await interaction.response.send_message("That pack is no longer in that slot.", ephemeral=True)
+                return
             users_cog.save_users()
 
-        self.cog.create_auction(self.user_id, self.item_type, self.item, start, buy)
+        self.cog.create_auction(self.user_id, self.item_type, self.item, start, buy, duration)
         await interaction.response.send_message("✅ Auction created!", ephemeral=True)
 
 
 class BidModal(discord.ui.Modal, title="Place Bid"):
-    bid_amount = discord.ui.TextInput(label="Bid Amount")
+    bid_amount = discord.ui.TextInput(label="Cash Bid Amount")
 
     def __init__(self, cog, auction):
         super().__init__()
@@ -452,7 +708,7 @@ class BidModal(discord.ui.Modal, title="Place Bid"):
         if error:
             await interaction.response.send_message(error, ephemeral=True)
         else:
-            await interaction.response.send_message(f"✅ Bid placed: {amount}", ephemeral=True)
+            await interaction.response.send_message(f"✅ Bid placed: {CASH_EMOJI} {amount} cash", ephemeral=True)
 
 
 class BuyView(discord.ui.View):
@@ -476,8 +732,8 @@ class BuyView(discord.ui.View):
             return
 
         profile = users_cog.get_profile(interaction.user)
-        if profile["gold"] < price:
-            await interaction.response.send_message("Not enough gold.", ephemeral=True)
+        if profile["cash"] < price:
+            await interaction.response.send_message("Not enough cash.", ephemeral=True)
             return
 
         settings = profile.get("settings", {})
@@ -490,13 +746,25 @@ class BuyView(discord.ui.View):
         if item_name.startswith("Failed:"):
             await interaction.response.send_message(item_name, ephemeral=True)
             return
-        await interaction.response.send_message(f"✅ Purchased **{item_name}** for {price} gold!", ephemeral=True)
+        await interaction.response.send_message(f"✅ Purchased **{item_name}** for {CASH_EMOJI} {price} cash!", ephemeral=True)
 
     def execute_buy_now(self, buyer_id: int, users_cog, cards_cog):
         item_name, error = self.cog.complete_buy_now(self.auction["auction_id"], buyer_id)
         if error:
             return f"Failed: {error}"
         return item_name
+
+    @discord.ui.button(label="Take Down", style=discord.ButtonStyle.red)
+    async def take_down(self, interaction, button):
+        item_name, error = self.cog.cancel_auction(self.auction["auction_id"], interaction.user.id)
+        if error:
+            await interaction.response.send_message(error, ephemeral=True)
+            return
+
+        await interaction.response.edit_message(
+            content=f"✅ Took down **{item_name}** and returned it to your inventory.",
+            view=None
+        )
 
 
 class ConfirmAuctionBuyView(discord.ui.View):
@@ -511,14 +779,14 @@ class ConfirmAuctionBuyView(discord.ui.View):
         cards_cog = interaction.client.get_cog("Cards")
         profile = users_cog.get_profile(interaction.user)
         price = self.auction["buy_now_price"]
-        if profile["gold"] < price:
-            await interaction.response.send_message("Not enough gold.", ephemeral=True)
+        if profile["cash"] < price:
+            await interaction.response.send_message("Not enough cash.", ephemeral=True)
             return
         item_name = BuyView(self.auction, self.cog).execute_buy_now(interaction.user.id, users_cog, cards_cog)
         if item_name.startswith("Failed:"):
             await interaction.response.edit_message(content=item_name, view=None)
             return
-        await interaction.response.edit_message(content=f"✅ Purchased **{item_name}** for {price} gold!", view=None)
+        await interaction.response.edit_message(content=f"✅ Purchased **{item_name}** for {CASH_EMOJI} {price} cash!", view=None)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -526,13 +794,17 @@ class ConfirmAuctionBuyView(discord.ui.View):
 
 
 class AuctionSelect(discord.ui.Select):
-    def __init__(self, auctions, cog):
+    def __init__(self, auctions, cog, page_start=0):
         self.auctions = auctions
         self.cog = cog
 
         options = [
             discord.SelectOption(
-                label=f"{i + 1}. {a['current_bid']} gold",
+                label=f"{page_start + i + 1}. {self.get_option_label(a)}"[:100],
+                description=(
+                    f"{CASH_EMOJI} Bid {a['current_bid']} | Buy Now "
+                    f"{f'{CASH_EMOJI} {a.get('buy_now_price')}' if a.get('buy_now_price') else 'None'}"
+                ),
                 value=str(i)
             )
             for i, a in enumerate(auctions)
@@ -541,7 +813,19 @@ class AuctionSelect(discord.ui.Select):
         if not options:
             options = [discord.SelectOption(label="No auctions", value="0")]
 
-        super().__init__(placeholder="Select auction", options=options, min_values=1, max_values=1)
+        super().__init__(placeholder="Select auction", options=options, min_values=1, max_values=1, row=4)
+
+    def get_option_label(self, auction):
+        cards_cog = self.cog.bot.get_cog("Cards")
+        if auction["item_type"] != "card":
+            return f"📦 {str(auction['pack_name']).replace('_', ' ').title()}"[:100]
+
+        card, card_data, player = self.cog.get_auction_card_context(auction, cards_cog)
+        rarity = (card or {}).get("rarity", "Unknown")
+        symbol = cards_cog.get_rarity_symbol(rarity) if cards_cog else "⚫"
+        if not card_data or not player:
+            return f"{symbol} Unknown Card"[:100]
+        return f"{symbol} {player.get('name', 'Unknown')} | {card_data.get('team', 'Unknown')}"[:100]
 
     async def callback(self, interaction: discord.Interaction):
         if not self.auctions:
@@ -555,90 +839,273 @@ class AuctionSelect(discord.ui.Select):
         )
 
 
+class AuctionFilterTypeSelect(discord.ui.Select):
+    FILTER_LABELS = {
+        "team": "Team",
+        "rarity": "Rarity",
+        "player": "Player",
+        "set": "Set",
+        "league": "League",
+        "role": "Role",
+    }
+
+    def __init__(self, view):
+        self.auction_view = view
+        options = [
+            discord.SelectOption(
+                label=label,
+                value=key,
+                default=view.selected_filter_key == key
+            )
+            for key, label in self.FILTER_LABELS.items()
+        ]
+        super().__init__(
+            placeholder="Choose a filter",
+            options=options,
+            min_values=1,
+            max_values=1,
+            row=1
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.auction_view.selected_filter_key = self.values[0]
+        self.auction_view.rebuild_items()
+        await interaction.response.edit_message(embed=self.auction_view.build_embed(), view=self.auction_view)
+
+
+class AuctionFilterValueSelect(discord.ui.Select):
+    def __init__(self, view, filter_key, options):
+        self.auction_view = view
+        self.filter_key = filter_key
+        choices = [
+            discord.SelectOption(
+                label=value[:100],
+                value=value[:100],
+                default=view.filters.get(filter_key) == value
+            )
+            for value in options
+        ]
+        super().__init__(
+            placeholder=f"Choose {filter_key}",
+            options=choices,
+            min_values=1,
+            max_values=1,
+            row=2
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.auction_view.filters[self.filter_key] = self.values[0]
+        self.auction_view.page = 0
+        self.auction_view.reload_auctions()
+        self.auction_view.rebuild_items()
+        await interaction.response.edit_message(embed=self.auction_view.build_embed(), view=self.auction_view)
+
+
+class AuctionSortSelect(discord.ui.Select):
+    def __init__(self, view):
+        self.auction_view = view
+        options = [
+            discord.SelectOption(label=label, value=value, default=view.sort == value)
+            for value, label in view.SORT_LABELS.items()
+        ]
+        super().__init__(
+            placeholder="Sort auctions",
+            options=options,
+            min_values=1,
+            max_values=1,
+            row=3
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.auction_view.sort = self.values[0]
+        self.auction_view.page = 0
+        self.auction_view.reload_auctions()
+        self.auction_view.rebuild_items()
+        await interaction.response.edit_message(embed=self.auction_view.build_embed(), view=self.auction_view)
+
+
 class AuctionView(discord.ui.View):
-    def __init__(self, cog, user_id, auctions):
+    SORT_LABELS = {
+        "bid_asc": "Lowest Bid",
+        "bid_desc": "Highest Bid",
+        "buy_asc": "Lowest Buy Now",
+        "buy_desc": "Highest Buy Now",
+        "player": "Player",
+        "team": "Team",
+        "rarity": "Rarity",
+        "set": "Set",
+        "league": "League",
+        "role": "Role",
+        "time": "Ending Soon",
+    }
+
+    def __init__(self, cog, user_id, auctions, filters=None, sort=None):
         super().__init__(timeout=120)
         self.cog = cog
         self.user_id = user_id
         self.auctions = auctions
+        self.filters = filters or {}
+        self.sort = sort
         self.page = 0
+        self.show_mine = False
+        self.selected_filter_key = next(iter(self.filters), "team")
 
         self.update_buttons()
-        self.add_item(AuctionSelect(self.get_page_items(), cog))
+        self.rebuild_items()
+
+    def get_base_auctions(self):
+        auctions = self.cog.load_auctions()
+        if self.show_mine:
+            auctions = [a for a in auctions if a.get("seller_id") == str(self.user_id)]
+        return auctions
+
+    def reload_auctions(self):
+        cards_cog = self.cog.bot.get_cog("Cards")
+        self.auctions = self.cog.filter_and_sort_auctions(
+            self.get_base_auctions(),
+            self.filters,
+            self.sort,
+            cards_cog
+        )
+        if self.page >= self.total_pages():
+            self.page = self.total_pages() - 1
+        self.update_buttons()
 
     def get_page_items(self):
-        start = self.page * 5
-        return self.auctions[start:start + 5]
+        start = self.page_start()
+        return self.auctions[start:start + AUCTIONS_PER_PAGE]
+
+    def page_start(self):
+        return self.page * AUCTIONS_PER_PAGE
 
     def total_pages(self):
-        return max(1, (len(self.auctions) - 1) // 5 + 1)
+        return max(1, (len(self.auctions) - 1) // AUCTIONS_PER_PAGE + 1)
+
+    def build_filter_text(self):
+        parts = []
+        if self.show_mine:
+            parts.append("Showing: Your Auctions")
+        if self.filters:
+            parts.extend(f"{key.capitalize()}: {value}" for key, value in self.filters.items())
+        if self.sort:
+            parts.append(f"Sort: {self.SORT_LABELS.get(self.sort, self.sort)}")
+        return " • ".join(parts)
+
+    def rebuild_items(self):
+        self.clear_items()
+        self.add_item(self.previous)
+        self.add_item(self.next)
+        self.add_item(self.refresh)
+        self.add_item(self.mine)
+        self.add_item(self.clear)
+        self.add_item(AuctionFilterTypeSelect(self))
+
+        cards_cog = self.cog.bot.get_cog("Cards")
+        filter_base = [
+            a for a in self.get_base_auctions()
+            if self.cog.auction_matches(
+                a,
+                {k: v for k, v in self.filters.items() if k != self.selected_filter_key},
+                cards_cog
+            )
+        ]
+        filter_options = self.cog.get_filter_options(filter_base, self.selected_filter_key, cards_cog)
+        if filter_options:
+            self.add_item(AuctionFilterValueSelect(self, self.selected_filter_key, filter_options))
+
+        self.add_item(AuctionSortSelect(self))
+        self.add_item(AuctionSelect(self.get_page_items(), self.cog, self.page_start()))
 
     def build_embed(self):
         cards_cog = self.cog.bot.get_cog("Cards")
-        embed = discord.Embed(title="Auction House")
+        embed = discord.Embed(title="🏛️ Auction House")
+        filter_text = self.build_filter_text()
+        if filter_text:
+            embed.description = filter_text
 
         if not self.auctions:
-            embed.description = "No auctions available."
+            embed.description = f"{filter_text}\nNo auctions available." if filter_text else "No auctions available."
             return embed
 
-        for i, auc in enumerate(self.get_page_items(), start=1):
+        for i, auc in enumerate(self.get_page_items(), start=self.page_start() + 1):
             if auc["item_type"] == "card":
-                card = auc["card_instance"]
-                card_data = cards_cog.get_card_by_id(card.get("card_id"))
-                if not card_data and card.get("snapshot"):
-                    card_data = card["snapshot"]
+                card, card_data, player = self.cog.get_auction_card_context(auc, cards_cog)
+                rarity = (card or {}).get("rarity", "Unknown")
+                rarity_symbol = cards_cog.get_rarity_symbol(rarity) if cards_cog else "⚫"
 
-                if card_data:
-                    player = cards_cog.get_player_for_card(card_data)
+                if card_data and player:
                     name = player.get("name", "Unknown")
-                    details = f"{card_data.get('team', 'Unknown')} • {card.get('rarity', 'Unknown')}"
+                    details = (
+                        f"{rarity_symbol} {rarity}\n"
+                        f"🛡️ {card_data.get('team', 'Unknown')}\n"
+                        f"🎴 {card_data.get('set', 'Unknown')}"
+                    )
                 else:
                     name = "Unknown Card"
-                    details = card.get("rarity", "Unknown")
+                    details = f"{rarity_symbol} {rarity}"
             else:
                 name = str(auc["pack_name"]).replace("_", " ").title()
-                details = "Pack"
+                details = "📦 Pack"
+
+            buy_now = f"{CASH_EMOJI} {auc['buy_now_price']}" if auc["buy_now_price"] is not None else "None"
 
             embed.add_field(
-                name=f"{i}. {name}",
+                name=f"`#{i}` {name}",
                 value=(
                     f"{details}\n"
-                    f"Bid: {auc['current_bid']}\n"
-                    f"Buy Now: {auc['buy_now_price']}\n"
-                    f"Time: {self.cog.get_time_remaining(auc['expires_at'])}"
+                    f"{CASH_EMOJI} Bid: {auc['current_bid']}\n"
+                    f"🛒 Buy Now: {buy_now}\n"
+                    f"⏳ {self.cog.get_time_remaining(auc['expires_at'])}"
                 ),
-                inline=False
+                inline=True
             )
 
-        embed.set_footer(text=f"Page {self.page + 1}/{self.total_pages()}")
+        embed.set_footer(text=f"Page {self.page + 1}/{self.total_pages()} • {len(self.auctions)} auctions")
         return embed
 
     def update_buttons(self):
         self.previous.disabled = self.page <= 0
         self.next.disabled = self.page >= self.total_pages() - 1
+        self.mine.label = "All Auctions" if self.show_mine else "My Auctions"
+        self.mine.style = discord.ButtonStyle.blurple if self.show_mine else discord.ButtonStyle.secondary
+        self.clear.disabled = not self.filters and not self.sort and not self.show_mine
 
-    @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary, row=0)
     async def previous(self, interaction, button):
         self.page -= 1
         self.update_buttons()
-        self.clear_items()
-        self.add_item(AuctionSelect(self.get_page_items(), self.cog))
+        self.rebuild_items()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="▶", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="▶", style=discord.ButtonStyle.secondary, row=0)
     async def next(self, interaction, button):
         self.page += 1
         self.update_buttons()
-        self.clear_items()
-        self.add_item(AuctionSelect(self.get_page_items(), self.cog))
+        self.rebuild_items()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="Refresh", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Refresh", style=discord.ButtonStyle.green, row=0)
     async def refresh(self, interaction, button):
-        self.auctions = self.cog.load_auctions()
-        self.clear_items()
-        self.add_item(AuctionSelect(self.get_page_items(), self.cog))
-        self.update_buttons()
+        self.reload_auctions()
+        self.rebuild_items()
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
+    @discord.ui.button(label="My Auctions", style=discord.ButtonStyle.secondary, row=0)
+    async def mine(self, interaction, button):
+        self.show_mine = not self.show_mine
+        self.page = 0
+        self.reload_auctions()
+        self.rebuild_items()
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
+    @discord.ui.button(label="Clear", style=discord.ButtonStyle.red, row=0)
+    async def clear(self, interaction, button):
+        self.filters = {}
+        self.sort = None
+        self.show_mine = False
+        self.page = 0
+        self.reload_auctions()
+        self.rebuild_items()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
 

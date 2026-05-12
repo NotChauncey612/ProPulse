@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 
 TRADES_PATH = "data/trades.json"
+CASH_EMOJI = "💵"
 
 
 class Trades(commands.Cog):
@@ -79,6 +80,8 @@ class Trades(commands.Cog):
         trade = self.active_trades[trade_id]
 
         users_cog = self.bot.get_cog("Users")
+        if not users_cog:
+            return False, "User data is not available right now."
 
         u1 = trade["user1"]
         u2 = trade["user2"]
@@ -89,17 +92,54 @@ class Trades(commands.Cog):
         o1 = trade["offers"][u1]
         o2 = trade["offers"][u2]
 
-        # --- GOLD ---
-        if p1["gold"] < o1["gold"] or p2["gold"] < o2["gold"]:
-            return
+        def validate_offer(profile, offer, label):
+            if offer["cash"] < 0:
+                return f"{label}'s cash offer is invalid."
+            if profile.get("cash", 0) < offer["cash"]:
+                return f"{label} no longer has enough cash."
 
-        p1["gold"] -= o1["gold"]
-        p2["gold"] += o1["gold"]
+            owned_card_ids = {
+                card.get("instance_id")
+                for card in profile.get("cards", [])
+                if isinstance(card, dict) and card.get("instance_id")
+            }
+            offered_card_ids = []
+            for card in offer["cards"]:
+                instance_id = card.get("instance_id") if isinstance(card, dict) else None
+                if not instance_id:
+                    return f"{label}'s offer contains an invalid card."
+                offered_card_ids.append(instance_id)
+                if instance_id not in owned_card_ids:
+                    return f"{label} no longer owns one of the offered cards."
+            if len(offered_card_ids) != len(set(offered_card_ids)):
+                return f"{label}'s offer contains the same card more than once."
 
-        p2["gold"] -= o2["gold"]
-        p1["gold"] += o2["gold"]
+            packs = profile.get("packs", [])
+            offered_pack_slots = []
+            for pack_offer in offer["packs"]:
+                if isinstance(pack_offer, dict):
+                    slot = pack_offer.get("slot")
+                    pack_id = pack_offer.get("pack_id")
+                    if not isinstance(slot, int) or slot < 0 or slot >= len(packs):
+                        return f"{label}'s offer contains an invalid pack slot."
+                    if packs[slot] != pack_id:
+                        return f"{label} no longer owns one of the offered packs."
+                    offered_pack_slots.append(slot)
+                else:
+                    matching_slots = [i for i, existing in enumerate(packs) if existing == pack_offer]
+                    if not matching_slots:
+                        return f"{label} no longer owns one of the offered packs."
+                    offered_pack_slots.append(matching_slots[0])
+            if len(offered_pack_slots) != len(set(offered_pack_slots)):
+                return f"{label}'s offer contains the same pack more than once."
 
-        # --- CARDS ---
+            return None
+
+        for profile, offer, label in ((p1, o1, "User 1"), (p2, o2, "User 2")):
+            error = validate_offer(profile, offer, label)
+            if error:
+                return False, error
+
         def remove_card_slot(profile, card):
             target = card.get("instance_id")
             for i, existing in enumerate(profile.get("cards", [])):
@@ -116,37 +156,48 @@ class Trades(commands.Cog):
                     return
             profile["cards"].append(card)
 
+        # --- CASH ---
+        p1["cash"] -= o1["cash"]
+        p2["cash"] += o1["cash"]
+
+        p2["cash"] -= o2["cash"]
+        p1["cash"] += o2["cash"]
+
+        # --- CARDS ---
         for card in o1["cards"]:
-            remove_card_slot(p1, card)
+            if not remove_card_slot(p1, card):
+                return False, "User 1 no longer owns one of the offered cards."
             add_card_slot(p2, card)
 
         for card in o2["cards"]:
-            remove_card_slot(p2, card)
+            if not remove_card_slot(p2, card):
+                return False, "User 2 no longer owns one of the offered cards."
             add_card_slot(p1, card)
 
         # --- PACKS ---
-        def remove_pack_slot(profile, pack):
+        def pack_offer_id(offer):
+            if isinstance(offer, dict):
+                return offer.get("pack_id")
+            return offer
+
+        def remove_pack_offer(profile, offer):
+            if isinstance(offer, dict) and "slot" in offer:
+                removed = users_cog.remove_pack_at_slot(profile, offer["slot"])
+                return removed == offer.get("pack_id")
+
             for i, existing in enumerate(profile.get("packs", [])):
-                if existing == pack:
+                if existing == offer:
                     profile["packs"][i] = None
                     return True
             return False
 
-        def add_pack_slot(profile, pack):
-            profile.setdefault("packs", [])
-            for i, existing in enumerate(profile["packs"]):
-                if existing is None:
-                    profile["packs"][i] = pack
-                    return
-            profile["packs"].append(pack)
+        for pack_offer in o1["packs"]:
+            if remove_pack_offer(p1, pack_offer):
+                users_cog.add_pack_to_first_slot(p2, pack_offer_id(pack_offer))
 
-        for pack in o1["packs"]:
-            remove_pack_slot(p1, pack)
-            add_pack_slot(p2, pack)
-
-        for pack in o2["packs"]:
-            remove_pack_slot(p2, pack)
-            add_pack_slot(p1, pack)
+        for pack_offer in o2["packs"]:
+            if remove_pack_offer(p2, pack_offer):
+                users_cog.add_pack_to_first_slot(p1, pack_offer_id(pack_offer))
 
         users_cog.save_users()
 
@@ -165,6 +216,7 @@ class Trades(commands.Cog):
         self.save_trades(history)
 
         del self.active_trades[trade_id]
+        return True, "Trade completed."
 
 
 # -----------------
@@ -193,8 +245,8 @@ class TradeRequestView(discord.ui.View):
             "user1": str(self.sender.id),
             "user2": str(self.receiver.id),
             "offers": {
-                str(self.sender.id): {"cards": [], "packs": [], "gold": 0},
-                str(self.receiver.id): {"cards": [], "packs": [], "gold": 0}
+                str(self.sender.id): {"cards": [], "packs": [], "cash": 0},
+                str(self.receiver.id): {"cards": [], "packs": [], "cash": 0}
             },
             "confirmed": {
                 str(self.sender.id): False,
@@ -240,25 +292,79 @@ class TradeView(discord.ui.View):
 
     def build_embed(self):
         trade = self.get_trade()
+        cards_cog = self.cog.bot.get_cog("Cards")
+
+        def display_name(uid):
+            user = self.cog.bot.get_user(int(uid))
+            return user.display_name if user else f"User {uid}"
+
+        def shorten_lines(lines):
+            text = "\n".join(lines)
+            if len(text) <= 1024:
+                return text
+
+            kept = []
+            current = 0
+            for line in lines:
+                extra = len(line) + (1 if kept else 0)
+                if current + extra + len("\n...") > 1024:
+                    break
+                kept.append(line)
+                current += extra
+            return "\n".join(kept + ["..."])
+
+        def format_card(card):
+            if not isinstance(card, dict):
+                return "Unknown card"
+            if cards_cog:
+                card_data = cards_cog.get_card_by_id(card.get("card_id"))
+                if not card_data and card.get("snapshot"):
+                    card_data = card["snapshot"]
+                player = cards_cog.get_player_for_card(card_data) if card_data else None
+                if card_data and player:
+                    rarity = card.get("rarity", "Unknown")
+                    rarity_symbol = cards_cog.get_rarity_symbol(rarity)
+                    player_name = player.get("name", "Unknown")
+                    set_name = card_data.get("set", "Unknown Set")
+                    return f"{rarity_symbol} {player_name} {set_name}"
+            return card.get("card_id", "Unknown card")
+
+        def format_pack(pack_offer):
+            pack_id = pack_offer.get("pack_id") if isinstance(pack_offer, dict) else pack_offer
+            pack = cards_cog.packs.get(pack_id) if cards_cog and pack_id else None
+            pack_name = pack.get("name") if pack else pack_id
+            return pack_name or "Unknown pack"
 
         def format_offer(uid):
             offer = trade["offers"][uid]
-            return (
-                f"Cards: {len(offer['cards'])}\n"
-                f"Packs: {len(offer['packs'])}\n"
-                f"Gold: {offer['gold']}"
-            )
+            lines = [f"Status: {'Accepted' if trade['confirmed'][uid] else 'Not accepted'}"]
+
+            if offer["cash"]:
+                lines.append(f"{CASH_EMOJI} Cash: {offer['cash']}")
+
+            if offer["cards"]:
+                lines.append("Cards:")
+                lines.extend(f"- {format_card(card)}" for card in offer["cards"])
+
+            if offer["packs"]:
+                lines.append("Packs:")
+                lines.extend(f"- {format_pack(pack_offer)}" for pack_offer in offer["packs"])
+
+            if len(lines) == 1:
+                lines.append("No items offered yet.")
+
+            return shorten_lines(lines)
 
         embed = discord.Embed(title="Trade")
 
         embed.add_field(
-            name=f"User 1",
+            name=display_name(trade["user1"]),
             value=format_offer(trade["user1"]),
             inline=True
         )
 
         embed.add_field(
-            name=f"User 2",
+            name=display_name(trade["user2"]),
             value=format_offer(trade["user2"]),
             inline=True
         )
@@ -286,10 +392,10 @@ class TradeView(discord.ui.View):
             AddPackModal(self.cog, self.trade_id)
         )
 
-    @discord.ui.button(label="Add Gold", style=discord.ButtonStyle.secondary)
-    async def add_gold(self, interaction, button):
+    @discord.ui.button(label=f"{CASH_EMOJI} Add Cash", style=discord.ButtonStyle.secondary)
+    async def add_cash(self, interaction, button):
         await interaction.response.send_modal(
-            AddGoldModal(self.cog, self.trade_id)
+            AddCashModal(self.cog, self.trade_id)
         )
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
@@ -305,11 +411,15 @@ class TradeView(discord.ui.View):
         trade["confirmed"][uid] = True
 
         if all(trade["confirmed"].values()):
-            self.cog.execute_trade(self.trade_id)
-            await interaction.response.edit_message(
-                content="✅ Trade completed.",
-                view=None
-            )
+            success, message = self.cog.execute_trade(self.trade_id)
+            if not success:
+                for participant_id in trade["confirmed"]:
+                    trade["confirmed"][participant_id] = False
+                await interaction.response.send_message(message, ephemeral=True)
+                await self.cog.refresh_trade_message(self.trade_id)
+                return
+            await interaction.response.edit_message(content="Trade completed.", embed=None, view=None)
+            return
         else:
             await interaction.response.send_message(
                 "Waiting for other user.",
@@ -324,7 +434,8 @@ class TradeView(discord.ui.View):
             await interaction.response.send_message("Only trade participants can cancel.", ephemeral=True)
             return
         del self.cog.active_trades[self.trade_id]
-        await interaction.response.edit_message(content="❌ Trade cancelled.", embed=None, view=None)
+        await interaction.response.edit_message(content="Trade cancelled.", embed=None, view=None)
+        return
 
 
 # -----------------
@@ -342,14 +453,27 @@ class AddCardModal(discord.ui.Modal, title="Add Card"):
     async def on_submit(self, interaction):
         cards_cog = interaction.client.get_cog("Cards")
 
-        index = int(self.index.value)
+        try:
+            index = int(self.index.value)
+        except ValueError:
+            await interaction.response.send_message("Inventory index must be a number.", ephemeral=True)
+            return
 
-        owned_card, *_ = cards_cog.get_owned_card_by_inventory_number(
+        owned_card, _, _, error = cards_cog.get_owned_card_by_inventory_number(
             interaction.user.id, index
         )
+        if error:
+            await interaction.response.send_message(error, ephemeral=True)
+            return
 
         trade = self.cog.active_trades[self.trade_id]
         uid = str(interaction.user.id)
+
+        instance_id = owned_card.get("instance_id")
+        for offered_card in trade["offers"][uid]["cards"]:
+            if offered_card.get("instance_id") == instance_id:
+                await interaction.response.send_message("That card is already in your offer.", ephemeral=True)
+                return
 
         trade["offers"][uid]["cards"].append(owned_card)
         trade["confirmed"][trade["user1"]] = False
@@ -372,7 +496,15 @@ class AddPackModal(discord.ui.Modal, title="Add Pack"):
         users_cog = interaction.client.get_cog("Users")
 
         profile = users_cog.get_profile(interaction.user)
-        index = int(self.index.value)
+        try:
+            index = int(self.index.value)
+        except ValueError:
+            await interaction.response.send_message("Pack index must be a number.", ephemeral=True)
+            return
+
+        if index < 1 or index > len(profile.get("packs", [])):
+            await interaction.response.send_message("Invalid pack index.", ephemeral=True)
+            return
 
         pack = profile["packs"][index - 1]
         if pack is None:
@@ -381,8 +513,14 @@ class AddPackModal(discord.ui.Modal, title="Add Pack"):
 
         trade = self.cog.active_trades[self.trade_id]
         uid = str(interaction.user.id)
+        slot = index - 1
 
-        trade["offers"][uid]["packs"].append(pack)
+        for pack_offer in trade["offers"][uid]["packs"]:
+            if isinstance(pack_offer, dict) and pack_offer.get("slot") == slot:
+                await interaction.response.send_message("That pack is already in your offer.", ephemeral=True)
+                return
+
+        trade["offers"][uid]["packs"].append({"slot": slot, "pack_id": pack})
         trade["confirmed"][trade["user1"]] = False
         trade["confirmed"][trade["user2"]] = False
         trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
@@ -391,8 +529,8 @@ class AddPackModal(discord.ui.Modal, title="Add Pack"):
         await self.cog.refresh_trade_message(self.trade_id)
 
 
-class AddGoldModal(discord.ui.Modal, title="Add Gold"):
-    amount = discord.ui.TextInput(label="Gold Amount")
+class AddCashModal(discord.ui.Modal, title="Add Cash"):
+    amount = discord.ui.TextInput(label="Cash Amount")
 
     def __init__(self, cog, trade_id):
         super().__init__()
@@ -402,22 +540,31 @@ class AddGoldModal(discord.ui.Modal, title="Add Gold"):
     async def on_submit(self, interaction):
         users_cog = interaction.client.get_cog("Users")
 
-        amount = int(self.amount.value)
+        try:
+            amount = int(self.amount.value)
+        except ValueError:
+            await interaction.response.send_message("Cash amount must be a number.", ephemeral=True)
+            return
+
+        if amount < 0:
+            await interaction.response.send_message("Cash amount cannot be negative.", ephemeral=True)
+            return
+
         profile = users_cog.get_profile(interaction.user)
 
-        if profile["gold"] < amount:
-            await interaction.response.send_message("Not enough gold.", ephemeral=True)
+        if profile["cash"] < amount:
+            await interaction.response.send_message("Not enough cash.", ephemeral=True)
             return
 
         trade = self.cog.active_trades[self.trade_id]
         uid = str(interaction.user.id)
 
-        trade["offers"][uid]["gold"] = amount
+        trade["offers"][uid]["cash"] = amount
         trade["confirmed"][trade["user1"]] = False
         trade["confirmed"][trade["user2"]] = False
         trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
 
-        await interaction.response.send_message("Gold added.", ephemeral=True)
+        await interaction.response.send_message("Cash added.", ephemeral=True)
         await self.cog.refresh_trade_message(self.trade_id)
 
 

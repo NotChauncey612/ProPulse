@@ -1,16 +1,59 @@
 import discord
 from discord.ext import commands
 import json
+import math
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 DATA_PATH = 'data/users.json'
+PRACTICE_COOLDOWN = timedelta(minutes=10)
+DAILY_COOLDOWN = timedelta(hours=24)
+PROFILE_EMOJI = "👤"
+COOLDOWN_EMOJI = "⏱️"
+PRACTICE_EMOJI = "🏋️"
+DAILY_EMOJI = "🎁"
+CASH_EMOJI = "💵"
+GOLD_EMOJI = "🟡"
+CARDS_EMOJI = "🃏"
+READY_EMOJI = "✅"
+WAIT_EMOJI = "⏳"
+ALERT_EMOJI = "🔔"
+DM_EMOJI = "📬"
+CONFIRM_EMOJI = "✅"
+PACK_EMOJI = "🎴"
+
+PRACTICE_XP_REWARD = 25
+DEFAULT_ELO = 1000
+RANK_THRESHOLDS = [
+    ("Challenger", 2200),
+    ("Champ", 1800),
+    ("Diamond", 1500),
+    ("Gold", 1200),
+    ("Silver", 0),
+]
+RANK_CASH_MULTIPLIERS = {
+    "Silver": 1.0,
+    "Gold": 1.25,
+    "Diamond": 1.5,
+    "Champ": 1.75,
+    "Challenger": 2.0,
+}
+
 
 class Users(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.users = self.load_users()
+        self.reminder_tasks = {}
+
+    async def cog_load(self):
+        self.schedule_pending_ready_notifications()
+
+    def cog_unload(self):
+        for task in self.reminder_tasks.values():
+            task.cancel()
+        self.reminder_tasks.clear()
 
     def load_users(self):
         try:
@@ -28,12 +71,18 @@ class Users(commands.Cog):
         uid = str(member.id)
         if uid not in self.users:
             self.users[uid] = {
+                'cash': 0,
                 'gold': 0,
-                'radianite': 0, 
                 'last_practice': None, 
                 'last_daily': None, 
                 'packs': [], 
                 'cards': [],
+                'team': {},
+                'xp': 0,
+                'level': 1,
+                'elo': DEFAULT_ELO,
+                'ranked_wins': 0,
+                'ranked_losses': 0,
                 'discord_username': member.name,
                 'settings': self.default_settings()
                 }
@@ -41,25 +90,80 @@ class Users(commands.Cog):
         else:
             self.users[uid]["discord_username"] = member.name
             self.users[uid].setdefault("settings", self.default_settings())
+            self.users[uid].setdefault("team", {})
+            self.normalize_profile_progress(self.users[uid])
+            self.normalize_profile_currency(self.users[uid])
         return self.users[uid]
 
     def get_profile_by_id(self, user_id):
         uid = str(user_id)
         if uid not in self.users:
             self.users[uid] = {
+                'cash': 0,
                 'gold': 0,
-                'radianite': 0,
                 'last_practice': None,
                 'last_daily': None,
                 'packs': [],
                 'cards': [],
+                'team': {},
+                'xp': 0,
+                'level': 1,
+                'elo': DEFAULT_ELO,
+                'ranked_wins': 0,
+                'ranked_losses': 0,
                 'discord_username': None,
                 'settings': self.default_settings()
             }
             self.save_users()
         else:
             self.users[uid].setdefault("settings", self.default_settings())
+            self.users[uid].setdefault("team", {})
+            self.normalize_profile_progress(self.users[uid])
+            self.normalize_profile_currency(self.users[uid])
         return self.users[uid]
+
+    def normalize_profile_currency(self, profile):
+        if "cash" not in profile:
+            profile["cash"] = profile.pop("gold", 0)
+        if "radianite" in profile:
+            profile["gold"] = profile.pop("radianite")
+        else:
+            profile.setdefault("gold", 0)
+
+    def xp_for_level(self, level):
+        return max(0, (level - 1) * level * 50)
+
+    def level_for_xp(self, xp):
+        level = 1
+        while self.xp_for_level(level + 1) <= xp:
+            level += 1
+        return level
+
+    def normalize_profile_progress(self, profile):
+        profile.setdefault("xp", 0)
+        profile["level"] = self.level_for_xp(int(profile.get("xp", 0)))
+        profile.setdefault("elo", DEFAULT_ELO)
+        profile.setdefault("ranked_wins", 0)
+        profile.setdefault("ranked_losses", 0)
+
+    def add_xp(self, profile, amount):
+        self.normalize_profile_progress(profile)
+        old_level = profile["level"]
+        profile["xp"] += amount
+        profile["level"] = self.level_for_xp(profile["xp"])
+        return profile["level"] > old_level
+
+    def rank_for_elo(self, elo):
+        for rank_name, threshold in RANK_THRESHOLDS:
+            if elo >= threshold:
+                return rank_name
+        return "Silver"
+
+    def daily_cash_reward(self, profile):
+        rank = self.rank_for_elo(int(profile.get("elo", DEFAULT_ELO)))
+        multiplier = RANK_CASH_MULTIPLIERS.get(rank, 1.0)
+        base_reward = random.randint(20, 50)
+        return base_reward, round(base_reward * multiplier), rank, multiplier
 
     def default_settings(self):
         return {
@@ -68,6 +172,128 @@ class Users(commands.Cog):
             "confirm_auction_buy": True,
             "confirm_pack_buy": True
         }
+
+    def add_pack_to_first_slot(self, profile, pack_id):
+        profile.setdefault("packs", [])
+        for i, existing in enumerate(profile["packs"]):
+            if existing is None:
+                profile["packs"][i] = pack_id
+                return i
+        profile["packs"].append(pack_id)
+        return len(profile["packs"]) - 1
+
+    def remove_pack_at_slot(self, profile, slot_index):
+        packs = profile.get("packs", [])
+        if slot_index < 0 or slot_index >= len(packs):
+            return None
+
+        pack_id = packs[slot_index]
+        if pack_id is None:
+            return None
+
+        packs[slot_index] = None
+        return pack_id
+
+    def utc_now(self):
+        return datetime.now(timezone.utc)
+
+    def parse_saved_time(self, saved_time):
+        if not saved_time:
+            return None
+
+        saved = datetime.fromisoformat(saved_time)
+        if saved.tzinfo is None:
+            return saved.replace(tzinfo=timezone.utc)
+        return saved.astimezone(timezone.utc)
+
+    def seconds_until(self, ready_at):
+        return max(0, math.ceil((ready_at - self.utc_now()).total_seconds()))
+
+    def format_duration(self, total_seconds):
+        days, remainder = divmod(total_seconds, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        if days:
+            return f"{days}d {hours}h"
+        if hours:
+            return f"{hours}h {minutes}m"
+        return f"{minutes}m {seconds}s"
+
+    def format_remaining(self, ready_at):
+        total_seconds = self.seconds_until(ready_at)
+        return self.format_duration(total_seconds)
+
+    def format_daily_remaining(self, ready_at):
+        return self.format_remaining(ready_at)
+
+    def remember_reminder_channel(self, user, action, channel_id):
+        user[f"{action}_reminder_channel_id"] = channel_id
+
+    def format_action_name(self, action):
+        action_emojis = {
+            "practice": PRACTICE_EMOJI,
+            "daily": DAILY_EMOJI,
+        }
+        return f"{action_emojis.get(action, '')} {action}".strip()
+
+    def schedule_ready_notification(self, channel_id: int, user_id: int, action: str, ready_at: datetime):
+        task_key = (str(user_id), action)
+        existing_task = self.reminder_tasks.get(task_key)
+        if existing_task and not existing_task.done():
+            existing_task.cancel()
+
+        task = self.bot.loop.create_task(self.notify_ready(channel_id, user_id, action, ready_at))
+        self.reminder_tasks[task_key] = task
+
+        def remove_finished_task(finished_task):
+            if self.reminder_tasks.get(task_key) is finished_task:
+                self.reminder_tasks.pop(task_key, None)
+
+        task.add_done_callback(remove_finished_task)
+
+    def cancel_ready_notifications(self, user_id, action=None):
+        actions = [action] if action else ["practice", "daily"]
+        for action_name in actions:
+            task = self.reminder_tasks.pop((str(user_id), action_name), None)
+            if task and not task.done():
+                task.cancel()
+
+    def schedule_user_ready_notifications(self, user_id, user, now=None):
+        now = now or self.utc_now()
+        cooldowns = {
+            "practice": PRACTICE_COOLDOWN,
+            "daily": DAILY_COOLDOWN,
+        }
+
+        for action, cooldown in cooldowns.items():
+            try:
+                last_used = self.parse_saved_time(user.get(f"last_{action}"))
+            except ValueError:
+                continue
+
+            channel_id = user.get(f"{action}_reminder_channel_id")
+            if not last_used or not channel_id:
+                continue
+
+            ready_at = last_used + cooldown
+            if ready_at <= now:
+                continue
+
+            try:
+                self.schedule_ready_notification(int(channel_id), int(user_id), action, ready_at)
+            except (TypeError, ValueError):
+                continue
+
+    def schedule_pending_ready_notifications(self):
+        now = self.utc_now()
+
+        for user_id, user in self.users.items():
+            settings = user.get("settings", self.default_settings())
+            if not settings.get("alert_daily_practice"):
+                continue
+
+            self.schedule_user_ready_notifications(user_id, user, now)
 
 
     # Commands 
@@ -81,23 +307,27 @@ class Users(commands.Cog):
             "`.help` - Show this command list.\n"
             "`.profile [@user]` - View a profile. Your own profile includes settings buttons.\n"
             "`.cd` - Check practice and daily cooldowns.\n"
-            "`.practice` - Earn gold every 10 minutes.\n"
-            "`.daily` - Earn gold and radianite every 24 hours.\n\n"
+            "`.practice` - Earn cash every 10 minutes.\n"
+            "`.daily` - Earn cash and gold every 24 hours.\n\n"
             "**Collection**\n"
             "`.inventory [filters]` or `.inv [filters]` - View your cards.\n"
             "Inventory filters: `-player <name/id>`, `-team <team>`, `-rarity <rarity>`, `-set <set>`, `-league <league>`, `-role <role>`.\n"
             "Example: `.inv -team T1 -rarity Gold -role mid`\n"
+            "`.progress [filters]` - View collection progress and best rarity for each card.\n"
+            "`.info [filters]` - List all bot cards. Supports inventory filters plus `-region <league>`.\n"
+            "`.info <CID>` - View one card's image and pulled rarity counts.\n"
             "`.view <inventory #>` - View one card from your inventory.\n"
+            "`.team` - View your lineup and set TOP/JNG/MID/BOT/SUP cards.\n"
+            "`.ranked` - Battle a similar-ELO user's team for ELO.\n"
             "`.packs` - View your unopened packs.\n"
             "`.open <pack #|pack id|pack name>` - Open a pack.\n"
-            "`.pull` - Pull a random card for testing.\n"
-            "`.getpack [amount]` - Get random pack(s) for testing.\n\n"
+            "`.pull` - Pull a random card for testing.\n\n"
             "**Economy**\n"
             "`.shop` - View packs for sale and buy packs.\n"
-            "`.auction [filters]` - View auctions, then select one to bid or buy now.\n"
-            "Auction filters: `-player <name>`, `-team <team>`, `-rarity <rarity>`, `-set <set>`.\n"
-            "`.auction -sell <inventory #>` - Auction one of your cards.\n"
-            "`.auction -sellpack <pack #>` - Auction one of your packs.\n"
+            "`.auction` - View auctions with filter dropdowns, then select one to bid or buy now.\n"
+            "`.auction -sell <inventory #>` - Auction one of your cards for 1-7 days.\n"
+            "`.auction -sellpack <pack #>` - Auction one of your packs for 1-7 days.\n"
+            "Use the auction buttons and dropdowns to filter, sort, view your listings, bid, buy now, or take down your own auction if nobody has bid yet.\n"
             "`.trade @user` - Start a trade with another user."
         )
 
@@ -108,22 +338,25 @@ class Users(commands.Cog):
         profile = self.get_profile(member)
 
         embed = discord.Embed(
-            title=f"{member.display_name}'s Profile"
+            title=f"{PROFILE_EMOJI} {member.display_name}'s Profile"
         )
 
         embed.set_thumbnail(url=member.display_avatar.url)
 
-        embed.add_field(name="Gold", value=str(profile["gold"]), inline=True)
-        embed.add_field(name="Radianite", value=str(profile["radianite"]), inline=True)
-        embed.add_field(name="Cards Owned", value=str(len(profile["cards"])), inline=True)
+        embed.add_field(name=f"{CASH_EMOJI} Cash", value=str(profile["cash"]), inline=True)
+        embed.add_field(name=f"{GOLD_EMOJI} Gold", value=str(profile["gold"]), inline=True)
+        embed.add_field(name=f"{CARDS_EMOJI} Cards Owned", value=str(len(profile["cards"])), inline=True)
+        embed.add_field(name="Level", value=str(profile["level"]), inline=True)
+        embed.add_field(name="XP", value=f"{profile['xp']}/{self.xp_for_level(profile['level'] + 1)}", inline=True)
+        embed.add_field(name="ELO", value=str(profile["elo"]), inline=True)
         settings = profile.get("settings", self.default_settings())
         embed.add_field(
             name="Alerts/Confirmations",
             value=(
-                f"Practice/Daily Alerts: {'ON' if settings['alert_daily_practice'] else 'OFF'}\n"
-                f"Auction DMs: {'ON' if settings['dm_auction_notis'] else 'OFF'}\n"
-                f"Auction Confirm Buy: {'ON' if settings['confirm_auction_buy'] else 'OFF'}\n"
-                f"Pack Confirm Buy: {'ON' if settings['confirm_pack_buy'] else 'OFF'}"
+                f"{ALERT_EMOJI} Practice/Daily Alerts: {'ON' if settings['alert_daily_practice'] else 'OFF'}\n"
+                f"{DM_EMOJI} Auction DMs: {'ON' if settings['dm_auction_notis'] else 'OFF'}\n"
+                f"{CONFIRM_EMOJI} Auction Confirm Buy: {'ON' if settings['confirm_auction_buy'] else 'OFF'}\n"
+                f"{PACK_EMOJI} Shop Confirm Buy: {'ON' if settings['confirm_pack_buy'] else 'OFF'}"
             ),
             inline=False
         )
@@ -135,93 +368,105 @@ class Users(commands.Cog):
     @commands.command()
     async def cd(self, ctx):
         user = self.get_profile(ctx.author)
-        now = datetime.utcnow()
+        now = self.utc_now()
 
-        practice_cd = "Ready"
-        daily_cd = "Ready"
+        practice_cd = f"{READY_EMOJI} Ready"
+        daily_cd = f"{READY_EMOJI} Ready"
 
-        if user.get("last_practice"):
-            last_practice = datetime.fromisoformat(user["last_practice"])
-            if now < last_practice + timedelta(minutes=10):
-                remaining = (last_practice + timedelta(minutes=10)) - now
-                minutes, seconds = divmod(int(remaining.total_seconds()), 60)
-                practice_cd = f"{minutes}m {seconds}s"
+        last_practice = self.parse_saved_time(user.get("last_practice"))
+        if last_practice:
+            practice_ready_at = last_practice + PRACTICE_COOLDOWN
+            if now < practice_ready_at:
+                practice_cd = self.format_remaining(practice_ready_at)
 
-        if user.get("last_daily"):
-            last_daily = datetime.fromisoformat(user["last_daily"])
-            if now < last_daily + timedelta(hours=24):
-                remaining = (last_daily + timedelta(hours=24)) - now
-                hours, remainder = divmod(int(remaining.total_seconds()), 3600)
-                minutes, seconds = divmod(remainder, 60)
-                daily_cd = f"{hours}h {minutes}m {seconds}s"
+        last_daily = self.parse_saved_time(user.get("last_daily"))
+        if last_daily:
+            daily_ready_at = last_daily + DAILY_COOLDOWN
+            if now < daily_ready_at:
+                daily_cd = self.format_daily_remaining(daily_ready_at)
 
-        embed = discord.Embed(title=f"{ctx.author.display_name}'s Cooldowns")
-        embed.add_field(name="Practice", value=practice_cd, inline=True)
-        embed.add_field(name="Daily", value=daily_cd, inline=True)
+        embed = discord.Embed(title=f"{COOLDOWN_EMOJI} {ctx.author.display_name}'s Cooldowns")
+        embed.add_field(name=f"{PRACTICE_EMOJI} Practice", value=practice_cd, inline=True)
+        embed.add_field(name=f"{DAILY_EMOJI} Daily", value=daily_cd, inline=True)
 
         await ctx.send(embed=embed)
 
 
-    # Practice command to earn gold every 10 minutes
+    # Practice command to earn cash every 10 minutes
     @commands.command()
     async def practice(self, ctx):
         user = self.get_profile(ctx.author)
-        now = datetime.utcnow()
+        now = self.utc_now()
 
-        last_time = user.get("last_practice")
+        last_time = self.parse_saved_time(user.get("last_practice"))
 
         if last_time:
-            last_time = datetime.fromisoformat(last_time)
-            if now < last_time + timedelta(minutes=10):
-                remaining = (last_time + timedelta(minutes=10)) - now
-                minutes, seconds = divmod(int(remaining.total_seconds()), 60)
-                await ctx.send(f"Wait {minutes}m {seconds}s before practicing again.")
+            practice_ready_at = last_time + PRACTICE_COOLDOWN
+            if now < practice_ready_at:
+                await ctx.send(f"{WAIT_EMOJI} Wait {self.format_remaining(practice_ready_at)} before practicing again.")
                 return
 
         reward = random.randint(5, 10)
-        user["gold"] += reward
+        leveled_up = self.add_xp(user, PRACTICE_XP_REWARD)
+        user["cash"] += reward
         user["last_practice"] = now.isoformat()
+        self.remember_reminder_channel(user, "practice", ctx.channel.id)
 
         self.save_users()
 
-        await ctx.send(f"{ctx.author.mention} You practiced and earned {reward} gold.")
+        level_text = f" You leveled up to **Level {user['level']}**." if leveled_up else ""
+        await ctx.send(
+            f"{PRACTICE_EMOJI} {ctx.author.mention} You practiced and earned "
+            f"{reward} {CASH_EMOJI} cash and {PRACTICE_XP_REWARD} XP.{level_text}"
+        )
         if user.get("settings", self.default_settings()).get("alert_daily_practice"):
-            self.bot.loop.create_task(self.notify_ready(ctx.channel.id, ctx.author.id, "practice", 10 * 60))
+            ready_at = now + PRACTICE_COOLDOWN
+            self.schedule_ready_notification(ctx.channel.id, ctx.author.id, "practice", ready_at)
 
-    # Daily command to earn gold once every 24 hours
+    # Daily command to earn cash and gold once every 24 hours
     @commands.command()
     async def daily(self, ctx):
         user = self.get_profile(ctx.author)
-        now = datetime.utcnow()
+        now = self.utc_now()
 
-        last_time = user.get("last_daily")
+        last_time = self.parse_saved_time(user.get("last_daily"))
 
         if last_time:
-            last_time = datetime.fromisoformat(last_time)
-            if now < last_time + timedelta(hours=24):
-                remaining = (last_time + timedelta(hours=24)) - now
-                hours, remainder = divmod(int(remaining.total_seconds()), 3600)
-                minutes, seconds = divmod(remainder, 60)
-                await ctx.send(f"Wait {hours}h {minutes}m {seconds}s before claiming daily again.")
+            daily_ready_at = last_time + DAILY_COOLDOWN
+            if now < daily_ready_at:
+                await ctx.send(f"{WAIT_EMOJI} Wait {self.format_daily_remaining(daily_ready_at)} before claiming daily again.")
                 return
 
-        reward = random.randint(20, 50)
-        user["gold"] += reward
-        user["radianite"] += 5
+        base_reward, reward, rank, multiplier = self.daily_cash_reward(user)
+        user["cash"] += reward
+        user["gold"] += 5
         user["last_daily"] = now.isoformat()
+        self.remember_reminder_channel(user, "daily", ctx.channel.id)
 
         self.save_users()
 
-        await ctx.send(f"{ctx.author.mention} You claimed your daily reward and earned {reward} gold and 5 radianite.")
+        multiplier_text = ""
+        if multiplier > 1:
+            multiplier_text = f" ({base_reward} x {multiplier:g} {rank} multiplier)"
+        await ctx.send(
+            f"{DAILY_EMOJI} {ctx.author.mention} You claimed your daily reward and earned "
+            f"{reward} {CASH_EMOJI} cash{multiplier_text} and 5 {GOLD_EMOJI} gold."
+        )
         if user.get("settings", self.default_settings()).get("alert_daily_practice"):
-            self.bot.loop.create_task(self.notify_ready(ctx.channel.id, ctx.author.id, "daily", 24 * 60 * 60))
+            ready_at = now + DAILY_COOLDOWN
+            self.schedule_ready_notification(ctx.channel.id, ctx.author.id, "daily", ready_at)
 
-    async def notify_ready(self, channel_id: int, user_id: int, action: str, wait_seconds: int):
-        await discord.utils.sleep_until(datetime.utcnow() + timedelta(seconds=wait_seconds))
+    async def notify_ready(self, channel_id: int, user_id: int, action: str, ready_at: datetime):
+        if ready_at.tzinfo is None:
+            ready_at = ready_at.replace(tzinfo=timezone.utc)
+        await self.bot.wait_until_ready()
+        await discord.utils.sleep_until(ready_at.astimezone(timezone.utc))
         try:
             channel = self.bot.get_channel(channel_id)
+            if channel is None:
+                channel = await self.bot.fetch_channel(channel_id)
             if channel:
-                await channel.send(f"<@{user_id}> your **{action}** is ready.")
+                await channel.send(f"{READY_EMOJI} <@{user_id}> your **{self.format_action_name(action)}** is ready.")
         except Exception:
             pass
 
@@ -251,6 +496,11 @@ class ProfileSettingsView(discord.ui.View):
         profile = self.users_cog.get_profile_by_id(self.target_uid)
         settings = profile.setdefault("settings", self.users_cog.default_settings())
         settings[key] = not settings.get(key, True)
+        if key == "alert_daily_practice":
+            if settings[key]:
+                self.users_cog.schedule_user_ready_notifications(self.target_uid, profile)
+            else:
+                self.users_cog.cancel_ready_notifications(self.target_uid)
         self.users_cog.save_users()
         self.refresh_button_styles()
         return settings[key]
@@ -270,22 +520,22 @@ class ProfileSettingsView(discord.ui.View):
         await interaction.response.send_message(message, ephemeral=True)
         await interaction.message.edit(view=self)
 
-    @discord.ui.button(label="Toggle Daily/Practice Alerts", style=discord.ButtonStyle.secondary, custom_id="profile_settings:alert_daily_practice")
+    @discord.ui.button(label=f"{ALERT_EMOJI} Toggle Daily/Practice Alerts", style=discord.ButtonStyle.secondary, custom_id="profile_settings:alert_daily_practice")
     async def toggle_alerts(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("alert_daily_practice")
         await self.send_toggle_response(interaction, f"Daily/Practice alerts are now {'ON' if state else 'OFF'}.")
 
-    @discord.ui.button(label="Toggle Auction DMs", style=discord.ButtonStyle.secondary, custom_id="profile_settings:dm_auction_notis")
+    @discord.ui.button(label=f"{DM_EMOJI} Toggle Auction DMs", style=discord.ButtonStyle.secondary, custom_id="profile_settings:dm_auction_notis")
     async def toggle_auction_dms(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("dm_auction_notis")
         await self.send_toggle_response(interaction, f"Auction DMs are now {'ON' if state else 'OFF'}.")
 
-    @discord.ui.button(label="Toggle Auction Confirm", style=discord.ButtonStyle.secondary, custom_id="profile_settings:confirm_auction_buy")
+    @discord.ui.button(label=f"{CONFIRM_EMOJI} Toggle Auction Confirm", style=discord.ButtonStyle.secondary, custom_id="profile_settings:confirm_auction_buy")
     async def toggle_auction_confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("confirm_auction_buy")
         await self.send_toggle_response(interaction, f"Auction purchase confirmation is now {'ON' if state else 'OFF'}.")
 
-    @discord.ui.button(label="Toggle Pack Confirm", style=discord.ButtonStyle.secondary, custom_id="profile_settings:confirm_pack_buy")
+    @discord.ui.button(label=f"{PACK_EMOJI} Toggle Pack Confirm", style=discord.ButtonStyle.secondary, custom_id="profile_settings:confirm_pack_buy")
     async def toggle_pack_confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("confirm_pack_buy")
         await self.send_toggle_response(interaction, f"Pack purchase confirmation is now {'ON' if state else 'OFF'}.")
