@@ -1,9 +1,10 @@
-import json
 import uuid
 from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands, tasks
+
+from .storage import load_json, save_json
 
 AUCTIONS_PATH = "data/auctions.json"
 HISTORY_PATH = "data/auctions_history.json"
@@ -24,16 +25,11 @@ class Auction(commands.Cog):
     # -----------------
 
     def load_auctions(self):
-        try:
-            with open(AUCTIONS_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data if isinstance(data, list) else []
-        except Exception:
-            return []
+        data = load_json(AUCTIONS_PATH, default=[])
+        return data if isinstance(data, list) else []
 
     def save_auctions(self, auctions):
-        with open(AUCTIONS_PATH, "w", encoding="utf-8") as f:
-            json.dump(auctions, f, indent=4)
+        save_json(AUCTIONS_PATH, auctions)
 
     def get_active_auction_count(self, seller_id):
         seller_id = str(seller_id)
@@ -43,16 +39,11 @@ class Auction(commands.Cog):
         return self.get_active_auction_count(seller_id) < MAX_ACTIVE_AUCTIONS_PER_USER
 
     def load_history(self):
-        try:
-            with open(HISTORY_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data if isinstance(data, list) else []
-        except Exception:
-            return []
+        data = load_json(HISTORY_PATH, default=[])
+        return data if isinstance(data, list) else []
 
     def save_history(self, history):
-        with open(HISTORY_PATH, "w", encoding="utf-8") as f:
-            json.dump(history, f, indent=4)
+        save_json(HISTORY_PATH, history)
 
     # -----------------
     # Helpers
@@ -112,6 +103,9 @@ class Auction(commands.Cog):
         users_cog = self.bot.get_cog("Users")
 
         min_increment = 10
+
+        if amount <= 0:
+            return "Bid must be greater than zero."
 
         for auction in auctions:
             if auction["auction_id"] != auction_id:
@@ -180,8 +174,17 @@ class Auction(commands.Cog):
 
         buyer_profile = users_cog.get_profile_by_id(str(buyer_id))
         seller_profile = users_cog.get_profile_by_id(target["seller_id"])
-        if buyer_profile["cash"] < price:
+        highest_bidder = target.get("highest_bidder")
+        current_bid = target.get("current_bid", 0)
+        held_by_buyer = current_bid if highest_bidder == str(buyer_id) else 0
+        if buyer_profile["cash"] + held_by_buyer < price:
             return None, "Not enough cash."
+
+        if highest_bidder and highest_bidder != str(buyer_id):
+            previous_bidder = users_cog.get_profile_by_id(highest_bidder)
+            previous_bidder["cash"] += current_bid
+        elif highest_bidder == str(buyer_id):
+            buyer_profile["cash"] += current_bid
 
         buyer_profile["cash"] -= price
         seller_profile["cash"] += price
@@ -546,6 +549,9 @@ class Auction(commands.Cog):
         users_cog = self.bot.get_cog("Users")
 
         if args and args[0] == "-sell":
+            if len(args) < 2 or not str(args[1]).isdigit():
+                await ctx.send("Use `.auction -sell <inventory #>`.")
+                return
             index = int(args[1])
             if not self.has_auction_room(ctx.author.id):
                 await ctx.send(f"You can only have {MAX_ACTIVE_AUCTIONS_PER_USER} active auctions at once.")
@@ -556,6 +562,9 @@ class Auction(commands.Cog):
             if error:
                 await ctx.send(error)
                 return
+            if cards_cog.is_card_in_user_team(ctx.author.id, owned_card):
+                await ctx.send("That card is in your team. Remove or replace it before auctioning it.")
+                return
 
             await ctx.send(
                 "Click below to create your auction:",
@@ -564,6 +573,9 @@ class Auction(commands.Cog):
             return
 
         if args and args[0] == "-sellpack":
+            if len(args) < 2 or not str(args[1]).isdigit():
+                await ctx.send("Use `.auction -sellpack <pack #>`.")
+                return
             index = int(args[1])
             if not self.has_auction_room(ctx.author.id):
                 await ctx.send(f"You can only have {MAX_ACTIVE_AUCTIONS_PER_USER} active auctions at once.")
@@ -667,6 +679,15 @@ class SellModal(discord.ui.Modal, title="Create Auction"):
                 ephemeral=True
             )
             return
+        if start <= 0:
+            await interaction.response.send_message("Starting price must be greater than zero.", ephemeral=True)
+            return
+        if buy is not None and buy <= 0:
+            await interaction.response.send_message("Buy now price must be greater than zero.", ephemeral=True)
+            return
+        if buy is not None and buy < start:
+            await interaction.response.send_message("Buy now price cannot be lower than the starting price.", ephemeral=True)
+            return
 
         users_cog = interaction.client.get_cog("Users")
         cards_cog = interaction.client.get_cog("Cards")
@@ -679,8 +700,16 @@ class SellModal(discord.ui.Modal, title="Create Auction"):
             return
 
         if self.item_type == "card":
+            if cards_cog.is_card_in_user_team(self.user_id, self.item):
+                await interaction.response.send_message(
+                    "That card is in your team. Remove or replace it before auctioning it.",
+                    ephemeral=True
+                )
+                return
             users, user_data = cards_cog.get_user_data(self.user_id)
-            cards_cog.remove_card_from_user(users, self.user_id, self.item)
+            if not cards_cog.remove_card_from_user(users, self.user_id, self.item):
+                await interaction.response.send_message("That card could not be removed from your inventory.", ephemeral=True)
+                return
         else:
             profile = users_cog.get_profile_by_id(str(self.user_id))
             removed = users_cog.remove_pack_at_slot(profile, self.pack_slot)
@@ -702,7 +731,14 @@ class BidModal(discord.ui.Modal, title="Place Bid"):
         self.auction = auction
 
     async def on_submit(self, interaction: discord.Interaction):
-        amount = int(self.bid_amount.value)
+        try:
+            amount = int(self.bid_amount.value)
+        except ValueError:
+            await interaction.response.send_message("Bid must be a whole number.", ephemeral=True)
+            return
+        if amount <= 0:
+            await interaction.response.send_message("Bid must be greater than zero.", ephemeral=True)
+            return
         error = self.cog.place_bid(self.auction["auction_id"], interaction.user.id, amount)
 
         if error:
@@ -732,7 +768,8 @@ class BuyView(discord.ui.View):
             return
 
         profile = users_cog.get_profile(interaction.user)
-        if profile["cash"] < price:
+        held_bid = self.auction.get("current_bid", 0) if self.auction.get("highest_bidder") == str(interaction.user.id) else 0
+        if profile["cash"] + held_bid < price:
             await interaction.response.send_message("Not enough cash.", ephemeral=True)
             return
 
@@ -779,7 +816,8 @@ class ConfirmAuctionBuyView(discord.ui.View):
         cards_cog = interaction.client.get_cog("Cards")
         profile = users_cog.get_profile(interaction.user)
         price = self.auction["buy_now_price"]
-        if profile["cash"] < price:
+        held_bid = self.auction.get("current_bid", 0) if self.auction.get("highest_bidder") == str(interaction.user.id) else 0
+        if profile["cash"] + held_bid < price:
             await interaction.response.send_message("Not enough cash.", ephemeral=True)
             return
         item_name = BuyView(self.auction, self.cog).execute_buy_now(interaction.user.id, users_cog, cards_cog)

@@ -1,36 +1,48 @@
-import json
 import uuid
 from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
 
+from .storage import load_json, save_json
+
 TRADES_PATH = "data/trades.json"
+ACTIVE_TRADES_PATH = "data/active_trades.json"
 CASH_EMOJI = "💵"
 
 
 class Trades(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.active_trades = {}
+        self.active_trades = self.load_active_trades()
+
+    async def cog_load(self):
+        for trade_id in list(self.active_trades):
+            await self.refresh_trade_message(trade_id)
 
     # -----------------
     # JSON
     # -----------------
 
     def load_trades(self):
-        try:
-            with open(TRADES_PATH, "r") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    return data
-                return []
-        except:
-            return []
+        data = load_json(TRADES_PATH, default=[])
+        return data if isinstance(data, list) else []
 
     def save_trades(self, trades):
-        with open(TRADES_PATH, "w") as f:
-            json.dump(trades, f, indent=4)
+        save_json(TRADES_PATH, trades)
+
+    def load_active_trades(self):
+        data = load_json(ACTIVE_TRADES_PATH, default={})
+        return data if isinstance(data, dict) else {}
+
+    def save_active_trades(self):
+        save_json(ACTIVE_TRADES_PATH, self.active_trades)
+
+    def reset_confirmations(self, trade):
+        for participant_id in trade["confirmed"]:
+            trade["confirmed"][participant_id] = False
+        trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
+        self.save_active_trades()
 
     async def refresh_trade_message(self, trade_id):
         trade = self.active_trades.get(trade_id)
@@ -104,6 +116,11 @@ class Trades(commands.Cog):
                 if isinstance(card, dict) and card.get("instance_id")
             }
             offered_card_ids = []
+            team_card_ids = {
+                instance_id
+                for instance_id in profile.get("team", {}).values()
+                if instance_id
+            }
             for card in offer["cards"]:
                 instance_id = card.get("instance_id") if isinstance(card, dict) else None
                 if not instance_id:
@@ -111,6 +128,8 @@ class Trades(commands.Cog):
                 offered_card_ids.append(instance_id)
                 if instance_id not in owned_card_ids:
                     return f"{label} no longer owns one of the offered cards."
+                if instance_id in team_card_ids:
+                    return f"{label} has an offered card in their team."
             if len(offered_card_ids) != len(set(offered_card_ids)):
                 return f"{label}'s offer contains the same card more than once."
 
@@ -194,10 +213,14 @@ class Trades(commands.Cog):
         for pack_offer in o1["packs"]:
             if remove_pack_offer(p1, pack_offer):
                 users_cog.add_pack_to_first_slot(p2, pack_offer_id(pack_offer))
+            else:
+                return False, "User 1 no longer owns one of the offered packs."
 
         for pack_offer in o2["packs"]:
             if remove_pack_offer(p2, pack_offer):
                 users_cog.add_pack_to_first_slot(p1, pack_offer_id(pack_offer))
+            else:
+                return False, "User 2 no longer owns one of the offered packs."
 
         users_cog.save_users()
 
@@ -216,6 +239,7 @@ class Trades(commands.Cog):
         self.save_trades(history)
 
         del self.active_trades[trade_id]
+        self.save_active_trades()
         return True, "Trade completed."
 
 
@@ -254,11 +278,13 @@ class TradeRequestView(discord.ui.View):
             },
             "can_confirm_at": datetime.utcnow().isoformat()
         }
+        self.cog.save_active_trades()
 
         await interaction.response.edit_message(content="Trade request accepted.", view=None)
         msg = await interaction.channel.send("Trade started.", embed=TradeView(self.cog, trade_id).build_embed(), view=TradeView(self.cog, trade_id))
         self.cog.active_trades[trade_id]["message_id"] = msg.id
         self.cog.active_trades[trade_id]["channel_id"] = msg.channel.id
+        self.cog.save_active_trades()
         await self.cog.refresh_trade_message(trade_id)
 
     @discord.ui.button(label="Decline", style=discord.ButtonStyle.red)
@@ -281,6 +307,11 @@ class TradeView(discord.ui.View):
 
     def get_trade(self):
         return self.cog.active_trades[self.trade_id]
+
+    async def on_timeout(self):
+        if self.trade_id in self.cog.active_trades:
+            del self.cog.active_trades[self.trade_id]
+            self.cog.save_active_trades()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         trade = self.get_trade()
@@ -344,11 +375,11 @@ class TradeView(discord.ui.View):
 
             if offer["cards"]:
                 lines.append("Cards:")
-                lines.extend(f"- {format_card(card)}" for card in offer["cards"])
+                lines.extend(f"{index}. {format_card(card)}" for index, card in enumerate(offer["cards"], start=1))
 
             if offer["packs"]:
                 lines.append("Packs:")
-                lines.extend(f"- {format_pack(pack_offer)}" for pack_offer in offer["packs"])
+                lines.extend(f"{index}. {format_pack(pack_offer)}" for index, pack_offer in enumerate(offer["packs"], start=1))
 
             if len(lines) == 1:
                 lines.append("No items offered yet.")
@@ -380,25 +411,37 @@ class TradeView(discord.ui.View):
 
     # ---------- BUTTONS ----------
 
-    @discord.ui.button(label="Add Card", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Add Card", style=discord.ButtonStyle.blurple, row=0)
     async def add_card(self, interaction, button):
         await interaction.response.send_modal(
             AddCardModal(self.cog, self.trade_id)
         )
 
-    @discord.ui.button(label="Add Pack", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Add Pack", style=discord.ButtonStyle.blurple, row=0)
     async def add_pack(self, interaction, button):
         await interaction.response.send_modal(
             AddPackModal(self.cog, self.trade_id)
         )
 
-    @discord.ui.button(label=f"{CASH_EMOJI} Add Cash", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label=f"{CASH_EMOJI} Set Cash", style=discord.ButtonStyle.secondary, row=0)
     async def add_cash(self, interaction, button):
         await interaction.response.send_modal(
             AddCashModal(self.cog, self.trade_id)
         )
 
-    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Remove Card", style=discord.ButtonStyle.secondary, row=1)
+    async def remove_card(self, interaction, button):
+        await interaction.response.send_modal(
+            RemoveCardModal(self.cog, self.trade_id)
+        )
+
+    @discord.ui.button(label="Remove Pack", style=discord.ButtonStyle.secondary, row=1)
+    async def remove_pack(self, interaction, button):
+        await interaction.response.send_modal(
+            RemovePackModal(self.cog, self.trade_id)
+        )
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, row=2)
     async def confirm(self, interaction, button):
         trade = self.get_trade()
         uid = str(interaction.user.id)
@@ -409,12 +452,14 @@ class TradeView(discord.ui.View):
             return
 
         trade["confirmed"][uid] = True
+        self.cog.save_active_trades()
 
         if all(trade["confirmed"].values()):
             success, message = self.cog.execute_trade(self.trade_id)
             if not success:
                 for participant_id in trade["confirmed"]:
                     trade["confirmed"][participant_id] = False
+                self.cog.save_active_trades()
                 await interaction.response.send_message(message, ephemeral=True)
                 await self.cog.refresh_trade_message(self.trade_id)
                 return
@@ -427,13 +472,14 @@ class TradeView(discord.ui.View):
             )
             await self.cog.refresh_trade_message(self.trade_id)
 
-    @discord.ui.button(label="Cancel Trade", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Cancel Trade", style=discord.ButtonStyle.red, row=2)
     async def cancel(self, interaction, button):
         trade = self.get_trade()
         if str(interaction.user.id) not in {trade["user1"], trade["user2"]}:
             await interaction.response.send_message("Only trade participants can cancel.", ephemeral=True)
             return
         del self.cog.active_trades[self.trade_id]
+        self.cog.save_active_trades()
         await interaction.response.edit_message(content="Trade cancelled.", embed=None, view=None)
         return
 
@@ -465,6 +511,12 @@ class AddCardModal(discord.ui.Modal, title="Add Card"):
         if error:
             await interaction.response.send_message(error, ephemeral=True)
             return
+        if cards_cog.is_card_in_user_team(interaction.user.id, owned_card):
+            await interaction.response.send_message(
+                "That card is in your team. Remove or replace it before trading it.",
+                ephemeral=True
+            )
+            return
 
         trade = self.cog.active_trades[self.trade_id]
         uid = str(interaction.user.id)
@@ -476,9 +528,7 @@ class AddCardModal(discord.ui.Modal, title="Add Card"):
                 return
 
         trade["offers"][uid]["cards"].append(owned_card)
-        trade["confirmed"][trade["user1"]] = False
-        trade["confirmed"][trade["user2"]] = False
-        trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
+        self.cog.reset_confirmations(trade)
 
         await interaction.response.send_message("Card added.", ephemeral=True)
         await self.cog.refresh_trade_message(self.trade_id)
@@ -521,9 +571,7 @@ class AddPackModal(discord.ui.Modal, title="Add Pack"):
                 return
 
         trade["offers"][uid]["packs"].append({"slot": slot, "pack_id": pack})
-        trade["confirmed"][trade["user1"]] = False
-        trade["confirmed"][trade["user2"]] = False
-        trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
+        self.cog.reset_confirmations(trade)
 
         await interaction.response.send_message("Pack added.", ephemeral=True)
         await self.cog.refresh_trade_message(self.trade_id)
@@ -560,11 +608,65 @@ class AddCashModal(discord.ui.Modal, title="Add Cash"):
         uid = str(interaction.user.id)
 
         trade["offers"][uid]["cash"] = amount
-        trade["confirmed"][trade["user1"]] = False
-        trade["confirmed"][trade["user2"]] = False
-        trade["can_confirm_at"] = (datetime.utcnow() + timedelta(seconds=3)).isoformat()
+        self.cog.reset_confirmations(trade)
 
-        await interaction.response.send_message("Cash added.", ephemeral=True)
+        await interaction.response.send_message("Cash offer updated.", ephemeral=True)
+        await self.cog.refresh_trade_message(self.trade_id)
+
+
+class RemoveCardModal(discord.ui.Modal, title="Remove Offered Card"):
+    index = discord.ui.TextInput(label="Offer Card Number")
+
+    def __init__(self, cog, trade_id):
+        super().__init__()
+        self.cog = cog
+        self.trade_id = trade_id
+
+    async def on_submit(self, interaction):
+        try:
+            index = int(self.index.value)
+        except ValueError:
+            await interaction.response.send_message("Offer card number must be a number.", ephemeral=True)
+            return
+
+        trade = self.cog.active_trades[self.trade_id]
+        uid = str(interaction.user.id)
+        cards = trade["offers"][uid]["cards"]
+        if index < 1 or index > len(cards):
+            await interaction.response.send_message("Invalid offered card number.", ephemeral=True)
+            return
+
+        cards.pop(index - 1)
+        self.cog.reset_confirmations(trade)
+        await interaction.response.send_message("Card removed from your offer.", ephemeral=True)
+        await self.cog.refresh_trade_message(self.trade_id)
+
+
+class RemovePackModal(discord.ui.Modal, title="Remove Offered Pack"):
+    index = discord.ui.TextInput(label="Offer Pack Number")
+
+    def __init__(self, cog, trade_id):
+        super().__init__()
+        self.cog = cog
+        self.trade_id = trade_id
+
+    async def on_submit(self, interaction):
+        try:
+            index = int(self.index.value)
+        except ValueError:
+            await interaction.response.send_message("Offer pack number must be a number.", ephemeral=True)
+            return
+
+        trade = self.cog.active_trades[self.trade_id]
+        uid = str(interaction.user.id)
+        packs = trade["offers"][uid]["packs"]
+        if index < 1 or index > len(packs):
+            await interaction.response.send_message("Invalid offered pack number.", ephemeral=True)
+            return
+
+        packs.pop(index - 1)
+        self.cog.reset_confirmations(trade)
+        await interaction.response.send_message("Pack removed from your offer.", ephemeral=True)
         await self.cog.refresh_trade_message(self.trade_id)
 
 

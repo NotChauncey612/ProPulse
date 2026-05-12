@@ -1,14 +1,14 @@
-import json
 import discord
 from discord.ext import commands
+
+from .storage import load_json
 
 PACKS_PATH = "data/packs.json"
 CASH_EMOJI = "💵"
 
 
 def load_packs():
-    with open(PACKS_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = load_json(PACKS_PATH, default={})
 
     if isinstance(data, dict) and "packs" in data:
         packs = data["packs"]
@@ -198,40 +198,6 @@ class ShopView(discord.ui.View):
 class Shop(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    def create_embed(self, packs: list[dict]) -> discord.Embed:
-        embed = discord.Embed(
-            title="Card Shop",
-            description="Select a pack below to purchase.",
-            color=discord.Color.blue()
-        )
-
-        for index, pack in enumerate(packs):
-            league_text = pack.get("league")
-
-        if not league_text and pack.get("leagues"):
-            league_text = ", ".join(pack["leagues"])
-
-        value_lines = [
-            f"🎮 **Game:** {pack.get('game', 'Unknown')}",
-            f"📦 **Set:** {pack.get('set', 'Unknown')}",
-        ]
-
-        if league_text:
-            value_lines.append(f"🏆 **League:** {league_text}")
-
-        value_lines.extend([
-            f"🃏 **Cards:** {pack.get('cards_per_pack', 0)}",
-            f"{CASH_EMOJI} **Cost:** {pack.get('price', 0)} cash"
-        ])
-
-        embed.add_field(
-            name=pack.get("name", "Unknown Pack"),
-            value="\n".join(value_lines),
-            inline=False
-        )
-
-        return embed
 
     def create_shop_embed(self, packs: list[dict]) -> discord.Embed:
         embed = discord.Embed(
