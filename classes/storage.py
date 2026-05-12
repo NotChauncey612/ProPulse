@@ -10,6 +10,10 @@ _locks = {}
 _locks_guard = threading.Lock()
 
 
+def configured_data_dir():
+    return os.getenv("DATA_DIR") or os.getenv("RAILWAY_VOLUME_MOUNT_PATH")
+
+
 def _lock_for(path):
     resolved = str(Path(path).resolve())
     with _locks_guard:
@@ -20,7 +24,7 @@ def _lock_for(path):
 
 def data_path(path):
     path = Path(path)
-    data_dir = os.getenv("DATA_DIR")
+    data_dir = configured_data_dir()
     if data_dir and not path.is_absolute() and path.parts and path.parts[0] == "data":
         return Path(data_dir, *path.parts[1:])
     return path
