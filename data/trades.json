@@ -6,7 +6,7 @@
         "user1_offer": {
             "cards": [],
             "packs": [],
-            "gold": 0
+            "cash": 0
         },
         "user2_offer": {
             "cards": [
@@ -18,7 +18,7 @@
                 }
             ],
             "packs": [],
-            "gold": 500
+            "cash": 500
         },
         "completed_at": "2026-04-13T16:54:03.470124"
     },
@@ -29,13 +29,29 @@
         "user1_offer": {
             "cards": [],
             "packs": [],
-            "gold": 5000
+            "cash": 5000
         },
         "user2_offer": {
             "cards": [],
             "packs": [],
-            "gold": 0
+            "cash": 0
         },
         "completed_at": "2026-04-13T19:09:08.518712"
+    },
+    {
+        "trade_id": "092ee2cf-556b-402f-9c2c-06bb24c1c5bf",
+        "user1_id": "272473699909763072",
+        "user2_id": "766143687980744706",
+        "user1_offer": {
+            "cards": [],
+            "packs": [],
+            "cash": 10000
+        },
+        "user2_offer": {
+            "cards": [],
+            "packs": [],
+            "cash": 0
+        },
+        "completed_at": "2026-05-12T03:24:15.991790"
     }
 ]

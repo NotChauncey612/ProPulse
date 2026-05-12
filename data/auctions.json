@@ -1,1 +1,144 @@
-[]
+[
+    {
+        "auction_id": "68ed1dc8-cc56-42d4-bd50-40d2ff15f74e",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "48404da2-5427-4bbd-89d7-35b4c1fe96fb",
+            "card_id": "2026_lck_t1_doran",
+            "rarity": "Silver",
+            "pulled_on": "2026-04-12T06:03:24.298329",
+            "snapshot": {
+                "ign": "Doran",
+                "team": "T1",
+                "set": "LOL '26",
+                "league": "LCK",
+                "image_url": ""
+            }
+        },
+        "pack_name": null,
+        "starting_price": 500,
+        "buy_now_price": 1000,
+        "current_bid": 500,
+        "highest_bidder": null,
+        "created_at": "2026-05-11T21:32:09.567932",
+        "expires_at": "2026-05-12T21:32:09.567939"
+    },
+    {
+        "auction_id": "4d2cb183-5eb5-4c78-a5b8-b9bc76879809",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "58a4d7aa-aa08-4a14-8c26-b9d317ce02a6",
+            "card_id": "2026_lck_t1_peyz",
+            "rarity": "Diamond",
+            "pulled_on": "2026-04-12T10:27:37.279460",
+            "snapshot": {
+                "ign": "Peyz",
+                "team": "T1",
+                "set": "LOL '26",
+                "league": "LCK",
+                "image_url": ""
+            }
+        },
+        "pack_name": null,
+        "starting_price": 500,
+        "buy_now_price": 10000,
+        "current_bid": 500,
+        "highest_bidder": null,
+        "created_at": "2026-05-11T21:32:56.184807",
+        "expires_at": "2026-05-12T21:32:56.184813"
+    },
+    {
+        "auction_id": "f4fcc260-100b-49c4-8d10-6cacdabc2599",
+        "seller_id": "272473699909763072",
+        "item_type": "pack",
+        "card_instance": null,
+        "pack_name": "pack_lck_26",
+        "starting_price": 10,
+        "buy_now_price": 150,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-11T22:19:26.915353",
+        "duration_days": 5,
+        "expires_at": "2026-05-16T22:19:26.915353"
+    },
+    {
+        "auction_id": "08005648-ea7e-457b-83d0-d1b68383b110",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "f41dafb3-6902-40b7-a1a6-7baf99bb7aa5",
+            "card_id": "2026_lck_t1_doran",
+            "rarity": "Master",
+            "pulled_on": "2026-04-12T10:27:14.996713",
+            "snapshot": {
+                "ign": "Doran",
+                "team": "T1",
+                "set": "LOL '26",
+                "league": "LCK",
+                "image_url": ""
+            }
+        },
+        "pack_name": null,
+        "starting_price": 500,
+        "buy_now_price": 10000,
+        "current_bid": 500,
+        "highest_bidder": null,
+        "created_at": "2026-05-11T23:48:00.959542",
+        "duration_days": 1,
+        "expires_at": "2026-05-12T23:48:00.959542"
+    },
+    {
+        "auction_id": "e36915de-638f-4e2b-9775-467cbcbc4157",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "feeed167-4ab2-4d77-8ce0-06b9eb624be7",
+            "card_id": "2026_lck_t1_peyz",
+            "rarity": "Diamond",
+            "pulled_on": "2026-04-12T09:33:55.620682",
+            "snapshot": {
+                "ign": "Peyz",
+                "team": "T1",
+                "set": "LOL '26",
+                "league": "LCK",
+                "image_url": ""
+            }
+        },
+        "pack_name": null,
+        "starting_price": 500,
+        "buy_now_price": 1500,
+        "current_bid": 500,
+        "highest_bidder": null,
+        "created_at": "2026-05-11T23:48:17.900351",
+        "duration_days": 1,
+        "expires_at": "2026-05-12T23:48:17.900351"
+    },
+    {
+        "auction_id": "1d01d1c1-5087-4ce9-ac04-60534f1ce5cf",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "8269b05b-6e03-4be2-8448-0c29a6d172df",
+            "card_id": "2026_lck_t1_keria",
+            "rarity": "Gold",
+            "pulled_on": "2026-04-12T06:33:53.984829",
+            "snapshot": {
+                "ign": "Keria",
+                "team": "T1",
+                "set": "LOL '26",
+                "league": "LCK",
+                "image_url": ""
+            }
+        },
+        "pack_name": null,
+        "starting_price": 500,
+        "buy_now_price": 1000,
+        "current_bid": 500,
+        "highest_bidder": null,
+        "created_at": "2026-05-11T23:50:06.203164",
+        "duration_days": 2,
+        "expires_at": "2026-05-13T23:50:06.203164"
+    }
+]
