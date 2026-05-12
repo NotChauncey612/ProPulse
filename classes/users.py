@@ -28,6 +28,7 @@ RANKED_EMOJI = "⚔️"
 
 PRACTICE_XP_MIN = 15
 PRACTICE_XP_MAX = 35
+STARTING_CASH = 200
 DEFAULT_ELO = 1000
 LEADERBOARD_PER_PAGE = 20
 TEAM_STAT_ROLES = ["TOP", "JNG", "MID", "BOT", "SUP"]
@@ -76,7 +77,7 @@ class Users(commands.Cog):
         uid = str(member.id)
         if uid not in self.users:
             self.users[uid] = {
-                'cash': 0,
+                'cash': STARTING_CASH,
                 'gold': 0,
                 'last_practice': None, 
                 'last_daily': None,
@@ -109,7 +110,7 @@ class Users(commands.Cog):
         uid = str(user_id)
         if uid not in self.users:
             self.users[uid] = {
-                'cash': 0,
+                'cash': STARTING_CASH,
                 'gold': 0,
                 'last_practice': None,
                 'last_daily': None,
