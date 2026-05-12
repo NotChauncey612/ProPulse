@@ -1,13 +1,1 @@
-[
-    {
-        "auction_id": "d2b8f993-8567-48b3-bbd6-1b2a11326fce",
-        "item_type": "pack",
-        "card_instance": null,
-        "pack_name": "pack_all_26",
-        "seller_id": "272473699909763072",
-        "winner_id": "766143687980744706",
-        "final_price": 1000,
-        "sold": true,
-        "ended_at": "2026-04-14T17:35:00.893539"
-    }
-]
+[]
