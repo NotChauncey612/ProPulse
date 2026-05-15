@@ -4,6 +4,7 @@ from discord.ext import commands
 from .storage import load_json
 
 PACKS_PATH = "data/packs.json"
+GAME_ORDER = ["LoL", "Valorant"]
 CASH_EMOJI = "💵"
 
 
@@ -158,7 +159,8 @@ class PackSelect(discord.ui.Select):
             placeholder="Choose a pack...",
             min_values=1,
             max_values=1,
-            options=options
+            options=options,
+            row=1
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -188,21 +190,76 @@ class PackSelect(discord.ui.Select):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
+class ShopGameSelect(discord.ui.Select):
+    def __init__(self, shop_view):
+        self.shop_view = shop_view
+        options = [
+            discord.SelectOption(
+                label=game,
+                value=game,
+                default=game == shop_view.selected_game
+            )
+            for game in shop_view.available_games()
+        ]
+        super().__init__(
+            placeholder="Choose a game...",
+            min_values=1,
+            max_values=1,
+            options=options,
+            row=0
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.shop_view.selected_game = self.values[0]
+        self.shop_view.rebuild_items()
+        await interaction.response.edit_message(
+            embed=self.shop_view.create_embed(),
+            view=self.shop_view
+        )
+
+
 class ShopView(discord.ui.View):
-    def __init__(self, packs: list[dict]):
+    def __init__(self, shop_cog, packs: list[dict]):
         super().__init__(timeout=120)
-        if packs:
-            self.add_item(PackSelect(packs))
+        self.shop_cog = shop_cog
+        self.packs = packs
+        games = self.available_games()
+        self.selected_game = games[0] if games else None
+        self.rebuild_items()
+
+    def available_games(self):
+        games = {pack.get("game", "Unknown") for pack in self.packs if pack.get("game")}
+        return sorted(games, key=lambda game: (GAME_ORDER.index(game) if game in GAME_ORDER else 99, game))
+
+    def filtered_packs(self):
+        if not self.selected_game:
+            return self.packs
+        return [pack for pack in self.packs if pack.get("game") == self.selected_game]
+
+    def rebuild_items(self):
+        self.clear_items()
+        if self.available_games():
+            self.add_item(ShopGameSelect(self))
+        filtered = self.filtered_packs()
+        if filtered:
+            self.add_item(PackSelect(filtered))
+
+    def create_embed(self):
+        return self.shop_cog.create_shop_embed(self.filtered_packs(), self.selected_game)
 
 
 class Shop(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def create_shop_embed(self, packs: list[dict]) -> discord.Embed:
+    def create_shop_embed(self, packs: list[dict], selected_game: str | None = None) -> discord.Embed:
         embed = discord.Embed(
             title="🛒 Card Shop",
-            description="Select a pack below to purchase.",
+            description=(
+                f"Showing **{selected_game}** packs. Use the dropdown to switch games."
+                if selected_game else
+                "Select a pack below to purchase."
+            ),
             color=discord.Color.blue()
         )
 
@@ -244,9 +301,8 @@ class Shop(commands.Cog):
     @commands.command()
     async def shop(self, ctx):
         packs = load_packs()
-        embed = self.create_shop_embed(packs)
-        view = ShopView(packs)
-        await ctx.send(embed=embed, view=view)
+        view = ShopView(self, packs)
+        await ctx.send(embed=view.create_embed(), view=view)
 
 
 async def setup(bot):

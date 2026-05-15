@@ -1,1 +1,30 @@
-[]
+[
+    {
+        "auction_id": "8810e190-c4cd-44da-911d-933058ef6676",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "b1a66c11-ec45-47b2-be1b-de9014c92a47",
+            "card_id": "2026_cblol_los_duduhh",
+            "rarity": "Master",
+            "pulled_on": "2026-05-12T19:19:40.137787",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Duduhh",
+                "team": "LOS",
+                "set": "LoL 26",
+                "league": "CBLOL",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/LOS/los_duduhh.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 70,
+        "buy_now_price": 70,
+        "current_bid": 70,
+        "highest_bidder": null,
+        "created_at": "2026-05-14T19:10:22.148147",
+        "duration_days": 1,
+        "expires_at": "2026-05-15T19:10:22.148147"
+    }
+]

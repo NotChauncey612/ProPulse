@@ -32,8 +32,17 @@ STARTING_CASH = 200
 DEFAULT_ELO = 1000
 LEADERBOARD_PER_PAGE = 20
 TEAM_STAT_ROLES = ["TOP", "JNG", "MID", "BOT", "SUP"]
+GAME_LEAGUE = "League of Legends"
+GAME_VALORANT = "Valorant"
+DEFAULT_TEAM_GAME = GAME_LEAGUE
+VALORANT_TEAM_STAT_ROLES = ["S1", "S2", "S3", "S4", "S5"]
+TEAM_STAT_ROLES_BY_GAME = {
+    GAME_LEAGUE: TEAM_STAT_ROLES,
+    GAME_VALORANT: VALORANT_TEAM_STAT_ROLES,
+}
+VALORANT_STAT_ROLE_MAP = dict(zip(VALORANT_TEAM_STAT_ROLES, TEAM_STAT_ROLES))
 BASE_TEAM_STAT = 10
-EMPTY_TEAM_SLOT_POWER_MULTIPLIER = 0.5
+EMPTY_TEAM_SLOT_POWER_MULTIPLIER = 1.0
 STAT_GAIN_MIN = 2
 STAT_GAIN_MAX = 5
 RANK_THRESHOLDS = [
@@ -44,11 +53,11 @@ RANK_THRESHOLDS = [
     ("Silver", 0),
 ]
 RANK_CASH_MULTIPLIERS = {
-    "Silver": 1.0,
-    "Gold": 1.25,
-    "Diamond": 1.5,
-    "Champ": 1.75,
-    "Challenger": 2.0,
+    "Silver": 1.1,
+    "Gold": 1.2,
+    "Diamond": 1.3,
+    "Champ": 1.4,
+    "Challenger": 1.5,
 }
 
 
@@ -85,10 +94,13 @@ class Users(commands.Cog):
                 'packs': [], 
                 'cards': [],
                 'team': {},
+                'teams': self.default_teams(),
                 'xp': 0,
                 'level': 1,
                 'team_stats': self.default_team_stats(),
+                'team_stats_by_game': self.default_team_stats_by_game(),
                 'team_stat_level': 1,
+                'default_team_game': DEFAULT_TEAM_GAME,
                 'elo': DEFAULT_ELO,
                 'ranked_wins': 0,
                 'ranked_losses': 0,
@@ -100,6 +112,7 @@ class Users(commands.Cog):
             self.users[uid]["discord_username"] = member.name
             self.users[uid].setdefault("settings", self.default_settings())
             self.users[uid].setdefault("team", {})
+            self.normalize_game_teams(self.users[uid])
             self.users[uid].setdefault("last_ranked", None)
             self.normalize_profile_progress(self.users[uid])
             self.normalize_profile_currency(self.users[uid])
@@ -118,10 +131,13 @@ class Users(commands.Cog):
                 'packs': [],
                 'cards': [],
                 'team': {},
+                'teams': self.default_teams(),
                 'xp': 0,
                 'level': 1,
                 'team_stats': self.default_team_stats(),
+                'team_stats_by_game': self.default_team_stats_by_game(),
                 'team_stat_level': 1,
+                'default_team_game': DEFAULT_TEAM_GAME,
                 'elo': DEFAULT_ELO,
                 'ranked_wins': 0,
                 'ranked_losses': 0,
@@ -132,6 +148,7 @@ class Users(commands.Cog):
         else:
             self.users[uid].setdefault("settings", self.default_settings())
             self.users[uid].setdefault("team", {})
+            self.normalize_game_teams(self.users[uid])
             self.users[uid].setdefault("last_ranked", None)
             self.normalize_profile_progress(self.users[uid])
             self.normalize_profile_currency(self.users[uid])
@@ -168,33 +185,100 @@ class Users(commands.Cog):
     def default_team_stats(self):
         return {role: BASE_TEAM_STAT for role in TEAM_STAT_ROLES}
 
-    def normalize_team_stats(self, profile):
-        stats = profile.get("team_stats")
-        if not isinstance(stats, dict):
-            stats = {}
-            profile["team_stats"] = stats
+    def default_teams(self):
+        return {game_name: {} for game_name in TEAM_STAT_ROLES_BY_GAME}
 
+    def default_team_stats_by_game(self):
+        return {
+            game_name: {role: BASE_TEAM_STAT for role in roles}
+            for game_name, roles in TEAM_STAT_ROLES_BY_GAME.items()
+        }
+
+    def valorant_stats_from_league_stats(self, league_stats):
+        return {
+            valorant_role: int(league_stats.get(league_role, BASE_TEAM_STAT))
+            for valorant_role, league_role in VALORANT_STAT_ROLE_MAP.items()
+        }
+
+    def normalize_game_name(self, game_name):
+        text = str(game_name or "").strip().lower()
+        if text in {"valorant", "val", "vct"}:
+            return GAME_VALORANT
+        return GAME_LEAGUE
+
+    def normalize_game_teams(self, profile):
+        teams = profile.get("teams")
+        if not isinstance(teams, dict):
+            teams = self.default_teams()
+            profile["teams"] = teams
+
+        legacy_team = profile.get("team")
+        if not isinstance(legacy_team, dict):
+            legacy_team = {}
+
+        league_team = teams.get(GAME_LEAGUE)
+        if not isinstance(league_team, dict):
+            league_team = {}
+            teams[GAME_LEAGUE] = league_team
         for role in TEAM_STAT_ROLES:
-            stats.setdefault(role, BASE_TEAM_STAT)
+            if role in legacy_team and role not in league_team:
+                league_team[role] = legacy_team[role]
+        teams.setdefault(GAME_VALORANT, {})
+        profile["team"] = league_team
+
+        default_game = self.normalize_game_name(profile.get("default_team_game"))
+        if default_game not in TEAM_STAT_ROLES_BY_GAME:
+            default_game = DEFAULT_TEAM_GAME
+        profile["default_team_game"] = default_game
+        return teams
+
+    def normalize_team_stats_by_game(self, profile):
+        stats_by_game = profile.get("team_stats_by_game")
+        if not isinstance(stats_by_game, dict):
+            stats_by_game = {}
+            profile["team_stats_by_game"] = stats_by_game
+
+        legacy_stats = profile.get("team_stats")
+        if not isinstance(legacy_stats, dict):
+            legacy_stats = {}
+
+        league_stats = stats_by_game.get(GAME_LEAGUE)
+        if not isinstance(league_stats, dict):
+            league_stats = {}
+            stats_by_game[GAME_LEAGUE] = league_stats
+        for role in TEAM_STAT_ROLES:
+            league_stats.setdefault(role, legacy_stats.get(role, BASE_TEAM_STAT))
+
+        stats_by_game[GAME_VALORANT] = self.valorant_stats_from_league_stats(league_stats)
+        profile["team_stats"] = league_stats
+        return stats_by_game
+
+    def normalize_team_stats(self, profile):
+        stats_by_game = self.normalize_team_stats_by_game(profile)
 
         profile.setdefault("team_stat_level", 1)
         while int(profile["team_stat_level"]) < int(profile.get("level", 1)):
             self.apply_team_stat_level_up(profile)
 
     def apply_team_stat_level_up(self, profile):
-        stats = profile.setdefault("team_stats", self.default_team_stats())
+        stats_by_game = self.normalize_team_stats_by_game(profile)
         gains = {}
+        league_stats = stats_by_game[GAME_LEAGUE]
+        league_gains = {}
         for role in TEAM_STAT_ROLES:
-            stats.setdefault(role, BASE_TEAM_STAT)
+            league_stats.setdefault(role, BASE_TEAM_STAT)
             gain = random.randint(STAT_GAIN_MIN, STAT_GAIN_MAX)
-            stats[role] += gain
-            gains[role] = gain
+            league_stats[role] += gain
+            league_gains[role] = gain
+        stats_by_game[GAME_VALORANT] = self.valorant_stats_from_league_stats(league_stats)
+        gains[GAME_LEAGUE] = league_gains
         profile["team_stat_level"] = int(profile.get("team_stat_level", 1)) + 1
         return gains
 
     def normalize_profile_progress(self, profile):
         profile.setdefault("xp", 0)
         profile["level"] = self.level_for_xp(int(profile.get("xp", 0)))
+        self.normalize_game_teams(profile)
         self.normalize_team_stats(profile)
         profile.setdefault("elo", DEFAULT_ELO)
         profile.setdefault("ranked_wins", 0)
@@ -223,7 +307,9 @@ class Users(commands.Cog):
         return base_reward, round(base_reward * multiplier), rank, multiplier
 
     def team_slot_has_card(self, profile, role):
-        team = profile.get("team") if isinstance(profile.get("team"), dict) else {}
+        teams = self.normalize_game_teams(profile)
+        game_name = profile.get("default_team_game", DEFAULT_TEAM_GAME)
+        team = teams.get(game_name) if isinstance(teams.get(game_name), dict) else {}
         instance_id = team.get(role)
         if not instance_id:
             return False
@@ -241,12 +327,32 @@ class Users(commands.Cog):
         return round(stat * EMPTY_TEAM_SLOT_POWER_MULTIPLIER)
 
     def total_power(self, profile):
-        stats = profile.get("team_stats")
+        cards_cog = self.bot.get_cog("Cards") if self.bot else None
+        if cards_cog is not None:
+            game_name = cards_cog.get_default_team_game(profile)
+            defense_slots = cards_cog.get_best_ranked_defense_slots(profile, game_name)
+            if defense_slots is None:
+                image_slots, _ = cards_cog.get_team_image_slots(
+                    profile,
+                    game_name,
+                    1.0,
+                )
+                cards_cog.remember_best_ranked_defense(profile, game_name, image_slots)
+                defense_slots = image_slots
+            return cards_cog.ranked_team_power(
+                profile,
+                defense_slots,
+                game_name,
+                1.0,
+            )
+
+        game_name = self.normalize_game_name(profile.get("default_team_game"))
+        stats = self.normalize_team_stats_by_game(profile).get(game_name, {})
         if not isinstance(stats, dict):
             stats = {}
         return sum(
             self.team_slot_power(stats, role, self.team_slot_has_card(profile, role))
-            for role in TEAM_STAT_ROLES
+            for role in TEAM_STAT_ROLES_BY_GAME.get(game_name, TEAM_STAT_ROLES)
         )
 
     def leaderboard_name(self, user_id, profile):
@@ -431,10 +537,10 @@ class Users(commands.Cog):
             "`.leaderboard` or `.lb` - View users ranked by ELO.\n"
             "`.ranked` - Battle a similar-ELO user's team for ELO.\n"
             "`.practice` - Earn cash every 10 minutes.\n"
-            "`.team` - View your lineup and set TOP/JNG/MID/BOT/SUP cards.\n\n"
+            "`.team` - View your LoL or Valorant lineup, set cards, and choose your default ranked game.\n\n"
             "**Collection**\n"
             "`.inventory [filters]` or `.inv [filters]` - View your cards.\n"
-            "Inventory filters: `-player <name/id>`, `-team <team>`, `-rarity <rarity>`, `-set <set>`, `-league <league>`, `-role <role>`.\n"
+            "Inventory filters: `-player <name/id>`, `-team <team>`, `-game <game>`, `-rarity <rarity>`, `-set <set>`, `-league <league>`, `-role <role>`.\n"
             "Example: `.inv -team T1 -rarity Gold -role mid`\n"
             "`.progress [filters]` - View collection progress and best rarity for each card.\n"
             "`.info [filters]` - List all bot cards. Supports inventory filters plus `-region <league>`.\n"
@@ -541,7 +647,7 @@ class Users(commands.Cog):
                 await ctx.send(f"{WAIT_EMOJI} Wait {self.format_remaining(practice_ready_at)} before practicing again.")
                 return
 
-        reward = random.randint(5, 10)
+        reward = random.randint(10, 20)
         xp_reward = random.randint(PRACTICE_XP_MIN, PRACTICE_XP_MAX)
         leveled_up, stat_gains = self.add_xp(user, xp_reward)
         user["cash"] += reward
@@ -553,7 +659,15 @@ class Users(commands.Cog):
         level_text = ""
         if leveled_up:
             latest_gains = stat_gains[-1] if stat_gains else {}
-            gain_text = ", ".join(f"{role} +{gain}" for role, gain in latest_gains.items())
+            gain_parts = []
+            for key, value in latest_gains.items():
+                if isinstance(value, dict):
+                    inner = ", ".join(f"{role} +{gain}" for role, gain in value.items())
+                    if inner:
+                        gain_parts.append(f"{key}: {inner}")
+                else:
+                    gain_parts.append(f"{key} +{value}")
+            gain_text = "; ".join(gain_parts)
             level_text = f" You leveled up to **Level {user['level']}**."
             if gain_text:
                 level_text += f" Stat gains: {gain_text}."
@@ -638,7 +752,7 @@ class LeaderboardView(discord.ui.View):
         for index, entry in enumerate(self.get_page_entries(), start=self.page_start() + 1):
             lines.append(
                 f"`#{index:>2}` **{entry['ign']}** | "
-                f"Power: `{entry['total_power']}` | ELO: `{entry['elo']}`"
+                f"Power: `{entry['total_power']}` | {RANKED_EMOJI} ELO: `{entry['elo']}`"
             )
 
         description = "\n".join(lines) if lines else "No users are on the leaderboard yet."
