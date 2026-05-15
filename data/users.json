@@ -11,8 +11,8 @@
             null,
             null,
             null,
-            "pack_all_26",
-            "pack_all_26"
+            null,
+            null
         ],
         "cards": [
             {
@@ -2403,6 +2403,244 @@
                     "league": "LCP",
                     "role": "BOT",
                     "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/GAM_Esports/gam-esports_artemis.png"
+                }
+            },
+            {
+                "instance_id": "f6a59019-9768-4df4-acc5-b55d964cef32",
+                "card_id": "2026_lcp_fshg_vsta",
+                "rarity": "Diamond",
+                "pulled_on": "2026-05-15T10:30:37.893723",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Vsta",
+                    "team": "Fukuoka SoftBank Hawks Gaming",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCP",
+                    "role": "SUP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Fukuoka_SoftBank_Hawks_Gaming/fukuoka-softbank-hawks-gaming_vsta.png"
+                }
+            },
+            {
+                "instance_id": "9478d259-8b5a-45b3-9831-104c3d1fad5c",
+                "card_id": "2026_lcs_c9_zven",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-15T10:30:37.900384",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Zven",
+                    "team": "Cloud9",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCS",
+                    "role": "BOT",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Cloud9/cloud9_zven.png"
+                }
+            },
+            {
+                "instance_id": "ac02232a-56e0-4180-a846-1d888df84710",
+                "card_id": "2026_lck_hle_zeus",
+                "rarity": "Master",
+                "pulled_on": "2026-05-15T10:30:37.907063",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Zeus",
+                    "team": "Hanwha Life Esports",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCK",
+                    "role": "TOP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Hanwha_Life_Esports/hanwha-life-esports_zeus.png"
+                }
+            },
+            {
+                "instance_id": "32f54a06-4523-4a48-aca7-352d7401865b",
+                "card_id": "2026_lcs_dig_photon",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-15T10:30:37.913896",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Photon",
+                    "team": "Dignitas",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCS",
+                    "role": "TOP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Dignitas/dignitas_photon.png"
+                }
+            },
+            {
+                "instance_id": "7a6d43f9-a4fc-4423-8c2e-d5fef4d43a3e",
+                "card_id": "2026_lcp_dcg_flauren",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-15T10:30:37.920776",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Flauren",
+                    "team": "Deep Cross Gaming",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCP",
+                    "role": "TOP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Deep_Cross_Gaming/deep-cross-gaming_flauren.png"
+                }
+            },
+            {
+                "instance_id": "cade8d0a-2346-48eb-b708-567e7d280a32",
+                "card_id": "2026_lec_sft_nuc",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-15T10:30:37.927534",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "nuc",
+                    "team": "Shifters",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "MID",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Shifters/shifters_nuc.png"
+                }
+            },
+            {
+                "instance_id": "ddd7bf91-db53-4f75-8480-0d99256ddd07",
+                "card_id": "2026_lec_sk_lider",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-15T10:30:37.934395",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "LIDER",
+                    "team": "SK Gaming",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "MID",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/SK_Gaming/sk-gaming_lider.png"
+                }
+            },
+            {
+                "instance_id": "b4691421-a447-4d5c-b37f-85aa7526046d",
+                "card_id": "2026_lcs_dig_palafox",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-15T10:30:40.326340",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Palafox",
+                    "team": "Dignitas",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCS",
+                    "role": "MID",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Dignitas/dignitas_palafox.png"
+                }
+            },
+            {
+                "instance_id": "9868d0cd-f224-44ec-9c75-8c1eb8a5be26",
+                "card_id": "2026_lck_drx_andil",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-15T10:30:40.333065",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Andil",
+                    "team": "Kiwoom DRX",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCK",
+                    "role": "SUP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Kiwoom_DRX/kiwoom-drx_andil.png"
+                }
+            },
+            {
+                "instance_id": "60ed70c8-096b-49cf-a223-5dbfc26a2b83",
+                "card_id": "2026_lck_dk_siwoo",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-15T10:30:40.339885",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Siwoo",
+                    "team": "Dplus KIA",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCK",
+                    "role": "TOP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Dplus_KIA/dplus-kia_siwoo.png"
+                }
+            },
+            {
+                "instance_id": "ed6e3d7d-1bda-4196-b2e8-45e6bf17344e",
+                "card_id": "2026_lec_th_ice",
+                "rarity": "Master",
+                "pulled_on": "2026-05-15T10:30:40.346563",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Ice",
+                    "team": "Team Heretics",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "BOT",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Team_Heretics/team-heretics_ice.png"
+                }
+            },
+            {
+                "instance_id": "a95706de-3a2d-4933-8740-458f5bfacae3",
+                "card_id": "2026_lpl_jdg_xiaoxu",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-15T10:30:40.353502",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Xiaoxu",
+                    "team": "JD Gaming",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LPL",
+                    "role": "TOP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/JD_Gaming/jd-gaming_xiaoxu.png"
+                }
+            },
+            {
+                "instance_id": "c20a6a70-c340-49e5-b2e9-9ce878220cd6",
+                "card_id": "2026_lpl_jdg_gala",
+                "rarity": "Diamond",
+                "pulled_on": "2026-05-15T10:30:40.360336",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "GALA",
+                    "team": "JD Gaming",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LPL",
+                    "role": "BOT",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/JD_Gaming/jd-gaming_gala.png"
+                }
+            },
+            {
+                "instance_id": "efac0737-2478-4e8b-845e-28c800d24876",
+                "card_id": "2026_lck_kt_cuzz",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-15T10:30:40.367198",
+                "pulled_by_id": "272473699909763072",
+                "pulled_by_username": "chauncey612",
+                "snapshot": {
+                    "ign": "Cuzz",
+                    "team": "KT Rolster",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCK",
+                    "role": "JNG",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/KT_Rolster/kt-rolster_cuzz.png"
                 }
             }
         ],
