@@ -1,1 +1,54 @@
-[]
+[
+    {
+        "trade_id": "502592a3-d820-48b4-841d-511bd49f986f",
+        "user1_id": "534170875293859840",
+        "user2_id": "1107866349188956241",
+        "user1_offer": {
+            "cards": [
+                {
+                    "instance_id": "adcbadc3-6605-43dc-836f-ddc839cbdcfa",
+                    "card_id": "2026_lcs_c9_zven",
+                    "rarity": "Silver",
+                    "pulled_on": "2026-05-15T16:25:03.401248",
+                    "pulled_by_id": "534170875293859840",
+                    "pulled_by_username": "chizuru0864",
+                    "snapshot": {
+                        "ign": "Zven",
+                        "team": "Cloud9",
+                        "game": "League of Legends",
+                        "set": "LoL 26",
+                        "league": "LCS",
+                        "role": "BOT",
+                        "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Cloud9/cloud9_zven.png"
+                    }
+                }
+            ],
+            "packs": [],
+            "cash": 0
+        },
+        "user2_offer": {
+            "cards": [
+                {
+                    "instance_id": "d94c7f50-cca0-4da1-afeb-9a716cc46556",
+                    "card_id": "2026_lcp_gzg_1jiang",
+                    "rarity": "Silver",
+                    "pulled_on": "2026-05-15T16:49:29.977800",
+                    "pulled_by_id": "1107866349188956241",
+                    "pulled_by_username": "zach_k1",
+                    "snapshot": {
+                        "ign": "1Jiang",
+                        "team": "Ground Zero Gaming",
+                        "game": "League of Legends",
+                        "set": "LoL 26",
+                        "league": "LCP",
+                        "role": "TOP",
+                        "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Ground_Zero_Gaming/ground-zero-gaming_1jiang.png"
+                    }
+                }
+            ],
+            "packs": [],
+            "cash": 0
+        },
+        "completed_at": "2026-05-15T16:54:29.355648"
+    }
+]

@@ -31,6 +31,7 @@ initial_extensions = [
     "classes.auction",
     "classes.shop",
     "classes.trades",
+    "classes.predictions",
 ]
 
 

@@ -110,7 +110,7 @@ class Users(commands.Cog):
             self.save_users()
         else:
             self.users[uid]["discord_username"] = member.name
-            self.users[uid].setdefault("settings", self.default_settings())
+            self.normalize_settings(self.users[uid])
             self.users[uid].setdefault("team", {})
             self.normalize_game_teams(self.users[uid])
             self.users[uid].setdefault("last_ranked", None)
@@ -146,7 +146,7 @@ class Users(commands.Cog):
             }
             self.save_users()
         else:
-            self.users[uid].setdefault("settings", self.default_settings())
+            self.normalize_settings(self.users[uid])
             self.users[uid].setdefault("team", {})
             self.normalize_game_teams(self.users[uid])
             self.users[uid].setdefault("last_ranked", None)
@@ -393,8 +393,19 @@ class Users(commands.Cog):
             "alert_daily_practice": True,
             "dm_auction_notis": True,
             "confirm_auction_buy": True,
-            "confirm_pack_buy": True
+            "confirm_pack_buy": True,
+            "show_name_in_challenger_pulls": True,
         }
+
+    def normalize_settings(self, profile):
+        settings = profile.get("settings")
+        if not isinstance(settings, dict):
+            settings = {}
+            profile["settings"] = settings
+        defaults = self.default_settings()
+        for key, value in defaults.items():
+            settings.setdefault(key, value)
+        return settings
 
     def add_pack_to_first_slot(self, profile, pack_id):
         profile.setdefault("packs", [])
@@ -514,7 +525,7 @@ class Users(commands.Cog):
         now = self.utc_now()
 
         for user_id, user in self.users.items():
-            settings = user.get("settings", self.default_settings())
+            settings = self.normalize_settings(user)
             if not settings.get("alert_daily_practice"):
                 continue
 
@@ -530,35 +541,41 @@ class Users(commands.Cog):
             "**Available Commands**\n\n"
             "**User**\n"
             "`.help` - Show this command list.\n"
-            "`.profile [@user]` - View a profile. Your own profile includes settings buttons.\n"
+            "`.profile [@user]` or `.prof [@user]` - View a profile. Your own profile includes settings buttons.\n"
             "`.cd` - Check practice, daily, and ranked cooldowns.\n"
             "`.daily` - Earn cash and gold every 24 hours.\n\n"
             "**Ranked**\n"
             "`.leaderboard` or `.lb` - View users ranked by ELO.\n"
-            "`.ranked` - Battle a similar-ELO user's team for ELO.\n"
-            "`.practice` - Earn cash every 10 minutes.\n"
+            "`.ranked` or `.r` - Play a ranked match to earn cash and XP.\n"
+            "`.practice` or `.p` - Earn cash and XP every 10 minutes.\n"
             "`.team` - View your LoL or Valorant lineup, set cards, and choose your default ranked game.\n\n"
             "**Collection**\n"
             "`.inventory [filters]` or `.inv [filters]` - View your cards.\n"
             "Inventory filters: `-player <name/id>`, `-team <team>`, `-game <game>`, `-rarity <rarity>`, `-set <set>`, `-league <league>`, `-role <role>`.\n"
-            "Example: `.inv -team T1 -rarity Gold -role mid`\n"
+            "Example: `.inv -game LoL -team T1 -rarity Gold -role mid`\n"
             "`.progress [filters]` - View collection progress and best rarity for each card.\n"
+            "`.completion` - View every set's completion tier and team/ranked power bonus.\n"
             "`.info [filters]` - List all bot cards. Supports inventory filters plus `-region <league>`.\n"
             "`.info <CID>` - View one card's image and pulled rarity counts.\n"
             "`.view <inventory #>` - View one card from your inventory.\n"
             "`.packs` - View your unopened packs.\n"
             "`.open <pack #|pack id|pack name>` - Open a pack.\n\n"
+            "**Predictions**\n"
+            "`.prediction`, `.predictions`, `.pred`, or `.preds` - View LoL match predictions, sort matches, make predictions, and manage your picks.\n\n"
             "**Economy**\n"
             "`.shop` - View packs for sale and buy packs.\n"
             "`.auction` - View auctions with filter dropdowns, then select one to bid or buy now.\n"
+            "Auction filters include `-progress` / `-needed` to show cards that help your current `.progress` tier.\n"
             "`.auction -sell <inventory #>` - Auction one of your cards for 1-7 days.\n"
             "`.auction -sellpack <pack #>` - Auction one of your packs for 1-7 days.\n"
+            "`.autosell` - Auction duplicate cards using your rarity autosell settings.\n"
+            "`.autosell -settings` - Toggle autosell by rarity and set starting/sell now prices.\n"
             "Use the auction buttons and dropdowns to filter, sort, view your listings, bid, buy now, or take down your own auction if nobody has bid yet.\n"
             "`.trade @user` - Start a trade with another user."
         )
 
     # Profile command to show user's balance and cards owned
-    @commands.command()
+    @commands.command(aliases=["prof"])
     async def profile(self, ctx, member: discord.Member = None):
         member = member or ctx.author
         profile = self.get_profile(member)
@@ -576,14 +593,15 @@ class Users(commands.Cog):
         embed.add_field(name="Level", value=str(profile["level"]), inline=True)
         embed.add_field(name="XP", value=f"{current_xp}/{needed_xp}", inline=True)
         embed.add_field(name="ELO", value=str(profile["elo"]), inline=True)
-        settings = profile.get("settings", self.default_settings())
+        settings = self.normalize_settings(profile)
         embed.add_field(
             name="Alerts/Confirmations",
             value=(
                 f"{ALERT_EMOJI} Cooldown Alerts: {'ON' if settings['alert_daily_practice'] else 'OFF'}\n"
                 f"{DM_EMOJI} Auction DMs: {'ON' if settings['dm_auction_notis'] else 'OFF'}\n"
                 f"{CONFIRM_EMOJI} Auction Confirm Buy: {'ON' if settings['confirm_auction_buy'] else 'OFF'}\n"
-                f"{PACK_EMOJI} Shop Confirm Buy: {'ON' if settings['confirm_pack_buy'] else 'OFF'}"
+                f"{PACK_EMOJI} Shop Confirm Buy: {'ON' if settings['confirm_pack_buy'] else 'OFF'}\n"
+                f"{CARDS_EMOJI} Show name in Challenger-Pulls: {'ON' if settings['show_name_in_challenger_pulls'] else 'OFF'}"
             ),
             inline=False
         )
@@ -634,7 +652,7 @@ class Users(commands.Cog):
 
 
     # Practice command to earn cash every 10 minutes
-    @commands.command()
+    @commands.command(aliases=["p"])
     async def practice(self, ctx):
         user = self.get_profile(ctx.author)
         now = self.utc_now()
@@ -675,7 +693,7 @@ class Users(commands.Cog):
             f"{PRACTICE_EMOJI} {ctx.author.mention} You practiced and earned "
             f"{reward} {CASH_EMOJI} cash and {xp_reward} XP.{level_text}"
         )
-        if user.get("settings", self.default_settings()).get("alert_daily_practice"):
+        if self.normalize_settings(user).get("alert_daily_practice"):
             ready_at = now + PRACTICE_COOLDOWN
             self.schedule_ready_notification(ctx.channel.id, ctx.author.id, "practice", ready_at)
 
@@ -708,7 +726,7 @@ class Users(commands.Cog):
             f"{DAILY_EMOJI} {ctx.author.mention} You claimed your daily reward and earned "
             f"{reward} {CASH_EMOJI} cash{multiplier_text} and 5 {GOLD_EMOJI} gold."
         )
-        if user.get("settings", self.default_settings()).get("alert_daily_practice"):
+        if self.normalize_settings(user).get("alert_daily_practice"):
             ready_at = now + DAILY_COOLDOWN
             self.schedule_ready_notification(ctx.channel.id, ctx.author.id, "daily", ready_at)
 
@@ -793,6 +811,7 @@ class ProfileSettingsView(discord.ui.View):
         "profile_settings:dm_auction_notis": "dm_auction_notis",
         "profile_settings:confirm_auction_buy": "confirm_auction_buy",
         "profile_settings:confirm_pack_buy": "confirm_pack_buy",
+        "profile_settings:show_name_in_challenger_pulls": "show_name_in_challenger_pulls",
     }
 
     def __init__(self, users_cog: Users, requester_id: int, target_uid: str):
@@ -810,7 +829,7 @@ class ProfileSettingsView(discord.ui.View):
 
     def toggle(self, key):
         profile = self.users_cog.get_profile_by_id(self.target_uid)
-        settings = profile.setdefault("settings", self.users_cog.default_settings())
+        settings = self.users_cog.normalize_settings(profile)
         settings[key] = not settings.get(key, True)
         if key == "alert_daily_practice":
             if settings[key]:
@@ -823,7 +842,7 @@ class ProfileSettingsView(discord.ui.View):
 
     def get_settings(self):
         profile = self.users_cog.get_profile_by_id(self.target_uid)
-        return profile.setdefault("settings", self.users_cog.default_settings())
+        return self.users_cog.normalize_settings(profile)
 
     def refresh_button_styles(self):
         settings = self.get_settings()
@@ -855,6 +874,11 @@ class ProfileSettingsView(discord.ui.View):
     async def toggle_pack_confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("confirm_pack_buy")
         await self.send_toggle_response(interaction, f"Pack purchase confirmation is now {'ON' if state else 'OFF'}.")
+
+    @discord.ui.button(label=f"{CARDS_EMOJI} Show name in Challenger-Pulls", style=discord.ButtonStyle.secondary, custom_id="profile_settings:show_name_in_challenger_pulls")
+    async def toggle_challenger_pull_name(self, interaction: discord.Interaction, button: discord.ui.Button):
+        state = self.toggle("show_name_in_challenger_pulls")
+        await self.send_toggle_response(interaction, f"Challenger-Pulls name display is now {'ON' if state else 'OFF'}.")
 
 async def setup(bot):
     await bot.add_cog(Users(bot))
