@@ -321,82 +321,115 @@ class TradeView(discord.ui.View):
             return False
         return True
 
+    def display_name(self, uid):
+        user = self.cog.bot.get_user(int(uid))
+        return user.display_name if user else f"User {uid}"
+
+    def shorten_lines(self, lines, limit=1024):
+        text = "\n".join(lines)
+        if len(text) <= limit:
+            return text
+
+        kept = []
+        current = 0
+        for line in lines:
+            extra = len(line) + (1 if kept else 0)
+            if current + extra + len("\n...") > limit:
+                break
+            kept.append(line)
+            current += extra
+        return "\n".join(kept + ["..."])
+
+    def format_card(self, card):
+        cards_cog = self.cog.bot.get_cog("Cards")
+        if not isinstance(card, dict):
+            return "Unknown card"
+        if cards_cog:
+            card_data = cards_cog.get_card_by_id(card.get("card_id"))
+            if not card_data and card.get("snapshot"):
+                card_data = card["snapshot"]
+            player = cards_cog.get_player_for_card(card_data) if card_data else None
+            if card_data and player:
+                rarity = card.get("rarity", "Unknown")
+                rarity_symbol = cards_cog.get_rarity_symbol(rarity)
+                player_name = player.get("name", "Unknown")
+                set_name = card_data.get("set", "Unknown Set")
+                return f"{rarity_symbol} {player_name} {set_name}"
+        return card.get("card_id", "Unknown card")
+
+    def format_pack(self, pack_offer):
+        cards_cog = self.cog.bot.get_cog("Cards")
+        pack_id = pack_offer.get("pack_id") if isinstance(pack_offer, dict) else pack_offer
+        pack = cards_cog.packs.get(pack_id) if cards_cog and pack_id else None
+        pack_name = pack.get("name") if pack else pack_id
+        return pack_name or "Unknown pack"
+
+    def format_offer(self, trade, uid):
+        offer = trade["offers"][uid]
+        lines = [f"Status: {'Accepted' if trade['confirmed'][uid] else 'Not accepted'}"]
+
+        if offer["cash"]:
+            lines.append(f"{CASH_EMOJI} Cash: {offer['cash']}")
+
+        if offer["cards"]:
+            lines.append("Cards:")
+            lines.extend(f"{index}. {self.format_card(card)}" for index, card in enumerate(offer["cards"], start=1))
+
+        if offer["packs"]:
+            lines.append("Packs:")
+            lines.extend(f"{index}. {self.format_pack(pack_offer)}" for index, pack_offer in enumerate(offer["packs"], start=1))
+
+        if len(lines) == 1:
+            lines.append("No items offered yet.")
+
+        return self.shorten_lines(lines)
+
+    def format_summary_offer(self, trade, uid):
+        offer = trade["offers"][uid]
+        items = []
+
+        if offer["cash"]:
+            items.append(f"{CASH_EMOJI} Cash: {offer['cash']}")
+
+        items.extend(self.format_card(card) for card in offer["cards"])
+        items.extend(self.format_pack(pack_offer) for pack_offer in offer["packs"])
+
+        if not items:
+            return "nothing"
+
+        summary = ", ".join(items)
+        if len(summary) > 800:
+            return summary[:797] + "..."
+        return summary
+
+    def build_summary(self, trade):
+        user1 = trade["user1"]
+        user2 = trade["user2"]
+        user1_name = self.display_name(user1)
+        user2_name = self.display_name(user2)
+        summary = (
+            "Trade summary\n"
+            f"{user1_name} gave \"{self.format_summary_offer(trade, user1)}\" to {user2_name}\n\n"
+            f"{user2_name} gave \"{self.format_summary_offer(trade, user2)}\" to {user1_name}"
+        )
+        if len(summary) > 2000:
+            return summary[:1997] + "..."
+        return summary
+
     def build_embed(self):
         trade = self.get_trade()
-        cards_cog = self.cog.bot.get_cog("Cards")
-
-        def display_name(uid):
-            user = self.cog.bot.get_user(int(uid))
-            return user.display_name if user else f"User {uid}"
-
-        def shorten_lines(lines):
-            text = "\n".join(lines)
-            if len(text) <= 1024:
-                return text
-
-            kept = []
-            current = 0
-            for line in lines:
-                extra = len(line) + (1 if kept else 0)
-                if current + extra + len("\n...") > 1024:
-                    break
-                kept.append(line)
-                current += extra
-            return "\n".join(kept + ["..."])
-
-        def format_card(card):
-            if not isinstance(card, dict):
-                return "Unknown card"
-            if cards_cog:
-                card_data = cards_cog.get_card_by_id(card.get("card_id"))
-                if not card_data and card.get("snapshot"):
-                    card_data = card["snapshot"]
-                player = cards_cog.get_player_for_card(card_data) if card_data else None
-                if card_data and player:
-                    rarity = card.get("rarity", "Unknown")
-                    rarity_symbol = cards_cog.get_rarity_symbol(rarity)
-                    player_name = player.get("name", "Unknown")
-                    set_name = card_data.get("set", "Unknown Set")
-                    return f"{rarity_symbol} {player_name} {set_name}"
-            return card.get("card_id", "Unknown card")
-
-        def format_pack(pack_offer):
-            pack_id = pack_offer.get("pack_id") if isinstance(pack_offer, dict) else pack_offer
-            pack = cards_cog.packs.get(pack_id) if cards_cog and pack_id else None
-            pack_name = pack.get("name") if pack else pack_id
-            return pack_name or "Unknown pack"
-
-        def format_offer(uid):
-            offer = trade["offers"][uid]
-            lines = [f"Status: {'Accepted' if trade['confirmed'][uid] else 'Not accepted'}"]
-
-            if offer["cash"]:
-                lines.append(f"{CASH_EMOJI} Cash: {offer['cash']}")
-
-            if offer["cards"]:
-                lines.append("Cards:")
-                lines.extend(f"{index}. {format_card(card)}" for index, card in enumerate(offer["cards"], start=1))
-
-            if offer["packs"]:
-                lines.append("Packs:")
-                lines.extend(f"{index}. {format_pack(pack_offer)}" for index, pack_offer in enumerate(offer["packs"], start=1))
-
-            if len(lines) == 1:
-                lines.append("No items offered yet.")
-
-            return shorten_lines(lines)
 
         embed = discord.Embed(title="Trade")
 
         embed.add_field(
-            name=display_name(trade["user1"]),
-            value=format_offer(trade["user1"]),
+            name=self.display_name(trade["user1"]),
+            value=self.format_offer(trade, trade["user1"]),
             inline=True
         )
 
         embed.add_field(
-            name=display_name(trade["user2"]),
-            value=format_offer(trade["user2"]),
+            name=self.display_name(trade["user2"]),
+            value=self.format_offer(trade, trade["user2"]),
             inline=True
         )
 
@@ -455,6 +488,7 @@ class TradeView(discord.ui.View):
         self.cog.save_active_trades()
 
         if all(trade["confirmed"].values()):
+            summary = self.build_summary(trade)
             success, message = self.cog.execute_trade(self.trade_id)
             if not success:
                 for participant_id in trade["confirmed"]:
@@ -463,7 +497,7 @@ class TradeView(discord.ui.View):
                 await interaction.response.send_message(message, ephemeral=True)
                 await self.cog.refresh_trade_message(self.trade_id)
                 return
-            await interaction.response.edit_message(content="Trade completed.", embed=None, view=None)
+            await interaction.response.edit_message(content=summary, embed=None, view=None)
             return
         else:
             await interaction.response.send_message(

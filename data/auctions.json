@@ -1,1 +1,1554 @@
-[]
+[
+    {
+        "auction_id": "9e441fb2-81f9-4047-b854-f5c32bd3d0bf",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "1740f6c2-68f6-4922-a528-19f2b492d193",
+            "card_id": "2026_lec_g2_hanssama",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-16T03:00:20.466043",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Hans Sama",
+                "team": "G2 Esports",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LEC",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/G2_Esports/g2-esports_hans_sama.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626505",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626505"
+    },
+    {
+        "auction_id": "006931dc-7dda-4b64-a858-33653c3631c4",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "e00d5959-a5d0-4593-8256-a756072e8e80",
+            "card_id": "2026_lcp_mvk_gury",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T03:00:20.452127",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Gury",
+                "team": "MVKE",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCP",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/MVKE/mvke_gury.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626541",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626541"
+    },
+    {
+        "auction_id": "6479f00c-4c43-408c-a88a-6bd94fb31783",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "939e1f9c-33f0-4181-9156-948ae19f45fc",
+            "card_id": "2026_lcp_fshg_van1",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T03:00:20.404742",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Van1",
+                "team": "Fukuoka SoftBank Hawks Gaming",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCP",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Fukuoka_SoftBank_Hawks_Gaming/fukuoka-softbank-hawks-gaming_van1.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626555",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626555"
+    },
+    {
+        "auction_id": "7371eebe-abe6-4b51-97cc-63f7ccc26658",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "0417ec55-ca52-45f9-a140-b0f959254287",
+            "card_id": "2026_lcs_sen_hambak",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T03:00:20.391490",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "HamBak",
+                "team": "Sentinels",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Sentinels/sentinels_hambak.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626564",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626564"
+    },
+    {
+        "auction_id": "33f2ab70-335e-4178-997a-106674b446a9",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "0b90f37a-14ec-4799-9ace-a423bb5eba63",
+            "card_id": "2026_lck_bro_teddy",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T03:00:06.161988",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Teddy",
+                "team": "HANJIN BRION",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/HANJIN_BRION/hanjin-brion_teddy.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626573",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626573"
+    },
+    {
+        "auction_id": "12e2c596-deef-417e-881d-d0bca237c303",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "8ec74cbc-a725-4a42-8d11-5721d5107089",
+            "card_id": "2026_lpl_jdg_xiaoxu",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T03:00:06.108110",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Xiaoxu",
+                "team": "JD Gaming",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LPL",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/JD_Gaming/jd-gaming_xiaoxu.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626582",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626582"
+    },
+    {
+        "auction_id": "12d1e229-6fc3-4de8-abc0-637539b587b8",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "59024251-ef6a-4319-83e9-70e3ae7cbbd9",
+            "card_id": "2026_cblol_los_ackerman",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T03:00:06.095196",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Ackerman",
+                "team": "LOS",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "CBLOL",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/LOS/los_ackerman.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626590",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626590"
+    },
+    {
+        "auction_id": "1abfdd02-0357-4617-ad9d-0c8f95f4cd11",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "22dc5908-b51c-46d1-b986-c9223868574f",
+            "card_id": "2026_lck_drx_andil",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T02:59:58.334994",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Andil",
+                "team": "Kiwoom DRX",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Kiwoom_DRX/kiwoom-drx_andil.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626597",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626597"
+    },
+    {
+        "auction_id": "e149edc6-7312-4a85-bc1b-7651fdd8e73c",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "81ded713-0b3b-4b09-b163-fceac6601a9a",
+            "card_id": "2026_lcs_dig_photon",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T02:59:58.308792",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Photon",
+                "team": "Dignitas",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Dignitas/dignitas_photon.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626605",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626605"
+    },
+    {
+        "auction_id": "99ede1fc-0f6a-4556-b990-dd1eb1e48b69",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "e3a44c58-8a27-4163-9cfb-1822595bc306",
+            "card_id": "2026_lec_vit_lyncas",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-16T02:59:53.257095",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Lyncas",
+                "team": "Team Vitality",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LEC",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Team_Vitality/team-vitality_lyncas.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626613",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626613"
+    },
+    {
+        "auction_id": "a2dbb199-9bc7-4f23-b4d1-79816b4f7680",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "c9541a2a-7eb5-44ad-9d3f-aebf3d9aab37",
+            "card_id": "2026_lcs_dig_photon",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T02:59:47.740178",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Photon",
+                "team": "Dignitas",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Dignitas/dignitas_photon.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626620",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626620"
+    },
+    {
+        "auction_id": "ad8afb3a-fa1a-4ea4-8143-f80dc83d8bf9",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "560a0e63-3c89-4fb1-b98e-656942d15444",
+            "card_id": "2026_lcs_sr_ceos",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T02:59:42.414599",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Ceos",
+                "team": "Shopify Rebellion",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Shopify_Rebellion/shopify-rebellion_ceos.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626628",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626628"
+    },
+    {
+        "auction_id": "2ae4ac22-bfd7-41d5-a956-c834c13e7cb4",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "f74ac953-187a-41ba-aaeb-496052a66dee",
+            "card_id": "2026_lcs_sen_hambak",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T02:59:42.389628",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "HamBak",
+                "team": "Sentinels",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Sentinels/sentinels_hambak.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626636",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626636"
+    },
+    {
+        "auction_id": "57fd11a8-bdf4-4d81-bade-f0fcfe67d53b",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "d797a8a8-e1ce-4153-b9ae-21bdd130c01d",
+            "card_id": "2026_cblol_intz_konseki",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T02:59:38.238043",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "konseki",
+                "team": "INTZ",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "CBLOL",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/INTZ/intz_konseki.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626644",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626644"
+    },
+    {
+        "auction_id": "50665119-cb27-487c-8bcb-3e4323ece9c2",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "1b7524f3-fe57-4e93-973b-9da1a70dff3f",
+            "card_id": "2026_lcs_dsg_kryra",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-16T02:59:38.197875",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "KryRa",
+                "team": "Disguised",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Disguised/disguised_kryra.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626651",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626651"
+    },
+    {
+        "auction_id": "ef1f520f-66a6-464a-bec5-eddd2e751fcb",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "8b471e11-324d-46a2-86c0-9050f982bdf9",
+            "card_id": "2026_lcp_fshg_vsta",
+            "rarity": "Diamond",
+            "pulled_on": "2026-05-16T02:59:33.380257",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Vsta",
+                "team": "Fukuoka SoftBank Hawks Gaming",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCP",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Fukuoka_SoftBank_Hawks_Gaming/fukuoka-softbank-hawks-gaming_vsta.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 50,
+        "buy_now_price": null,
+        "current_bid": 50,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626659",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626659"
+    },
+    {
+        "auction_id": "4dc07056-646f-41e6-bfbf-4f3ea5f8a448",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "34762b31-0f1b-43e9-9a17-b9f3f1aa99fc",
+            "card_id": "2026_lck_kt_effort",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-16T02:59:33.318394",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Effort",
+                "team": "KT Rolster",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/KT_Rolster/kt-rolster_effort.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626666",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626666"
+    },
+    {
+        "auction_id": "c01d72a0-7a93-46bb-a38a-862277f1ca6c",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "a55291dd-7ce1-459d-973d-8af961156d98",
+            "card_id": "2026_lcs_fly_massu",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T17:29:47.253026",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Massu",
+                "team": "FlyQuest",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/FlyQuest/flyquest_massu.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626673",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626673"
+    },
+    {
+        "auction_id": "e8fdd015-33ef-45e0-a01a-ca93243b9e74",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "0b889ba2-f555-446a-a0e5-bcfcc42dc740",
+            "card_id": "2026_lpl_lng_missing",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:47.231081",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "MISSING",
+                "team": "LNG Esports",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LPL",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/LNG_Esports/lng-esports_missing.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626681",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626681"
+    },
+    {
+        "auction_id": "1bc18bae-1190-43ec-a7f5-199dd046fee2",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "ba5c0ac3-1579-4044-abed-2c2df654177e",
+            "card_id": "2026_lck_dns_clozer",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:44.303026",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Clozer",
+                "team": "DN SOOPers",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "MID",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/DN_SOOPers/dn-soopers_clozer.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626688",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626688"
+    },
+    {
+        "auction_id": "f7badc19-9666-4d7c-a36c-1344b9a16d2d",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "1e289ac7-e4c4-4cee-bfa8-2f21f815499c",
+            "card_id": "2026_lcs_fly_gryffinn",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:44.293212",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Gryffinn",
+                "team": "FlyQuest",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/FlyQuest/flyquest_gryffinn.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626696",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626696"
+    },
+    {
+        "auction_id": "e7e8a49b-4da8-49aa-bb11-5cb19e420b94",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "7a6beba4-fcb4-4e9e-aaa6-b2509de7f2c1",
+            "card_id": "2026_lcp_dcg_flauren",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:41.725731",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Flauren",
+                "team": "Deep Cross Gaming",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCP",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Deep_Cross_Gaming/deep-cross-gaming_flauren.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626703",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626703"
+    },
+    {
+        "auction_id": "3d0ebd91-5544-4690-9f75-52b8f725e08b",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "edefb8b2-baad-44a5-be10-f13f8691e131",
+            "card_id": "2026_lcs_c9_zven",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:41.698357",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Zven",
+                "team": "Cloud9",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Cloud9/cloud9_zven.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626711",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626711"
+    },
+    {
+        "auction_id": "aa6a52cd-e5a3-4fac-ad75-0c8ec6c8bfd8",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "8f91c07d-3b18-45e6-a8b2-d13dd36eeda2",
+            "card_id": "2026_lec_sk_skeanz",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:41.688613",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Skeanz",
+                "team": "SK Gaming",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LEC",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/SK_Gaming/sk-gaming_skeanz.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626718",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626718"
+    },
+    {
+        "auction_id": "d47d12b5-6621-406a-9841-07baf9bfca9b",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "9df977c1-36ad-4d55-be64-d35eb19bac08",
+            "card_id": "2026_lcs_c9_blaber",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T17:29:41.679577",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Blaber",
+                "team": "Cloud9",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Cloud9/cloud9_blaber.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626725",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626725"
+    },
+    {
+        "auction_id": "2558579c-a75b-41a8-9aa2-b9dcea68cc9a",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "4cfe8917-b5ab-4912-855a-d702ce9a6cdf",
+            "card_id": "2026_lpl_tes_fengyue",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:39.222679",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "fengyue",
+                "team": "Top Esports",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LPL",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/Top_Esports/top-esports_fengyue.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626733",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626733"
+    },
+    {
+        "auction_id": "bbbe3d1e-78d4-4352-bdd0-3b4dca2f6e9d",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "630971e3-fd65-4867-8be4-399e12ec23c6",
+            "card_id": "2026_lec_kc_yike",
+            "rarity": "Diamond",
+            "pulled_on": "2026-05-15T17:29:36.916085",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Yike",
+                "team": "Karmine Corp",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LEC",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Karmine_Corp/karmine-corp_yike.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 50,
+        "buy_now_price": null,
+        "current_bid": 50,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626741",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626741"
+    },
+    {
+        "auction_id": "add3e9f7-0b75-464e-a2a3-6ca2fc32fc53",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "d7a044d5-f85d-492a-a650-6791a3bc93da",
+            "card_id": "2026_lck_bfx_raptor",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:36.841965",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Raptor",
+                "team": "BNK FEARX",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/BNK_FEARX/bnk-fearx_raptor.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626749",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626749"
+    },
+    {
+        "auction_id": "3ff6cdba-925e-4ca9-a0cf-21584ad46ecb",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "90490cc4-1f0a-469c-8b2b-985ce8346c07",
+            "card_id": "2026_lec_mkoi_myrwn",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T17:29:34.001381",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Myrwn",
+                "team": "Movistar KOI",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LEC",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Movistar_KOI/movistar-koi_myrwn.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626757",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626757"
+    },
+    {
+        "auction_id": "c82177a5-c60b-46d0-9452-db4c6306a155",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "454ef991-f383-497f-b696-b0cc38f475ff",
+            "card_id": "2026_lck_dk_showmaker",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T17:29:27.052303",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "ShowMaker",
+                "team": "Dplus KIA",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "MID",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Dplus_KIA/dplus-kia_showmaker.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626765",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626765"
+    },
+    {
+        "auction_id": "c14c41cf-d47d-4b01-812b-9a2abcfdf074",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "060f8b8c-02e0-4ed3-ad93-3105df005efa",
+            "card_id": "2026_cblol_red_morttheus",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T17:29:25.315227",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Morttheus",
+                "team": "RED Canids",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "CBLOL",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/RED_Canids/red-canids_morttheus.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626772",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626772"
+    },
+    {
+        "auction_id": "4e670df9-6927-4a5e-aaf1-c042b5496b22",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "b556b317-64c7-4334-bad0-1b7ddfb42667",
+            "card_id": "2026_lcp_tsw_eddie",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T17:29:25.298512",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Eddie",
+                "team": "Team Secret Whales",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCP",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Team_Secret_Whales/team-secret-whales_eddie.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626783",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626783"
+    },
+    {
+        "auction_id": "ebed1255-9c39-4279-8839-f30987c31f50",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "a95706de-3a2d-4933-8740-458f5bfacae3",
+            "card_id": "2026_lpl_jdg_xiaoxu",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T10:30:40.353502",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Xiaoxu",
+                "team": "JD Gaming",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LPL",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/JD_Gaming/jd-gaming_xiaoxu.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626791",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626791"
+    },
+    {
+        "auction_id": "4f51b793-6029-4f3d-acb0-983e4056f7b8",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "9868d0cd-f224-44ec-9c75-8c1eb8a5be26",
+            "card_id": "2026_lck_drx_andil",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T10:30:40.333065",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Andil",
+                "team": "Kiwoom DRX",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Kiwoom_DRX/kiwoom-drx_andil.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626799",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626799"
+    },
+    {
+        "auction_id": "fbd2944d-ec5d-41ae-a464-d00c0b4bb9f1",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "9478d259-8b5a-45b3-9831-104c3d1fad5c",
+            "card_id": "2026_lcs_c9_zven",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T10:30:37.900384",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Zven",
+                "team": "Cloud9",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Cloud9/cloud9_zven.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626806",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626806"
+    },
+    {
+        "auction_id": "9174788a-041e-413a-a786-9d1df63ef4e7",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "a517968c-917a-4b0b-9325-9bfd44005977",
+            "card_id": "2026_lec_fnc_empyros",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T10:30:34.079579",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Empyros",
+                "team": "Fnatic",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LEC",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Fnatic/fnatic_empyros.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626814",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626814"
+    },
+    {
+        "auction_id": "2c791ee8-213c-44db-84d4-5bb3346d79ee",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "6947ca99-3a3a-4b81-adaf-5ce5fd09d9cc",
+            "card_id": "2026_lck_bfx_raptor",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T10:30:34.059534",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Raptor",
+                "team": "BNK FEARX",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/BNK_FEARX/bnk-fearx_raptor.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626821",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626821"
+    },
+    {
+        "auction_id": "d3ce7083-f7e4-4f35-a570-90ec52da527d",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "5c83a28b-0811-4926-9408-cf1dd7b08e87",
+            "card_id": "2026_lcp_gam_kiaya",
+            "rarity": "Diamond",
+            "pulled_on": "2026-05-15T10:30:34.053025",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Kiaya",
+                "team": "GAM Esports",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCP",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/GAM_Esports/gam-esports_kiaya.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 50,
+        "buy_now_price": null,
+        "current_bid": 50,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626829",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626829"
+    },
+    {
+        "auction_id": "8fbb0972-fc9a-41e1-97cc-6c0481550834",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "4faebc1f-00b0-4238-a889-532650953dba",
+            "card_id": "2026_lec_gx_jackies",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T10:30:28.800071",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Jackies",
+                "team": "GIANTX",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LEC",
+                "role": "MID",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/GIANTX/giantx_jackies.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626836",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626836"
+    },
+    {
+        "auction_id": "f4464b36-5349-4e3e-9fa9-15a90f674b2e",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "fb13cea8-9aa6-453b-a322-d35e794eaf6b",
+            "card_id": "2026_lcs_sen_darkwings",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T10:30:27.129357",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "DARKWINGS",
+                "team": "Sentinels",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "MID",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Sentinels/sentinels_darkwings.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626844",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626844"
+    },
+    {
+        "auction_id": "b5a22fd6-1673-4bea-a531-91e9bb33767b",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "e34c8d73-21d1-4bf4-bb40-78144f9a7e16",
+            "card_id": "2026_lck_gen_ruler",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-14T20:00:52.455797",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Ruler",
+                "team": "Gen.G",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Gen_G/gen-g_ruler.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626852",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626852"
+    },
+    {
+        "auction_id": "0376068b-ee29-4bfb-80ff-763d4eb0f54a",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "2ac58920-24de-46e6-8742-69d240ba2cb3",
+            "card_id": "2026_lck_kt_effort",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-14T20:00:52.444471",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Effort",
+                "team": "KT Rolster",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "SUP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/KT_Rolster/kt-rolster_effort.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626859",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626859"
+    },
+    {
+        "auction_id": "efcb5600-164a-40b3-95ac-7c9fdc83b0dc",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "d3478f11-0134-4475-b325-536210a2d864",
+            "card_id": "2026_cblol_los_zest",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-14T20:00:45.198531",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Zest",
+                "team": "LOS",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "CBLOL",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/LOS/los_zest.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626867",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626867"
+    },
+    {
+        "auction_id": "009041c4-1ed4-485d-abb1-58eaef7f9908",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "634f8c36-2be9-471e-9af3-973f841c182b",
+            "card_id": "2026_cblol_loud_xyno",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-14T20:00:45.187505",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Xyno",
+                "team": "LOUD",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "CBLOL",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/LOUD/loud_xyno.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626875",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626875"
+    },
+    {
+        "auction_id": "ba742cfb-cc67-4dff-a4ae-13411f4a3497",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "ad35b7d5-6a51-4888-ae18-3bc69cdfa18e",
+            "card_id": "2026_cblol_vks_sarolu",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-14T20:00:45.182261",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "sarolu",
+                "team": "Vivo Keyd Stars",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "CBLOL",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/Vivo_Keyd_Stars/vivo-keyd-stars_sarolu.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626883",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626883"
+    },
+    {
+        "auction_id": "b4af391c-00f4-4909-8ce2-67b86604bd71",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "adb02a68-6e7e-4df1-88e4-e9dd9f026816",
+            "card_id": "2026_lpl_lng_1xn",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-14T20:00:45.171427",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "1xn",
+                "team": "LNG Esports",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LPL",
+                "role": "BOT",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/LNG_Esports/lng-esports_1xn.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626890",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626890"
+    },
+    {
+        "auction_id": "751063db-d549-4e03-b498-0a0b897b604d",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "65194422-0991-42ee-ad1f-3c887f1d1127",
+            "card_id": "2026_lcs_sen_darkwings",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-14T03:13:59.777596",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "DARKWINGS",
+                "team": "Sentinels",
+                "set": "LoL 26",
+                "league": "LCS",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Sentinels/sentinels_darkwings.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626898",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626898"
+    },
+    {
+        "auction_id": "1436f194-2ad3-4829-a062-c2dac2fb019e",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "64382e59-5a3f-4f65-91ed-fdc4ce0f0bc4",
+            "card_id": "2026_lcp_dcg_feng",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-14T03:13:57.636375",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Feng",
+                "team": "Deep Cross Gaming",
+                "set": "LoL 26",
+                "league": "LCP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Deep_Cross_Gaming/deep-cross-gaming_feng_.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626905",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626905"
+    },
+    {
+        "auction_id": "9d2478a7-c9f7-4634-b199-358873f4b471",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "6a57ae17-8269-4f1e-9537-7b4f532927c8",
+            "card_id": "2026_lck_ns_scout",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-13T16:50:43.155441",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Scout",
+                "team": "Nongshim RedForce",
+                "set": "LoL 26",
+                "league": "LCK",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Nongshim_RedForce/nongshim-redforce_scout.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626913",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626913"
+    },
+    {
+        "auction_id": "bae7a783-703f-4c09-8ea0-1b101abc411e",
+        "seller_id": "272473699909763072",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "b69193d2-94cc-4347-930c-fdf59ec62d57",
+            "card_id": "2026_lck_ns_scout",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-13T16:50:34.621558",
+            "pulled_by_id": "272473699909763072",
+            "pulled_by_username": "chauncey612",
+            "snapshot": {
+                "ign": "Scout",
+                "team": "Nongshim RedForce",
+                "set": "LoL 26",
+                "league": "LCK",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Nongshim_RedForce/nongshim-redforce_scout.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:28:22.626920",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:28:22.626920"
+    },
+    {
+        "auction_id": "c1752fc9-a737-43f9-a921-89e3c1d6a9ee",
+        "seller_id": "1107866349188956241",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "a4e120b1-2220-4c49-a790-0b508d0c90a4",
+            "card_id": "2026_lck_ns_sponge",
+            "rarity": "Gold",
+            "pulled_on": "2026-05-15T19:08:50.547368",
+            "pulled_by_id": "1107866349188956241",
+            "pulled_by_username": "zach_k1",
+            "snapshot": {
+                "ign": "Sponge",
+                "team": "Nongshim RedForce",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCK",
+                "role": "JNG",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/Nongshim_RedForce/nongshim-redforce_sponge.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 10,
+        "buy_now_price": null,
+        "current_bid": 10,
+        "highest_bidder": null,
+        "created_at": "2026-05-16T04:43:45.828325",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:43:45.828325"
+    },
+    {
+        "auction_id": "63a9d508-e4f8-4383-8ca6-909c204f4207",
+        "seller_id": "1107866349188956241",
+        "item_type": "card",
+        "card_instance": {
+            "instance_id": "aeffe713-4304-49f1-b2a0-30f0ecaa853f",
+            "card_id": "2026_lcs_sr_fudge",
+            "rarity": "Silver",
+            "pulled_on": "2026-05-15T16:49:29.961620",
+            "pulled_by_id": "1107866349188956241",
+            "pulled_by_username": "zach_k1",
+            "snapshot": {
+                "ign": "Fudge",
+                "team": "Shopify Rebellion",
+                "game": "League of Legends",
+                "set": "LoL 26",
+                "league": "LCS",
+                "role": "TOP",
+                "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Shopify_Rebellion/shopify-rebellion_fudge.png"
+            }
+        },
+        "pack_name": null,
+        "starting_price": 5,
+        "buy_now_price": null,
+        "current_bid": 5,
+        "highest_bidder": "272473699909763072",
+        "created_at": "2026-05-16T04:43:45.828366",
+        "duration_days": 1,
+        "expires_at": "2026-05-17T04:43:45.828366"
+    }
+]

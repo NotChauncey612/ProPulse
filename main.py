@@ -7,6 +7,8 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from classes.storage import configured_data_dir
+
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
@@ -29,12 +31,14 @@ initial_extensions = [
     "classes.auction",
     "classes.shop",
     "classes.trades",
+    "classes.predictions",
 ]
 
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
+    print(f"Using data directory: {configured_data_dir() or 'repo data/'}")
     print("Bot is ready.")
 
 

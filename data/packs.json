@@ -2,9 +2,9 @@
     "packs": [
       {
         "pack_id": "pack_lck_26",
-        "name": "LCK '26",
+        "name": "LCK 26",
         "game": "LoL",
-        "set": "LoL '26",
+        "set": "LoL 26",
         "type": "league",
         "league": "LCK",
         "price": 150,
@@ -12,9 +12,9 @@
       },
       {
         "pack_id": "pack_lec_26",
-        "name": "LEC '26",
+        "name": "LEC 26",
         "game": "LoL",
-        "set": "LoL '26",
+        "set": "LoL 26",
         "type": "league",
         "league": "LEC",
         "price": 150,
@@ -22,9 +22,9 @@
       },
       {
         "pack_id": "pack_lcs_26",
-        "name": "LCS '26",
+        "name": "LCS 26",
         "game": "LoL",
-        "set": "LoL '26",
+        "set": "LoL 26",
         "type": "league",
         "league": "LCS",
         "price": 150,
@@ -32,9 +32,9 @@
       },
       {
         "pack_id": "pack_lpl_26",
-        "name": "LPL '26",
+        "name": "LPL 26",
         "game": "LoL",
-        "set": "LoL '26",
+        "set": "LoL 26",
         "type": "league",
         "league": "LPL",
         "price": 150,
@@ -42,9 +42,9 @@
       },
       {
         "pack_id": "pack_lcp_26",
-        "name": "LCP '26",
+        "name": "LCP 26",
         "game": "LoL",
-        "set": "LoL '26",
+        "set": "LoL 26",
         "type": "league",
         "league": "LCP",
         "price": 150,
@@ -52,9 +52,9 @@
       },
       {
         "pack_id": "pack_cblol_26",
-        "name": "CBLOL '26",
+        "name": "CBLOL 26",
         "game": "LoL",
-        "set": "LoL '26",
+        "set": "LoL 26",
         "type": "league",
         "league": "CBLOL",
         "price": 150,
@@ -62,11 +62,61 @@
       },
       {
         "pack_id": "pack_all_26",
-        "name": "LoL '26",
+        "name": "LoL 26",
         "game": "LoL",
-        "set": "LoL '26",
+        "set": "LoL 26",
         "type": "mixed",
         "leagues": ["LCK", "LEC", "LCS", "LPL", "LCP", "CBLOL"],
+        "price": 100,
+        "cards_per_pack": 7
+      },
+      {
+        "pack_id": "pack_vct_americas_26",
+        "name": "Americas 26",
+        "game": "Valorant",
+        "set": "VCT 26",
+        "type": "league",
+        "league": "VCT Americas",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_vct_emea_26",
+        "name": "EMEA 26",
+        "game": "Valorant",
+        "set": "VCT 26",
+        "type": "league",
+        "league": "VCT EMEA",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_vct_pacific_26",
+        "name": "Pacific 26",
+        "game": "Valorant",
+        "set": "VCT 26",
+        "type": "league",
+        "league": "VCT Pacific",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_vct_cn_26",
+        "name": "VCT CN 26",
+        "game": "Valorant",
+        "set": "VCT 26",
+        "type": "league",
+        "league": "VCT CN",
+        "price": 150,
+        "cards_per_pack": 5
+      },
+      {
+        "pack_id": "pack_valorant_26",
+        "name": "Valorant 26",
+        "game": "Valorant",
+        "set": "VCT 26",
+        "type": "mixed",
+        "leagues": ["VCT Americas", "VCT EMEA", "VCT Pacific", "VCT CN"],
         "price": 100,
         "cards_per_pack": 7
       }
