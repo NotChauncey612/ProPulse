@@ -35,7 +35,7 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249106+00:00"
+            "last_fetched_at": "2026-05-16T08:58:24.851406+00:00"
         },
         "115548128962971867": {
             "id": "115548128962971867",
@@ -72,7 +72,7 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249243+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933406+00:00"
         },
         "115548128962971943": {
             "id": "115548128962971943",
@@ -109,7 +109,7 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249271+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933445+00:00"
         },
         "115615926677896639": {
             "id": "115615926677896639",
@@ -146,23 +146,24 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249292+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933470+00:00"
         },
         "115548128962971935": {
             "id": "115548128962971935",
             "match_id": "115548128962971935",
             "league": "LCK",
             "league_slug": "lck",
-            "block_name": null,
-            "start_time": null,
-            "state": "unstarted",
+            "block_name": "Week 7",
+            "start_time": "2026-05-16T10:00:00Z",
+            "state": "completed",
             "team1": {
                 "name": "BNK FEARX",
                 "source_name": "BNK FEARX",
                 "code": "BFX",
                 "key": "bnkfearx",
                 "result": {
-                    "gameWins": 0
+                    "outcome": "win",
+                    "gameWins": 2
                 }
             },
             "team2": {
@@ -171,14 +172,18 @@
                 "code": "NS",
                 "key": "nongshimredforce",
                 "result": {
+                    "outcome": "loss",
                     "gameWins": 0
                 }
             },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "bnkfearx",
+                "name": "BNK FEARX"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.576374+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933567+00:00"
         },
         "115564793879403720": {
             "id": "115564793879403720",
@@ -212,7 +217,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249440+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933632+00:00"
         },
         "115548128962971871": {
             "id": "115548128962971871",
@@ -246,7 +251,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249454+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933648+00:00"
         },
         "115570683341249979": {
             "id": "115570683341249979",
@@ -280,7 +285,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249475+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933671+00:00"
         },
         "115548128963037519": {
             "id": "115548128963037519",
@@ -314,7 +319,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249488+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933686+00:00"
         },
         "115570683341184403": {
             "id": "115570683341184403",
@@ -348,7 +353,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249514+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933714+00:00"
         },
         "115565670260181833": {
             "id": "115565670260181833",
@@ -382,7 +387,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249536+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933738+00:00"
         },
         "115564793879338108": {
             "id": "115564793879338108",
@@ -416,7 +421,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249553+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933758+00:00"
         },
         "115564793879469264": {
             "id": "115564793879469264",
@@ -450,7 +455,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249565+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933771+00:00"
         },
         "115548128962971911": {
             "id": "115548128962971911",
@@ -484,7 +489,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249653+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933867+00:00"
         },
         "115548128963037551": {
             "id": "115548128963037551",
@@ -518,7 +523,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249667+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933881+00:00"
         },
         "115548128962906315": {
             "id": "115548128962906315",
@@ -552,7 +557,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249762+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.933984+00:00"
         },
         "115548128963037507": {
             "id": "115548128963037507",
@@ -586,7 +591,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249783+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934009+00:00"
         },
         "115548128962971963": {
             "id": "115548128962971963",
@@ -620,7 +625,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249895+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934130+00:00"
         },
         "115548128962971927": {
             "id": "115548128962971927",
@@ -654,7 +659,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249967+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934208+00:00"
         },
         "115548128962971875": {
             "id": "115548128962971875",
@@ -688,7 +693,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.249989+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934232+00:00"
         },
         "115548668059589358": {
             "id": "115548668059589358",
@@ -722,7 +727,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250007+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934251+00:00"
         },
         "115565670260181845": {
             "id": "115565670260181845",
@@ -756,7 +761,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250020+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934265+00:00"
         },
         "115548128962971891": {
             "id": "115548128962971891",
@@ -790,7 +795,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250047+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934294+00:00"
         },
         "115548668059589352": {
             "id": "115548668059589352",
@@ -824,7 +829,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250060+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934308+00:00"
         },
         "115548128962971939": {
             "id": "115548128962971939",
@@ -858,7 +863,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250180+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934434+00:00"
         },
         "115548128962971959": {
             "id": "115548128962971959",
@@ -892,7 +897,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250250+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934511+00:00"
         },
         "115548128962971903": {
             "id": "115548128962971903",
@@ -926,7 +931,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250272+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934535+00:00"
         },
         "115548128963037547": {
             "id": "115548128963037547",
@@ -960,7 +965,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250327+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934592+00:00"
         },
         "115548128962971955": {
             "id": "115548128962971955",
@@ -994,7 +999,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250368+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934636+00:00"
         },
         "115548128962971883": {
             "id": "115548128962971883",
@@ -1028,7 +1033,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250389+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934659+00:00"
         },
         "115548128962971859": {
             "id": "115548128962971859",
@@ -1062,7 +1067,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250421+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934693+00:00"
         },
         "115548128963037543": {
             "id": "115548128963037543",
@@ -1096,7 +1101,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T05:23:27.250442+00:00"
+            "last_fetched_at": "2026-05-16T15:43:24.934716+00:00"
         }
     },
     "predictions": [
@@ -1122,10 +1127,13 @@
             "team_key": "bnkfearx",
             "team_name": "BNK FEARX",
             "amount": 50,
-            "status": "active",
+            "status": "won",
             "placed_at": "2026-05-16T04:20:53.097120+00:00",
-            "resolved_at": null,
-            "payout": 0
+            "resolved_at": "2026-05-16T13:13:24.643349+00:00",
+            "payout": 100,
+            "winner_name": "BNK FEARX",
+            "winning_pool": 50,
+            "losing_pool": 50
         },
         {
             "prediction_id": "816bfdba-b443-4b62-ad75-269ed9bda9e0",
@@ -1135,11 +1143,14 @@
             "team_key": "nongshimredforce",
             "team_name": "Nongshim RedForce",
             "amount": 50,
-            "status": "active",
+            "status": "lost",
             "placed_at": "2026-05-16T04:21:28.986394+00:00",
-            "resolved_at": null,
-            "payout": 0
+            "resolved_at": "2026-05-16T13:13:24.643354+00:00",
+            "payout": 0,
+            "winner_name": "BNK FEARX",
+            "winning_pool": 50,
+            "losing_pool": 50
         }
     ],
-    "last_refresh": "2026-05-16T05:23:27.250741+00:00"
+    "last_refresh": "2026-05-16T15:43:24.935035+00:00"
 }

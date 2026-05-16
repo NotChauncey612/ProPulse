@@ -1,10 +1,10 @@
 {
     "272473699909763072": {
-        "cash": 506,
+        "cash": 864,
         "gold": 20,
-        "last_practice": "2026-05-16T05:24:23.008285+00:00",
+        "last_practice": "2026-05-16T15:46:42.108900+00:00",
         "last_daily": "2026-05-15T19:27:21.846164+00:00",
-        "last_ranked": "2026-05-16T05:03:50.445010+00:00",
+        "last_ranked": "2026-05-16T15:33:06.134810+00:00",
         "packs": [
             null,
             null,
@@ -4242,19 +4242,19 @@
             "BOT": "d37e583c-b609-4bec-b394-58f0c7b308e8",
             "SUP": "3a760ea7-5962-4fa1-b6ad-b40e87021e72"
         },
-        "xp": 6220,
-        "level": 8,
+        "xp": 6441,
+        "level": 9,
         "team_stats": {
-            "TOP": 36,
-            "JNG": 36,
-            "MID": 39,
-            "BOT": 36,
-            "SUP": 41
+            "TOP": 41,
+            "JNG": 38,
+            "MID": 43,
+            "BOT": 40,
+            "SUP": 44
         },
-        "team_stat_level": 8,
-        "elo": 1354,
-        "ranked_wins": 74,
-        "ranked_losses": 5,
+        "team_stat_level": 9,
+        "elo": 1333,
+        "ranked_wins": 76,
+        "ranked_losses": 6,
         "discord_username": "chauncey612",
         "settings": {
             "alert_daily_practice": true,
@@ -4268,9 +4268,9 @@
         "practice_reminder_channel_id": 1503540831699599410,
         "daily_reminder_channel_id": 1503540831699599410,
         "recent_ranked_opponents": [
-            "713289222009651230",
-            "766143687980744706",
-            "1107866349188956241"
+            "656332144909746177",
+            "1107866349188956241",
+            "534170875293859840"
         ],
         "ranked_reminder_channel_id": 1503540831699599410,
         "teams": {
@@ -4292,29 +4292,29 @@
         "default_team_game": "League of Legends",
         "team_stats_by_game": {
             "League of Legends": {
-                "TOP": 36,
-                "JNG": 36,
-                "MID": 39,
-                "BOT": 36,
-                "SUP": 41
+                "TOP": 41,
+                "JNG": 38,
+                "MID": 43,
+                "BOT": 40,
+                "SUP": 44
             },
             "Valorant": {
-                "S1": 36,
-                "S2": 36,
-                "S3": 39,
-                "S4": 36,
-                "S5": 41
+                "S1": 41,
+                "S2": 38,
+                "S3": 43,
+                "S4": 40,
+                "S5": 44
             }
         },
         "best_ranked_defense": {
             "League of Legends": {
-                "power": 376,
+                "power": 412,
                 "slots": [
                     {
                         "role": "TOP",
                         "game": "League of Legends",
-                        "stat": 36,
-                        "power": 72,
+                        "stat": 41,
+                        "power": 82,
                         "card_data": {
                             "card_id": "2026_lck_hle_zeus",
                             "ign": "Zeus",
@@ -4338,8 +4338,8 @@
                     {
                         "role": "JNG",
                         "game": "League of Legends",
-                        "stat": 36,
-                        "power": 72,
+                        "stat": 38,
+                        "power": 76,
                         "card_data": {
                             "card_id": "2026_lcs_c9_blaber",
                             "ign": "Blaber",
@@ -4363,8 +4363,8 @@
                     {
                         "role": "MID",
                         "game": "League of Legends",
-                        "stat": 39,
-                        "power": 88,
+                        "stat": 43,
+                        "power": 97,
                         "card_data": {
                             "card_id": "2026_lck_kt_bdd",
                             "ign": "Bdd",
@@ -4388,8 +4388,8 @@
                     {
                         "role": "BOT",
                         "game": "League of Legends",
-                        "stat": 36,
-                        "power": 72,
+                        "stat": 40,
+                        "power": 80,
                         "card_data": {
                             "card_id": "2026_lck_kt_aiming",
                             "ign": "Aiming",
@@ -4413,8 +4413,8 @@
                     {
                         "role": "SUP",
                         "game": "League of Legends",
-                        "stat": 41,
-                        "power": 72,
+                        "stat": 44,
+                        "power": 77,
                         "card_data": {
                             "card_id": "2026_lpl_lng_missing",
                             "ign": "MISSING",
@@ -4571,9 +4571,9 @@
         "starter_pack_opened": true
     },
     "534170875293859840": {
-        "cash": 197,
+        "cash": 209,
         "gold": 10,
-        "last_practice": "2026-05-16T05:24:36.672557+00:00",
+        "last_practice": "2026-05-16T05:38:30.611014+00:00",
         "last_daily": "2026-05-15T16:27:33.089211+00:00",
         "last_ranked": "2026-05-16T05:24:33.716636+00:00",
         "packs": [
@@ -5080,7 +5080,7 @@
             "MID": "708b5ff6-0e34-40bd-bcf0-89eb47800bcd",
             "JNG": "0aa24f30-9d4b-42de-b362-707cfb94cfc8"
         },
-        "xp": 452,
+        "xp": 487,
         "level": 3,
         "team_stats": {
             "TOP": 17,
@@ -5090,9 +5090,9 @@
             "SUP": 16
         },
         "team_stat_level": 3,
-        "elo": 940,
+        "elo": 927,
         "ranked_wins": 11,
-        "ranked_losses": 29,
+        "ranked_losses": 31,
         "discord_username": "chizuru0864",
         "settings": {
             "alert_daily_practice": true,
@@ -5373,9 +5373,9 @@
             "SUP": 10
         },
         "team_stat_level": 1,
-        "elo": 869,
-        "ranked_wins": 2,
-        "ranked_losses": 20,
+        "elo": 885,
+        "ranked_wins": 3,
+        "ranked_losses": 21,
         "discord_username": "firefox_1888",
         "settings": {
             "alert_daily_practice": true,
@@ -5650,9 +5650,9 @@
             "SUP": 10
         },
         "team_stat_level": 1,
-        "elo": 845,
+        "elo": 829,
         "ranked_wins": 1,
-        "ranked_losses": 22,
+        "ranked_losses": 24,
         "discord_username": "irep3922",
         "settings": {
             "alert_daily_practice": true,
@@ -6153,9 +6153,9 @@
             "SUP": 15
         },
         "team_stat_level": 2,
-        "elo": 920,
+        "elo": 917,
         "ranked_wins": 4,
-        "ranked_losses": 17,
+        "ranked_losses": 18,
         "discord_username": "erikd943",
         "settings": {
             "alert_daily_practice": true,
@@ -6346,11 +6346,11 @@
         "starter_pack_opened": true
     },
     "1107866349188956241": {
-        "cash": 777,
+        "cash": 1000,
         "gold": 10,
-        "last_practice": "2026-05-16T05:24:36.716429+00:00",
+        "last_practice": "2026-05-16T06:37:33.912130+00:00",
         "last_daily": "2026-05-15T19:08:05.685911+00:00",
-        "last_ranked": "2026-05-16T04:56:24.143381+00:00",
+        "last_ranked": "2026-05-16T06:37:36.688040+00:00",
         "packs": [
             null
         ],
@@ -7350,36 +7350,36 @@
                 "S5": "2137735e-7e6c-49f8-a2b1-79d109d42cc6"
             }
         },
-        "xp": 1866,
-        "level": 5,
+        "xp": 2083,
+        "level": 6,
         "team_stats": {
-            "TOP": 23,
-            "JNG": 24,
-            "MID": 22,
-            "BOT": 28,
-            "SUP": 21
+            "TOP": 27,
+            "JNG": 27,
+            "MID": 26,
+            "BOT": 32,
+            "SUP": 23
         },
         "team_stats_by_game": {
             "League of Legends": {
-                "TOP": 23,
-                "JNG": 24,
-                "MID": 22,
-                "BOT": 28,
-                "SUP": 21
+                "TOP": 27,
+                "JNG": 27,
+                "MID": 26,
+                "BOT": 32,
+                "SUP": 23
             },
             "Valorant": {
-                "S1": 23,
-                "S2": 24,
-                "S3": 22,
-                "S4": 28,
-                "S5": 21
+                "S1": 27,
+                "S2": 27,
+                "S3": 26,
+                "S4": 32,
+                "S5": 23
             }
         },
-        "team_stat_level": 5,
+        "team_stat_level": 6,
         "default_team_game": "League of Legends",
-        "elo": 1040,
-        "ranked_wins": 15,
-        "ranked_losses": 14,
+        "elo": 1074,
+        "ranked_wins": 19,
+        "ranked_losses": 15,
         "discord_username": "zach_k1",
         "settings": {
             "alert_daily_practice": true,
@@ -7393,13 +7393,13 @@
         "daily_reminder_channel_id": 1503540831699599410,
         "best_ranked_defense": {
             "League of Legends": {
-                "power": 224,
+                "power": 257,
                 "slots": [
                     {
                         "role": "TOP",
                         "game": "League of Legends",
-                        "stat": 23,
-                        "power": 52,
+                        "stat": 27,
+                        "power": 61,
                         "card_data": {
                             "card_id": "2026_lcs_c9_thanatos",
                             "ign": "Thanatos",
@@ -7418,15 +7418,13 @@
                         "set_label": "LCS '26",
                         "owned_card": {
                             "rarity": "Challenger"
-                        },
-                        "gold": 6418,
-                        "multiplier": 123.42626068299647
+                        }
                     },
                     {
                         "role": "JNG",
                         "game": "League of Legends",
-                        "stat": 24,
-                        "power": 48,
+                        "stat": 27,
+                        "power": 54,
                         "card_data": {
                             "card_id": "2026_lcs_sen_hambak",
                             "ign": "HamBak",
@@ -7445,15 +7443,13 @@
                         "set_label": "LCS '26",
                         "owned_card": {
                             "rarity": "Master"
-                        },
-                        "gold": 21030,
-                        "multiplier": 438.118335237316
+                        }
                     },
                     {
                         "role": "MID",
                         "game": "League of Legends",
-                        "stat": 22,
-                        "power": 38,
+                        "stat": 26,
+                        "power": 46,
                         "card_data": {
                             "card_id": "2026_lcp_gzg_jimien",
                             "ign": "JimieN",
@@ -7472,15 +7468,13 @@
                         "set_label": "LCP '26",
                         "owned_card": {
                             "rarity": "Diamond"
-                        },
-                        "gold": 13465,
-                        "multiplier": 354.33699341123116
+                        }
                     },
                     {
                         "role": "BOT",
                         "game": "League of Legends",
-                        "stat": 28,
-                        "power": 49,
+                        "stat": 32,
+                        "power": 56,
                         "card_data": {
                             "card_id": "2026_lcp_dcg_feng",
                             "ign": "Feng",
@@ -7499,15 +7493,13 @@
                         "set_label": "LCP '26",
                         "owned_card": {
                             "rarity": "Diamond"
-                        },
-                        "gold": 15984,
-                        "multiplier": 326.2134220416294
+                        }
                     },
                     {
                         "role": "SUP",
                         "game": "League of Legends",
-                        "stat": 21,
-                        "power": 37,
+                        "stat": 23,
+                        "power": 40,
                         "card_data": {
                             "card_id": "2026_lcs_sen_huhi",
                             "ign": "huhi",
@@ -7526,9 +7518,7 @@
                         "set_label": "LCS '26",
                         "owned_card": {
                             "rarity": "Diamond"
-                        },
-                        "gold": 11493,
-                        "multiplier": 310.61173604889274
+                        }
                     }
                 ]
             },
@@ -7665,19 +7655,19 @@
         },
         "practice_reminder_channel_id": 1503540831699599410,
         "recent_ranked_opponents": [
-            "656332144909746177",
             "534170875293859840",
-            "451527111442825226"
+            "451527111442825226",
+            "766143687980744706"
         ],
         "ranked_reminder_channel_id": 1503540831699599410,
         "starter_pack_opened": true
     },
     "713289222009651230": {
-        "cash": 80,
+        "cash": 54,
         "gold": 10,
-        "last_practice": "2026-05-16T04:07:41.586593+00:00",
+        "last_practice": "2026-05-16T13:26:31.727761+00:00",
         "last_daily": "2026-05-16T03:30:13.213382+00:00",
-        "last_ranked": "2026-05-16T04:07:47.160740+00:00",
+        "last_ranked": "2026-05-16T13:15:56.092942+00:00",
         "packs": [
             null
         ],
@@ -9075,6 +9065,210 @@
                     "role": "JNG",
                     "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/LNG_Esports/lng-esports_croco.png"
                 }
+            },
+            {
+                "instance_id": "5595518d-82ae-46da-848f-9accabc1383e",
+                "card_id": "2026_lck_t1_faker",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-16T09:58:34.069215",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Faker",
+                    "team": "T1",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCK",
+                    "role": "MID",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/T1/t1_faker.png"
+                }
+            },
+            {
+                "instance_id": "668219a4-afcc-4ab3-a389-6feab3ff3008",
+                "card_id": "2026_lcs_sr_contractz",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-16T09:58:34.081703",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Contractz",
+                    "team": "Shopify Rebellion",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCS",
+                    "role": "JNG",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/Shopify_Rebellion/shopify-rebellion_contractz.png"
+                }
+            },
+            {
+                "instance_id": "fa4f1132-5430-4a88-a445-bd3a19852360",
+                "card_id": "2026_lpl_lng_1xn",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-16T09:58:34.094276",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "1xn",
+                    "team": "LNG Esports",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LPL",
+                    "role": "BOT",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LPL/LNG_Esports/lng-esports_1xn.png"
+                }
+            },
+            {
+                "instance_id": "a2787202-3f86-4866-9068-ab696ff8690c",
+                "card_id": "2026_lck_bfx_vicla",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-16T09:58:34.107064",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "VicLa",
+                    "team": "BNK FEARX",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCK",
+                    "role": "MID",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/BNK_FEARX/bnk-fearx_vicla.png"
+                }
+            },
+            {
+                "instance_id": "0999aa1f-ed35-4437-8ddb-5f42b040583a",
+                "card_id": "2026_lck_bro_gideon",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-16T09:58:34.119801",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "GIDEON",
+                    "team": "HANJIN BRION",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCK",
+                    "role": "JNG",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCK/HANJIN_BRION/hanjin-brion_gideon.png"
+                }
+            },
+            {
+                "instance_id": "8707df17-99f5-4978-8d6c-70c5e214bcfa",
+                "card_id": "2026_lcs_lyon_inspired",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-16T09:58:34.132544",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Inspired",
+                    "team": "LYON",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCS",
+                    "role": "JNG",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCS/LYON/lyon_inspired.png"
+                }
+            },
+            {
+                "instance_id": "a6380b66-66d1-480e-a323-8046714b5f9b",
+                "card_id": "2026_lcp_dfm_woody",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-16T09:58:34.145523",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Woody",
+                    "team": "DetonatioN FocusMe",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LCP",
+                    "role": "SUP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/DetonatioN_FocusMe/detonation-focusme_woody.png"
+                }
+            },
+            {
+                "instance_id": "502fbca2-6367-47bc-a8a4-44434fcbfe3e",
+                "card_id": "2026_lec_sk_mikyx",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-16T13:27:00.409866",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Mikyx",
+                    "team": "SK Gaming",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "SUP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/SK_Gaming/sk-gaming_mikyx.png"
+                }
+            },
+            {
+                "instance_id": "dab1cc90-4359-461d-bbb2-5ca6263a28e9",
+                "card_id": "2026_lec_kc_yike",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-16T13:27:00.422410",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Yike",
+                    "team": "Karmine Corp",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "JNG",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Karmine_Corp/karmine-corp_yike.png"
+                }
+            },
+            {
+                "instance_id": "9ee029f9-aacc-42f8-b345-6cf188fdd876",
+                "card_id": "2026_lec_th_way",
+                "rarity": "Silver",
+                "pulled_on": "2026-05-16T13:27:00.435236",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Way",
+                    "team": "Team Heretics",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "SUP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Team_Heretics/team-heretics_way.png"
+                }
+            },
+            {
+                "instance_id": "d106b039-e354-48c5-9f51-ce1eb8f26b38",
+                "card_id": "2026_lec_fnc_lospa",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-16T13:27:00.448109",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Lospa",
+                    "team": "Fnatic",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "SUP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/Fnatic/fnatic_lospa.png"
+                }
+            },
+            {
+                "instance_id": "6e7d622a-5c8b-4f0a-b169-24cd25658ff9",
+                "card_id": "2026_lec_gx_jun",
+                "rarity": "Gold",
+                "pulled_on": "2026-05-16T13:27:00.461353",
+                "pulled_by_id": "713289222009651230",
+                "pulled_by_username": "call.me.space",
+                "snapshot": {
+                    "ign": "Jun",
+                    "team": "GIANTX",
+                    "game": "League of Legends",
+                    "set": "LoL 26",
+                    "league": "LEC",
+                    "role": "SUP",
+                    "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LEC/GIANTX/giantx_jun.png"
+                }
             }
         ],
         "team": {
@@ -9094,7 +9288,7 @@
             },
             "Valorant": {}
         },
-        "xp": 1430,
+        "xp": 1641,
         "level": 5,
         "team_stats": {
             "TOP": 22,
@@ -9121,9 +9315,9 @@
         },
         "team_stat_level": 5,
         "default_team_game": "League of Legends",
-        "elo": 1032,
-        "ranked_wins": 10,
-        "ranked_losses": 10,
+        "elo": 1035,
+        "ranked_wins": 12,
+        "ranked_losses": 11,
         "discord_username": "call.me.space",
         "settings": {
             "alert_daily_practice": true,
@@ -9279,9 +9473,9 @@
             }
         },
         "recent_ranked_opponents": [
-            "656332144909746177",
             "1107866349188956241",
-            "534170875293859840"
+            "451527111442825226",
+            "766143687980744706"
         ],
         "ranked_reminder_channel_id": 1503540831699599410,
         "starter_pack_opened": true
