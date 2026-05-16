@@ -416,10 +416,10 @@ class CompletionView(discord.ui.View):
     def set_completion_label(self, entry):
         completed_rarity = entry.get("completed_rarity")
         if not completed_rarity:
-            return "None"
+            return MISSING_CARD_SYMBOL
         symbol = self.cog.get_rarity_symbol(completed_rarity)
         multiplier = PACK_COMPLETION_MULTIPLIERS.get(completed_rarity, 1.0)
-        return f"{symbol} {completed_rarity} x{multiplier:g}"
+        return f"{symbol} {completed_rarity} - {multiplier:g}x power"
 
     def build_embed(self):
         lines = []
@@ -435,7 +435,7 @@ class CompletionView(discord.ui.View):
             release_date = entry.get("release_date")
             release_text = f" - {release_date}" if release_date else ""
             lines.append(
-                f"`{self.set_completion_label(entry):<20}` {entry.get('name', entry.get('set', 'Unknown Set'))}"
+                f"{self.set_completion_label(entry)} **{entry.get('name', entry.get('set', 'Unknown Set'))}**"
                 f"{release_text} ({entry['overall_owned_count']}/{entry['total_count']})"
             )
 
@@ -1571,18 +1571,29 @@ class Cards(commands.Cog):
         ]
         return {"sets": entries}, None
 
-    def completion_multiplier_for_card(self, user_data, card_data):
+    def completion_entry_for_card(self, user_data, card_data, rarity_card_ids=None):
         if not isinstance(user_data, dict) or not card_data:
-            return 1.0
+            return None
 
-        rarity_card_ids = self.get_user_rarity_card_ids(user_data)
+        rarity_card_ids = rarity_card_ids if rarity_card_ids is not None else self.get_user_rarity_card_ids(user_data)
+        best_entry = None
         best_multiplier = 1.0
         for completion_set in self.sorted_completion_sets():
             if not self.set_contains_card(completion_set, card_data):
                 continue
             entry = self.get_set_completion_entry(completion_set, user_data, rarity_card_ids)
-            best_multiplier = max(best_multiplier, entry["multiplier"])
-        return best_multiplier
+            multiplier = entry["multiplier"]
+            if multiplier > best_multiplier:
+                best_entry = entry
+                best_multiplier = multiplier
+        return best_entry
+
+    def completion_multiplier_for_card(self, user_data, card_data):
+        if not isinstance(user_data, dict) or not card_data:
+            return 1.0
+
+        entry = self.completion_entry_for_card(user_data, card_data)
+        return entry["multiplier"] if entry else 1.0
 
     def format_inventory_index(self, index):
         return f"`#{index}`"
@@ -2078,7 +2089,15 @@ class Cards(commands.Cog):
             if slot and "gold" in slot:
                 set_label = self.fit_line(draw, f"{slot['gold']:,}g", card_width - 14)
             elif slot and slot.get("card_data"):
-                set_label = self.fit_line(draw, slot["set_label"], card_width - 14)
+                completion_multiplier = float(slot.get("completion_multiplier", 1.0) or 1.0)
+                if completion_multiplier > 1:
+                    set_label = self.fit_line(
+                        draw,
+                        f"{slot['set_label']} - {completion_multiplier:g}x",
+                        card_width - 14
+                    )
+                else:
+                    set_label = self.fit_line(draw, slot["set_label"], card_width - 14)
             else:
                 stat = slot.get("power", slot.get("stat", BASE_TEAM_STAT)) if slot else self.team_slot_power({}, role, False)
                 set_label = f"Power {stat}"
@@ -2189,11 +2208,29 @@ class Cards(commands.Cog):
         embed.add_field(name="ELO", value=str(elo), inline=True)
         embed.add_field(name="Tier", value=rank, inline=True)
         embed.add_field(name="Ranked Team", value=default_text, inline=True)
+        bonus_lines = self.team_completion_bonus_lines(image_slots)
+        if bonus_lines:
+            embed.add_field(name="Set Bonuses", value="\n".join(bonus_lines), inline=False)
         embed.set_footer(text="Choose a game, choose a slot, then enter a card id or inventory number.")
         file = self.make_team_lineup_file(image_slots, user_id, game_name)
         if file:
             embed.set_image(url=f"attachment://{file.filename}")
         return embed, file
+
+    def team_completion_bonus_lines(self, slots):
+        bonuses = {}
+        for slot in slots:
+            multiplier = float(slot.get("completion_multiplier", 1.0) or 1.0)
+            rarity = slot.get("completion_rarity")
+            name = slot.get("completion_name")
+            if multiplier <= 1 or not rarity or not name:
+                continue
+            bonuses[name] = (rarity, multiplier)
+
+        return [
+            f"{self.get_rarity_symbol(rarity)} {name}: {rarity} - {multiplier:g}x power"
+            for name, (rarity, multiplier) in sorted(bonuses.items())
+        ]
 
     def get_leaderboard_position(self, user_id, users):
         users_cog = self.bot.get_cog("Users") if self.bot else None
@@ -2282,6 +2319,8 @@ class Cards(commands.Cog):
             rarity = owned_card.get("rarity", "Unknown Rarity")
             player_name = player.get("name", card_data.get("ign", "Unknown"))
             set_label = self.format_team_set_label(card_data)
+            completion_entry = self.completion_entry_for_card(user_data, card_data)
+            completion_multiplier = completion_entry["multiplier"] if completion_entry else 1.0
 
             image_slots.append({
                 "role": role,
@@ -2297,8 +2336,11 @@ class Cards(commands.Cog):
                     role,
                     True,
                     rarity=rarity,
-                    completion_multiplier=self.completion_multiplier_for_card(user_data, card_data),
+                    completion_multiplier=completion_multiplier,
                 ),
+                "completion_multiplier": completion_multiplier,
+                "completion_rarity": completion_entry.get("completed_rarity") if completion_entry else None,
+                "completion_name": completion_entry.get("name") if completion_entry else None,
             })
 
         return image_slots, changed
@@ -2312,7 +2354,7 @@ class Cards(commands.Cog):
                 "stat": slot.get("stat", BASE_TEAM_STAT),
                 "power": slot.get("power", slot.get("stat", BASE_TEAM_STAT)),
             }
-            for key in ("card_data", "player_name", "rarity", "set_label"):
+            for key in ("card_data", "player_name", "rarity", "set_label", "completion_multiplier", "completion_rarity", "completion_name"):
                 if key in slot:
                     saved_slot[key] = slot[key]
             if "rarity" in saved_slot:
