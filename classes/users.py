@@ -537,42 +537,62 @@ class Users(commands.Cog):
     # Help command to list available commands and filters
     @commands.command()
     async def help(self, ctx):
-        await ctx.send(
-            "**Available Commands**\n\n"
-            "**User**\n"
-            "`.help` - Show this command list.\n"
-            "`.profile [@user]` or `.prof [@user]` - View a profile. Your own profile includes settings buttons.\n"
-            "`.cd` - Check practice, daily, and ranked cooldowns.\n"
-            "`.daily` - Earn cash and gold every 24 hours.\n\n"
-            "**Ranked**\n"
-            "`.leaderboard` or `.lb` - View users ranked by ELO.\n"
-            "`.ranked` or `.r` - Play a ranked match to earn cash and XP.\n"
-            "`.practice` or `.p` - Earn cash and XP every 10 minutes.\n"
-            "`.team` - View your LoL or Valorant lineup, set cards, and choose your default ranked game.\n\n"
-            "**Collection**\n"
-            "`.inventory [filters]` or `.inv [filters]` - View your cards.\n"
-            "Inventory filters: `-player <name/id>`, `-team <team>`, `-game <game>`, `-rarity <rarity>`, `-set <set>`, `-league <league>`, `-role <role>`.\n"
-            "Example: `.inv -game LoL -team T1 -rarity Gold -role mid`\n"
-            "`.progress [filters]` - View collection progress and best rarity for each card.\n"
-            "`.completion` - View every set's completion tier and team/ranked power bonus.\n"
-            "`.info [filters]` - List all bot cards. Supports inventory filters plus `-region <league>`.\n"
-            "`.info <CID>` - View one card's image and pulled rarity counts.\n"
-            "`.view <inventory #>` - View one card from your inventory.\n"
-            "`.packs` - View your unopened packs.\n"
-            "`.open <pack #|pack id|pack name>` - Open a pack.\n\n"
-            "**Predictions**\n"
-            "`.prediction`, `.predictions`, `.pred`, or `.preds` - View LoL match predictions, sort matches, make predictions, and manage your picks.\n\n"
-            "**Economy**\n"
-            "`.shop` - View packs for sale and buy packs.\n"
-            "`.auction` - View auctions with filter dropdowns, then select one to bid or buy now.\n"
-            "Auction filters include `-progress` / `-needed` to show cards that help your current `.progress` tier.\n"
-            "`.auction -sell <inventory #>` - Auction one of your cards for 1-7 days.\n"
-            "`.auction -sellpack <pack #>` - Auction one of your packs for 1-7 days.\n"
-            "`.autosell` - Auction duplicate cards using your rarity autosell settings.\n"
-            "`.autosell -settings` - Toggle autosell by rarity and set starting/sell now prices.\n"
-            "Use the auction buttons and dropdowns to filter, sort, view your listings, bid, buy now, or take down your own auction if nobody has bid yet.\n"
-            "`.trade @user` - Start a trade with another user."
+        embed = discord.Embed(title="Available Commands", color=discord.Color.dark_grey())
+        embed.add_field(
+            name="User",
+            value=(
+                "`.help` - Show this command list.\n"
+                "`.profile [@user]` or `.prof [@user]` - View a profile.\n"
+                "`.cd` - Check practice, daily, and ranked cooldowns.\n"
+                "`.daily` - Earn cash and gold every 24 hours."
+            ),
+            inline=False
         )
+        embed.add_field(
+            name="Ranked",
+            value=(
+                "`.leaderboard` or `.lb` - View users ranked by ELO.\n"
+                "`.ranked` or `.r` - Play a ranked match to earn cash and XP.\n"
+                "`.practice` or `.p` - Earn cash and XP every 10 minutes.\n"
+                "`.team` - View your LoL or Valorant lineup."
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="Collection",
+            value=(
+                "`.inventory [filters]` or `.inv [filters]` - View your cards.\n"
+                "Filters: `-player`, `-team`, `-game`, `-rarity`, `-set`, `-league`, `-role`.\n"
+                "Example: `.inv -game LoL -team T1 -rarity Gold -role mid`\n"
+                "`.progress [filters]` - View collection progress.\n"
+                "`.completion` - View set completion and power bonuses.\n"
+                "`.info [filters]` or `.info <CID>` - List or inspect bot cards.\n"
+                "`.view <inventory #>` - View one inventory card.\n"
+                "`.packs` - View unopened packs.\n"
+                "`.open <pack #|pack id|pack name>` - Open a pack."
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="Predictions",
+            value="`.prediction`, `.predictions`, `.pred`, or `.preds` - View matches and manage your picks.",
+            inline=False
+        )
+        embed.add_field(
+            name="Economy",
+            value=(
+                "`.shop` - View packs for sale and buy packs.\n"
+                "`.auction` - View auctions with filters, bidding, and buy now.\n"
+                "Auction filters include `-progress` / `-needed`.\n"
+                "`.auction -sell <inventory #>` - Auction a card.\n"
+                "`.auction -sellpack <pack #>` - Auction a pack.\n"
+                "`.autosell` - Auction duplicate cards using autosell settings.\n"
+                "`.autosell -settings` - Configure autosell.\n"
+                "`.trade @user` - Start a trade."
+            ),
+            inline=False
+        )
+        await ctx.send(embed=embed)
 
     # Profile command to show user's balance and cards owned
     @commands.command(aliases=["prof"])
