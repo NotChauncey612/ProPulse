@@ -1342,8 +1342,8 @@ class LeaderboardView(discord.ui.View):
         for index, entry in enumerate(self.get_page_entries(), start=self.page_start() + 1):
             rank_symbol = RANK_SYMBOLS.get(entry["rank"], "⚫")
             lines.append(
-                f"# {index} {rank_symbol} | {entry['ign']} | "
-                f"ELO: {entry['elo']} | {RANKED_EMOJI}: {entry['total_power']}"
+                f"`#{index:>2}` {rank_symbol} **{entry['ign']}** | "
+                f"ELO: `{entry['elo']}` | {RANKED_EMOJI}: `{entry['total_power']}`"
             )
 
         description = "\n".join(lines) if lines else "No users are on the leaderboard yet."
