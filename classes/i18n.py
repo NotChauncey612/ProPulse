@@ -105,6 +105,10 @@ class Translator:
         return None
 
     def translate_capture(self, value, language_code):
+        language_code = self.normalize_language(language_code)
+        if self.catalogs.get(language_code, {}).get(value):
+            return self.translate(value, language_code)
+
         alpha_count = sum(character.isalpha() for character in value)
         if alpha_count < 4:
             return value

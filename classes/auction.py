@@ -36,6 +36,9 @@ class Auction(commands.Cog):
         self.bot = bot
         self.check_auctions.start()
 
+    def cog_unload(self):
+        self.check_auctions.cancel()
+
     # -----------------
     # JSON
     # -----------------
@@ -889,6 +892,10 @@ class Auction(commands.Cog):
 
         self.save_auctions(remaining)
 
+    @check_auctions.before_loop
+    async def before_check_auctions(self):
+        await self.bot.wait_until_ready()
+
     async def resolve_auction(self, auction):
         users_cog = self.bot.get_cog("Users")
         cards_cog = self.bot.get_cog("Cards")
@@ -936,7 +943,7 @@ class Auction(commands.Cog):
     # Command
     # -----------------
 
-    @commands.command()
+    @commands.command(aliases=["ah"])
     async def auction(self, ctx, *args):
         cards_cog = self.bot.get_cog("Cards")
         users_cog = self.bot.get_cog("Users")

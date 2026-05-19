@@ -3,3 +3,16 @@
 __pycache__/
 *.pyc
 *.log
+
+# Runtime data lives on Railway/local backups, not in Git.
+data/users.json
+data/predictions.json
+data/auctions.json
+data/auctions_history.json
+data/trades.json
+data/active_trades.json
+data/moderators.json
+data/reaction_roles.json
+
+# Backup/export artifacts.
+*.zip

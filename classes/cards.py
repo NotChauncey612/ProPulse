@@ -170,6 +170,20 @@ TEAM_EMOJI = "🏳️"
 ROLE_EMOJI = "🎮"
 LEAGUE_EMOJI = "🏆"
 SET_EMOJI = "📦"
+RANKED_EMOJI = "⚔️"
+WAIT_EMOJI = "⏳"
+CASH_EMOJI = "💵"
+COIN_EMOJI = "🪙"
+REWARDS_EMOJI = "💰"
+TOTALS_EMOJI = "💸"
+RANK_SYMBOLS = {
+    "Silver": "⚪",
+    "Gold": "🟡",
+    "Diamond": "🟣",
+    "Champ": "🔴",
+    "Master": "🔴",
+    "Challenger": "🔵",
+}
 MISSING_CARD_SYMBOL = "⚫"
 
 
@@ -506,12 +520,17 @@ class CardInfoListView(discord.ui.View):
         lines = []
         for cid, card_data in self.get_page_slice():
             player = self.cog.get_player_for_card(card_data) or {}
+            details = [
+                f"{TEAM_EMOJI} {card_data.get('team', 'Unknown')}",
+                f"{LEAGUE_EMOJI} {card_data.get('league', 'Unknown')}",
+                f"{SET_EMOJI} {card_data.get('set', 'Unknown Set')}",
+            ]
+            role_label = self.cog.display_card_role(card_data, player)
+            if role_label:
+                details.insert(1, f"{ROLE_EMOJI} {role_label}")
             lines.append(
                 f"`CID {cid}` {player.get('name', card_data.get('ign', 'Unknown'))} - "
-                f"{TEAM_EMOJI} {card_data.get('team', 'Unknown')} - "
-                f"{ROLE_EMOJI} {player.get('role', card_data.get('role', 'Unknown'))} - "
-                f"{LEAGUE_EMOJI} {card_data.get('league', 'Unknown')} - "
-                f"{SET_EMOJI} {card_data.get('set', 'Unknown Set')}"
+                + " - ".join(details)
             )
 
         description = "\n".join(lines) if lines else "No cards matched those filters."
@@ -606,11 +625,10 @@ class CardInfoView(discord.ui.View):
             f"CID: `{cid}`" if cid is not None else None,
             f"Game: {card_data.get('game', 'Unknown')}",
             f"{TEAM_EMOJI} Team: {card_data.get('team', 'Unknown')}",
-            f"{ROLE_EMOJI} Role: {player.get('role', card_data.get('role', 'Unknown'))}",
+            f"{ROLE_EMOJI} Role: {role_label}" if (role_label := self.cog.display_card_role(card_data, player)) else None,
             f"{LEAGUE_EMOJI} League: {card_data.get('league', 'Unknown')}",
             f"{SET_EMOJI} Set: {card_data.get('set', 'Unknown Set')}",
         ]
-        detail_lines.append(f"Card ID: `{card_id or 'unknown'}`")
         description_parts.append("\n".join(line for line in detail_lines if line is not None))
 
         embed = discord.Embed(
@@ -1131,16 +1149,32 @@ class Cards(commands.Cog):
 
     def parse_inventory_filters(self, args):
         filters = {}
-        valid_flags = {"-team", "-rarity", "-player", "-set", "-role", "-league", "-region", "-game"}
+        flag_aliases = {
+            "-player": "player",
+            "-p": "player",
+            "-team": "team",
+            "-t": "team",
+            "-game": "game",
+            "-g": "game",
+            "-rarity": "rarity",
+            "-ra": "rarity",
+            "-pack": "set",
+            "-pa": "set",
+            "-league": "league",
+            "-l": "league",
+            "-region": "league",
+            "-re": "league",
+            "-role": "role",
+            "-ro": "role",
+        }
+        valid_flags = set(flag_aliases)
 
         i = 0
         while i < len(args):
             current = args[i].lower()
 
             if current in valid_flags:
-                key = current[1:]
-                if key == "region":
-                    key = "league"
+                key = flag_aliases[current]
                 i += 1
 
                 value_parts = []
@@ -1265,7 +1299,8 @@ class Cards(commands.Cog):
     def build_filter_text(self, filters):
         if not filters:
             return None
-        return " • ".join(f"{key.capitalize()}: {value}" for key, value in filters.items())
+        labels = {"league": "Region", "set": "Pack"}
+        return " • ".join(f"{labels.get(key, key.capitalize())}: {value}" for key, value in filters.items())
 
     def iter_card_instances_from_users(self):
         users = self.load_users()
@@ -2329,18 +2364,16 @@ class Cards(commands.Cog):
             color=discord.Color.dark_grey()
         )
         embed.add_field(
-            name="Rank",
-            value=f"#{leaderboard_position}" if leaderboard_position else "Unranked",
+            name=f"{LEAGUE_EMOJI} Rank",
+            value=f"{RANK_SYMBOLS.get(rank, '⚫')} {rank} - #{leaderboard_position}" if leaderboard_position else f"{RANK_SYMBOLS.get(rank, '⚫')} {rank} - Unranked",
             inline=True
         )
-        embed.add_field(name="Power", value=str(total_power), inline=True)
+        embed.add_field(name=f"{RANKED_EMOJI} Power", value=str(total_power), inline=True)
         embed.add_field(name="ELO", value=str(elo), inline=True)
-        embed.add_field(name="Tier", value=rank, inline=True)
-        embed.add_field(name="Ranked Team", value=default_text, inline=True)
+        embed.add_field(name=f"{TEAM_EMOJI} Ranked Team", value=default_text, inline=True)
         bonus_lines = self.team_completion_bonus_lines(image_slots)
         if bonus_lines:
-            embed.add_field(name="Set Bonuses", value="\n".join(bonus_lines), inline=False)
-        embed.set_footer(text="Choose a game, choose a slot, then enter a card id or inventory number.")
+            embed.add_field(name=f"{SET_EMOJI} Set Bonuses", value="\n".join(bonus_lines), inline=False)
         file = self.make_team_lineup_file(image_slots, user_id, game_name)
         if file:
             embed.set_image(url=f"attachment://{file.filename}")
@@ -2802,7 +2835,7 @@ class Cards(commands.Cog):
         now = self.utc_now()
         if now >= ready_at:
             return None
-        return f"Ranked is on cooldown. Try again in {self.format_duration((ready_at - now).total_seconds())}."
+        return f"{WAIT_EMOJI} Wait {self.format_duration((ready_at - now).total_seconds())} before playing ranked again."
 
     def rank_for_elo(self, elo):
         for rank_name, threshold in RANK_THRESHOLDS:
@@ -3251,24 +3284,26 @@ class Cards(commands.Cog):
         embed.add_field(name="Opponent", value=result["opponent_name"], inline=True)
         embed.add_field(name="Record", value=f"{result['wins']}W - {result['losses']}L", inline=True)
         embed.add_field(name="ELO", value=f"{result['user_elo_before']} -> {result['user_elo_after']} ({delta_text})", inline=False)
-        new_rank_text = f"{self.get_rarity_symbol(result['new_rank'])} {result['new_rank']}"
-        old_rank_text = f"{self.get_rarity_symbol(result['old_rank'])} {result['old_rank']}"
+        new_rank_text = f"{RANK_SYMBOLS.get(result['new_rank'], '⚫')} {result['new_rank']}"
+        old_rank_text = f"{RANK_SYMBOLS.get(result['old_rank'], '⚫')} {result['old_rank']}"
         rank_text = new_rank_text if result["old_rank"] == result["new_rank"] else f"{old_rank_text} -> {new_rank_text}"
-        embed.add_field(name="Rank", value=rank_text, inline=True)
-        embed.add_field(name="Power", value=f"{result['user_power']} vs {result['opponent_power']}", inline=True)
-        embed.add_field(name="Gold", value=f"{result['user_gold']:,}g vs {result['opponent_gold']:,}g", inline=True)
+        embed.add_field(name=f"{LEAGUE_EMOJI} Rank", value=rank_text, inline=True)
+        embed.add_field(name=f"{RANKED_EMOJI} Power", value=f"{result['user_power']} vs {result['opponent_power']}", inline=True)
+        embed.add_field(name=f"{COIN_EMOJI} Gold", value=f"{result['user_gold']:,}g vs {result['opponent_gold']:,}g", inline=True)
         embed.add_field(name="Win Chance", value=f"{round(result['win_chance'] * 100)}%", inline=True)
-        reward_text = f"{result['xp_reward']} XP and {result['cash_reward']} cash"
+        reward_text = f"{result['xp_reward']} XP and {result['cash_reward']} {CASH_EMOJI}"
         reward_parts = []
         if result["cash_multiplier"] > 1:
-            reward_parts.append(f"{result['base_cash_reward']} cash x {result['cash_multiplier']:g} {result['new_rank']} rank")
+            reward_parts.append(
+                f"{result['base_cash_reward']} {CASH_EMOJI} x {result['cash_multiplier']:g} {new_rank_text} rank"
+            )
         if reward_parts:
             reward_text += f" ({' '.join(reward_parts)})"
-        embed.add_field(name="Rewards", value=reward_text, inline=False)
+        embed.add_field(name=f"{REWARDS_EMOJI} Rewards", value=reward_text, inline=False)
         embed.add_field(
-            name="Totals",
+            name=f"{TOTALS_EMOJI} Totals",
             value=(
-                f"{result['total_cash']} cash and "
+                f"{result['total_cash']} {CASH_EMOJI} and "
                 f"{result['current_level_xp']}/{result['needed_level_xp']} XP "
                 f"towards Level {result['level'] + 1}"
             ),
@@ -3307,9 +3342,20 @@ class Cards(commands.Cog):
         }
         return colors.get(rarity, discord.Color.default())
 
+    def display_card_role(self, card_data, player=None):
+        if self.card_game(card_data) == GAME_VALORANT:
+            return None
+
+        player = player or self.get_player_for_card(card_data) or {}
+        role = player.get("role", card_data.get("role", "Unknown"))
+        normalized_role = self.normalize_team_role(role, self.card_game(card_data))
+        return self.get_team_role_labels(self.card_game(card_data)).get(normalized_role, role)
+
     def card_embed(self, player, card_data, card_instance, pulled_by_name):
         rarity = card_instance.get("rarity", "Unknown")
         rarity_label = f"{self.get_rarity_symbol(rarity)} {rarity}"
+        game_name = self.card_game(card_data)
+        role_label = self.display_card_role(card_data, player)
 
         embed = discord.Embed(
             title=player.get("name", "Unknown"),
@@ -3317,7 +3363,8 @@ class Cards(commands.Cog):
         )
 
         embed.add_field(name=f"{TEAM_EMOJI} Team", value=card_data.get("team", "Unknown"), inline=False)
-        embed.add_field(name=f"{ROLE_EMOJI} Role", value=player.get("role", "Unknown"), inline=False)
+        if role_label:
+            embed.add_field(name=f"{ROLE_EMOJI} Role", value=role_label, inline=False)
         embed.add_field(name=f"{LEAGUE_EMOJI} League", value=card_data.get("league", "Unknown"), inline=False)
         embed.add_field(name=f"{SET_EMOJI} Set", value=card_data.get("set", "Unknown Set"), inline=False)
         embed.add_field(name="Rarity", value=rarity_label, inline=False)
@@ -3682,7 +3729,7 @@ class Cards(commands.Cog):
 
         user_packs = user_data.get("packs", [])
 
-        if arg.lower() == "-all":
+        if arg.lower() == "all":
             result = self.open_lowest_index_pack(ctx.author.id, ctx.author)
             error = result.get("error")
             if error:

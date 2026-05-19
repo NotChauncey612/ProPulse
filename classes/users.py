@@ -43,6 +43,7 @@ ALERT_EMOJI = "🔔"
 DM_EMOJI = "📬"
 CONFIRM_EMOJI = "✅"
 PACK_EMOJI = "🎴"
+LANGUAGE_EMOJI = "\U0001f310"
 
 RANKED_EMOJI = "⚔️"
 
@@ -72,6 +73,13 @@ RANK_THRESHOLDS = [
     ("Gold", 1200),
     ("Silver", 0),
 ]
+RANK_SYMBOLS = {
+    "Silver": "⚪",
+    "Gold": "🟡",
+    "Diamond": "🟣",
+    "Champ": "🔴",
+    "Challenger": "🔵",
+}
 MAIN_DISCORD_INVITE = os.getenv("MAIN_DISCORD_INVITE", "https://discord.gg/fbJYSF2RfV")
 MAIN_DISCORD_GUILD_ID = os.getenv("MAIN_DISCORD_GUILD_ID")
 CREATE_MISSING_RANK_ROLES = os.getenv("CREATE_MISSING_RANK_ROLES", "true").lower() not in {"0", "false", "no"}
@@ -689,6 +697,7 @@ class Users(commands.Cog):
                 "ign": self.leaderboard_name(user_id, profile),
                 "total_power": total_power,
                 "elo": elo,
+                "rank": self.rank_for_elo(elo),
             })
 
         entries.sort(
@@ -881,7 +890,7 @@ class Users(commands.Cog):
                 "`.profile [@user]` or `.prof [@user]` - View a profile.\n"
                 "`.cd` - Check practice, daily, ranked, and vote cooldowns.\n"
                 "`.daily` - Earn cash and gold every 24 hours.\n"
-                "`.vote` - Vote on Top.gg and claim 50 cash plus 5 gold."
+                "`.vote` or `.v` - Vote on Top.gg and claim 50 cash plus 5 gold."
             ),
             inline=False
         )
@@ -899,15 +908,15 @@ class Users(commands.Cog):
             name="Collection",
             value=(
                 "`.inventory [filters]` or `.inv [filters]` - View your cards.\n"
-                "Filters: `-player`, `-team`, `-game`, `-rarity`, `-set`, `-league`, `-role`.\n"
-                "Example: `.inv -game LoL -team T1 -rarity Gold -role mid`\n"
+                "Filters: `-player/-p`, `-team/-t`, `-game/-g`, `-rarity/-ra`, `-pack/-pa`, `-league/-l`, `-region/-re`, `-role/-ro`.\n"
+                "Example: `.inv -g LoL -t T1 -ra Gold -ro mid`\n"
                 "`.progress [filters]` - View collection progress.\n"
                 "`.completion` - View set completion and power bonuses.\n"
                 "`.info [filters]` or `.info <CID>` - List or inspect bot cards.\n"
                 "`.view <inventory #>` - View one inventory card.\n"
                 "`.packs` - View unopened packs.\n"
                 "`.open <pack #|pack id|pack name>` - Open a pack.\n"
-                "`.open -all` - Open your packs one at a time from lowest index."
+                "`.open all` - Open your packs one at a time from lowest index."
             ),
             inline=False
         )
@@ -920,7 +929,7 @@ class Users(commands.Cog):
             name="Economy",
             value=(
                 "`.shop` - View packs for sale and buy packs.\n"
-                "`.auction` - View auctions with filters, bidding, and buy now.\n"
+                "`.auction` or `.ah` - View auctions with filters, bidding, and buy now.\n"
                 "Auction filters include `-progress` / `-needed`.\n"
                 "`.auction -sell <inventory #>` - Auction a card.\n"
                 "`.auction -sellpack <pack #>` - Auction a pack.\n"
@@ -952,6 +961,8 @@ class Users(commands.Cog):
         embed.add_field(name="XP", value=f"{current_xp}/{needed_xp}", inline=True)
         embed.add_field(name="ELO", value=str(profile["elo"]), inline=True)
         settings = self.normalize_settings(profile)
+        language_code = settings["language"]
+        language_name = available_languages().get(language_code, "English")
         embed.add_field(
             name="Alerts/Confirmations",
             value=(
@@ -960,7 +971,7 @@ class Users(commands.Cog):
                 f"{CONFIRM_EMOJI} Auction Confirm Buy: {'ON' if settings['confirm_auction_buy'] else 'OFF'}\n"
                 f"{PACK_EMOJI} Shop Confirm Buy: {'ON' if settings['confirm_pack_buy'] else 'OFF'}\n"
                 f"{CARDS_EMOJI} Show name in Challenger-Pulls: {'ON' if settings['show_name_in_challenger_pulls'] else 'OFF'}\n"
-                f"Language: {available_languages().get(settings['language'], 'English')}"
+                f"{LANGUAGE_EMOJI} Language: {language_name}"
             ),
             inline=False
         )
@@ -1110,26 +1121,14 @@ class Users(commands.Cog):
         else:
             vote_cd = "Vote link ready"
 
-        embed = discord.Embed(title=f"{COOLDOWN_EMOJI} {ctx.author.display_name}'s Cooldowns")
-        embed.add_field(
-            name="\u200b",
-            value=(
-                f"{PRACTICE_EMOJI} **Practice**\n"
-                f"{practice_cd}\n\n"
-                f"{VOTE_EMOJI} **Vote**\n"
-                f"{vote_cd}"
+        embed = discord.Embed(
+            title=f"{COOLDOWN_EMOJI} {ctx.author.display_name}'s Cooldowns",
+            description=(
+                f"{PRACTICE_EMOJI} **Practice:** {practice_cd}\n"
+                f"{RANKED_EMOJI} **Ranked:** {ranked_cd}\n"
+                f"{VOTE_EMOJI} **Vote:** {vote_cd}\n"
+                f"{DAILY_EMOJI} **Daily:** {daily_cd}"
             ),
-            inline=True,
-        )
-        embed.add_field(
-            name="\u200b",
-            value=(
-                f"{RANKED_EMOJI} **Ranked**\n"
-                f"{ranked_cd}\n\n"
-                f"{DAILY_EMOJI} **Daily**\n"
-                f"{daily_cd}"
-            ),
-            inline=True,
         )
 
         await ctx.send(embed=embed)
@@ -1177,14 +1176,14 @@ class Users(commands.Cog):
         await ctx.send(
             f"{PRACTICE_EMOJI} {ctx.author.mention} You practiced and earned "
             f"{reward} {CASH_EMOJI} and {xp_reward} XP.{level_text}\n"
-            f"Total: {user['cash']} {CASH_EMOJI} \n"
-            f"{current_xp}/{needed_xp} XP towards Level {user['level'] + 1}."
+            f"Total: {user['cash']} {CASH_EMOJI} "
+            f"{current_xp}/{needed_xp} XP until level {user['level'] + 1}."
         )
         if self.normalize_settings(user).get("alert_daily_practice"):
             ready_at = now + PRACTICE_COOLDOWN
             self.schedule_ready_notification(ctx.channel.id, ctx.author.id, "practice", ready_at)
 
-    @commands.command()
+    @commands.command(aliases=["v"])
     async def vote(self, ctx):
         user = self.get_profile(ctx.author)
         vote_url = self.topgg_vote_url()
@@ -1341,9 +1340,10 @@ class LeaderboardView(discord.ui.View):
     def build_embed(self):
         lines = []
         for index, entry in enumerate(self.get_page_entries(), start=self.page_start() + 1):
+            rank_symbol = RANK_SYMBOLS.get(entry["rank"], "⚫")
             lines.append(
-                f"`#{index:>2}` **{entry['ign']}** | "
-                f"Power: `{entry['total_power']}` | {RANKED_EMOJI} ELO: `{entry['elo']}`"
+                f"# {index} {rank_symbol} | {entry['ign']} | "
+                f"ELO: {entry['elo']} | {RANKED_EMOJI}: {entry['total_power']}"
             )
 
         description = "\n".join(lines) if lines else "No users are on the leaderboard yet."
