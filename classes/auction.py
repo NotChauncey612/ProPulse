@@ -125,16 +125,16 @@ class Auction(commands.Cog):
         if users_cog is None:
             return
 
-        item_text = f" for **{item_name}**" if item_name else ""
+        item_name = item_name or self.get_auction_item_name(auction, self.bot.get_cog("Cards"))
         await self.send_auction_dm(
             users_cog,
             winner_id,
-            f"You won auction `{auction['auction_id']}`{item_text} for {CASH_EMOJI} {final_price} cash."
+            f"You won **{item_name}** for {CASH_EMOJI} {final_price} cash."
         )
         await self.send_auction_dm(
             users_cog,
             auction["seller_id"],
-            f"Your auction `{auction['auction_id']}`{item_text} sold for {CASH_EMOJI} {final_price} cash."
+            f"Your auction for **{item_name}** sold for {CASH_EMOJI} {final_price} cash."
         )
 
     async def notify_auction_returned(self, auction):
@@ -142,11 +142,28 @@ class Auction(commands.Cog):
         if users_cog is None:
             return
 
+        if not self.should_send_returned_auction_dm(users_cog, auction["seller_id"]):
+            return
+
         await self.send_auction_dm(
             users_cog,
             auction["seller_id"],
-            f"Your auction `{auction['auction_id']}` ended with no bids. Item returned."
+            "One or more of your auctions ended with no bids today. Returned items were placed back in your inventory."
         )
+
+    def should_send_returned_auction_dm(self, users_cog, seller_id):
+        if not self.auction_dms_enabled(users_cog, seller_id):
+            return False
+
+        profile = users_cog.get_profile_by_id(str(seller_id))
+        settings = users_cog.normalize_settings(profile)
+        today = datetime.utcnow().date().isoformat()
+        if settings.get("last_returned_auction_dm_date") == today:
+            return False
+
+        settings["last_returned_auction_dm_date"] = today
+        users_cog.save_users()
+        return True
 
     def get_time_remaining(self, expires_at):
         now = datetime.utcnow()
@@ -166,6 +183,30 @@ class Auction(commands.Cog):
             return f"{hours}h {minutes}m"
 
         return f"{minutes}m {seconds}s"
+
+    def format_bid_label(self, auction):
+        label = "Highest Bid" if auction.get("highest_bidder") else "Starting Bid"
+        return f"{label}: {CASH_EMOJI} {auction.get('current_bid', 0)}"
+
+    def get_pack_display_name(self, pack_id, cards_cog=None):
+        pack = getattr(cards_cog, "packs", {}).get(pack_id, {}) if cards_cog else {}
+        return pack.get("name") or str(pack_id).replace("_", " ").title()
+
+    def get_auction_item_name(self, auction, cards_cog=None):
+        if auction.get("item_type") == "pack":
+            return self.get_pack_display_name(auction.get("pack_name"), cards_cog)
+
+        card_instance = auction.get("card_instance") or {}
+        card_data = {}
+        if cards_cog is not None:
+            card_data = cards_cog.get_card_by_id(card_instance.get("card_id")) or {}
+        if not card_data:
+            card_data = card_instance.get("snapshot", {}) or {}
+
+        player = cards_cog.get_player_for_card(card_data) if cards_cog is not None else None
+        card_name = (player or {}).get("name") or card_data.get("ign") or "Unknown Card"
+        set_name = card_data.get("set") or "Unknown Set"
+        return f"{card_name} ({set_name})"
 
     # -----------------
     # Create Auction
@@ -287,16 +328,13 @@ class Auction(commands.Cog):
         buyer_profile["cash"] -= price
         seller_profile["cash"] += price
 
-        item_name = "Unknown"
+        item_name = self.get_auction_item_name(target, cards_cog)
         if target["item_type"] == "card":
             users, user_data = cards_cog.get_user_data(buyer_id)
             user_data.setdefault("cards", [])
             cards_cog.add_card_to_user(users, buyer_id, target["card_instance"])
-            card_data = cards_cog.get_card_by_id(target["card_instance"].get("card_id")) or target["card_instance"].get("snapshot", {})
-            item_name = cards_cog.get_player_for_card(card_data).get("name", "Unknown Card")
         else:
             users_cog.add_pack_to_first_slot(buyer_profile, target["pack_name"])
-            item_name = str(target["pack_name"]).replace("_", " ").title()
 
         users_cog.save_users()
         self.save_auctions(remaining)
@@ -338,22 +376,19 @@ class Auction(commands.Cog):
         if target.get("highest_bidder"):
             return None, "You cannot take down an auction after someone has bid on it."
 
-        item_name = "Unknown"
+        item_name = self.get_auction_item_name(target, cards_cog)
         if target["item_type"] == "card":
             users, user_data = cards_cog.get_user_data(seller_id)
             if user_data is None:
                 return None, "Seller profile not found."
             user_data.setdefault("cards", [])
             cards_cog.add_card_to_user(users, seller_id, target["card_instance"])
-            card_data = cards_cog.get_card_by_id(target["card_instance"].get("card_id")) or target["card_instance"].get("snapshot", {})
-            item_name = cards_cog.get_player_for_card(card_data).get("name", "Unknown Card")
         else:
             profile = users_cog.get_profile_by_id(str(seller_id))
             if profile is None:
                 return None, "Seller profile not found."
             users_cog.add_pack_to_first_slot(profile, target["pack_name"])
             users_cog.save_users()
-            item_name = str(target["pack_name"]).replace("_", " ").title()
 
         self.save_auctions(remaining)
         return item_name, None
@@ -637,6 +672,12 @@ class Auction(commands.Cog):
             settings["autosell"] = autosell
 
         defaults = self.default_autosell_settings()
+        try:
+            duration_days = int(autosell.get("duration_days", DEFAULT_AUCTION_DAYS))
+        except (TypeError, ValueError):
+            duration_days = DEFAULT_AUCTION_DAYS
+        autosell["duration_days"] = min(max(duration_days, 1), MAX_AUCTION_DAYS)
+
         legacy_enabled = {
             "master": bool(settings.get("autosell_master", defaults["master"]["enabled"])),
             "challenger": bool(settings.get("autosell_challenger", defaults["challenger"]["enabled"])),
@@ -667,6 +708,10 @@ class Auction(commands.Cog):
                 config[price_key] = value
 
         return autosell
+
+    def autosell_duration_days(self, settings):
+        autosell = self.normalize_autosell_settings(settings)
+        return autosell.get("duration_days", DEFAULT_AUCTION_DAYS)
 
     def autosell_prices(self, card, settings):
         rarity = str(card.get("rarity", "")).lower()
@@ -713,7 +758,7 @@ class Auction(commands.Cog):
         sell_now = f" - Sell Now {CASH_EMOJI} {buy_now_price}" if buy_now_price is not None else ""
         return f"`#{slot_index + 1}` {rarity_symbol} {player_name} {set_name} - Start {CASH_EMOJI} {start_price}{sell_now}"
 
-    def build_autosell_embed(self, user_display_name, sell_cards, cards_cog, page=0):
+    def build_autosell_embed(self, user_display_name, sell_cards, cards_cog, page=0, duration_days=DEFAULT_AUCTION_DAYS):
         total_pages = max(1, (len(sell_cards) - 1) // AUTOSELL_PER_PAGE + 1)
         page = min(max(page, 0), total_pages - 1)
         start = page * AUTOSELL_PER_PAGE
@@ -726,7 +771,7 @@ class Auction(commands.Cog):
         embed = discord.Embed(
             title=f"{user_display_name}'s Autosell Review",
             description=(
-                f"You are about to autosell {len(sell_cards)} cards onto the auction! Continue?\n\n"
+                f"You are about to autosell {len(sell_cards)} cards onto the auction for {duration_days} day(s)! Continue?\n\n"
                 + ("\n".join(lines) if lines else "No duplicate cards are eligible for autosell.")
             ),
             color=discord.Color.dark_grey()
@@ -737,8 +782,9 @@ class Auction(commands.Cog):
     def build_autosell_settings_embed(self, profile, selected_rarity=None):
         settings = self.bot.get_cog("Users").normalize_settings(profile)
         autosell = self.normalize_autosell_settings(settings)
+        duration_days = self.autosell_duration_days(settings)
         selected_rarity = selected_rarity or RARITY_ORDER[0]
-        lines = []
+        lines = [f"**Auction Duration**: {duration_days} day(s)", ""]
         for rarity in RARITY_ORDER:
             rarity_key = rarity.lower()
             config = autosell[rarity_key]
@@ -755,7 +801,7 @@ class Auction(commands.Cog):
             description="\n".join(lines),
             color=discord.Color.dark_grey()
         )
-        embed.set_footer(text="Use the dropdown to pick a rarity, then toggle it or edit its prices.")
+        embed.set_footer(text="Use the dropdown to pick a rarity, then toggle it, edit prices, or change duration.")
         return embed
 
     def execute_autosell(self, user_id, target_instance_ids):
@@ -766,6 +812,7 @@ class Auction(commands.Cog):
 
         profile = users_cog.get_profile_by_id(str(user_id))
         settings = users_cog.normalize_settings(profile)
+        duration_days = self.autosell_duration_days(settings)
         eligible_cards = self.get_autosell_cards(user_id, profile, cards_cog, settings)
         target_instance_ids = set(target_instance_ids)
         sell_cards = [
@@ -782,7 +829,7 @@ class Auction(commands.Cog):
             if slot_index >= len(profile.get("cards", [])) or profile["cards"][slot_index] is not card:
                 continue
             profile["cards"][slot_index] = None
-            auctions.append(self.build_auction_record(user_id, "card", card, start_price, buy_now_price, DEFAULT_AUCTION_DAYS))
+            auctions.append(self.build_auction_record(user_id, "card", card, start_price, buy_now_price, duration_days))
             created_cards.append((slot_index, card, start_price, buy_now_price))
 
         if not created_cards:
@@ -936,7 +983,10 @@ class Auction(commands.Cog):
             await ctx.send("Fill this out to create your pack auction:", view=SellPackView(self, ctx.author.id, index - 1, pack_name))
             return
 
-        auctions = self.load_auctions()
+        auctions = [
+            auction for auction in self.load_auctions()
+            if auction.get("seller_id") != str(ctx.author.id)
+        ]
         filters, sort = self.parse_filters(args)
         if "progress" in filters:
             filters["progress"] = self.progress_filter_label(ctx.author.id, filters, cards_cog)
@@ -1045,6 +1095,10 @@ class AutosellSettingsView(discord.ui.View):
     async def edit_prices_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(AutosellPriceModal(self))
 
+    @discord.ui.button(label="Edit Duration", style=discord.ButtonStyle.primary)
+    async def edit_duration_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(AutosellDurationModal(self))
+
 
 class AutosellPriceModal(discord.ui.Modal, title="Edit Autosell Prices"):
     def __init__(self, view: AutosellSettingsView):
@@ -1090,6 +1144,40 @@ class AutosellPriceModal(discord.ui.Modal, title="Edit Autosell Prices"):
         await interaction.response.edit_message(embed=self.settings_view.build_embed(), view=self.settings_view)
 
 
+class AutosellDurationModal(discord.ui.Modal, title="Edit Autosell Duration"):
+    def __init__(self, view: AutosellSettingsView):
+        self.settings_view = view
+        duration_days = view.cog.autosell_duration_days(view.settings())
+        super().__init__(title="Autosell Auction Duration")
+        self.duration_days.default = str(duration_days)
+
+    duration_days = discord.ui.TextInput(
+        label="Auction Duration Days",
+        placeholder=f"1-{MAX_AUCTION_DAYS}",
+        required=True,
+        max_length=1,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            duration = int(str(self.duration_days.value).strip())
+        except ValueError:
+            await interaction.response.send_message("Duration must be a whole number of days.", ephemeral=True)
+            return
+
+        if duration < 1 or duration > MAX_AUCTION_DAYS:
+            await interaction.response.send_message(
+                f"Autosell auction duration must be between 1 and {MAX_AUCTION_DAYS} days.",
+                ephemeral=True,
+            )
+            return
+
+        autosell = self.settings_view.autosell_settings()
+        autosell["duration_days"] = duration
+        self.settings_view.cog.bot.get_cog("Users").save_users()
+        await interaction.response.edit_message(embed=self.settings_view.build_embed(), view=self.settings_view)
+
+
 class AutosellReviewView(discord.ui.View):
     def __init__(self, cog, author_id, user_display_name, sell_cards):
         super().__init__(timeout=120)
@@ -1112,7 +1200,17 @@ class AutosellReviewView(discord.ui.View):
 
     def build_embed(self):
         cards_cog = self.cog.bot.get_cog("Cards")
-        return self.cog.build_autosell_embed(self.user_display_name, self.sell_cards, cards_cog, self.page)
+        users_cog = self.cog.bot.get_cog("Users")
+        profile = users_cog.get_profile_by_id(str(self.author_id))
+        settings = users_cog.normalize_settings(profile)
+        duration_days = self.cog.autosell_duration_days(settings)
+        return self.cog.build_autosell_embed(
+            self.user_display_name,
+            self.sell_cards,
+            cards_cog,
+            self.page,
+            duration_days,
+        )
 
     def update_buttons(self):
         self.previous_button.disabled = self.page <= 0
@@ -1388,7 +1486,7 @@ class AuctionSelect(discord.ui.Select):
             discord.SelectOption(
                 label=f"{page_start + i + 1}. {self.get_option_label(a)}"[:100],
                 description=(
-                    f"{CASH_EMOJI} Bid {a['current_bid']} | Buy Now "
+                    f"{self.cog.format_bid_label(a)} | Buy Now "
                     f"{f'{CASH_EMOJI} {a.get('buy_now_price')}' if a.get('buy_now_price') else 'None'}"
                 ),
                 value=str(i)
@@ -1544,6 +1642,7 @@ class AuctionView(discord.ui.View):
         self.sort = sort
         self.page = 0
         self.show_mine = False
+        self.show_my_bids = False
         self.selected_filter_key = next(iter(self.filters), "team")
 
         self.update_buttons()
@@ -1551,8 +1650,16 @@ class AuctionView(discord.ui.View):
 
     def get_base_auctions(self):
         auctions = self.cog.load_auctions()
+        user_id = str(self.user_id)
         if self.show_mine:
-            auctions = [a for a in auctions if a.get("seller_id") == str(self.user_id)]
+            auctions = [a for a in auctions if a.get("seller_id") == user_id]
+        elif self.show_my_bids:
+            auctions = [a for a in auctions if a.get("highest_bidder") == user_id]
+        else:
+            auctions = [
+                a for a in auctions
+                if a.get("seller_id") != user_id and a.get("highest_bidder") != user_id
+            ]
         return auctions
 
     def reload_auctions(self):
@@ -1580,10 +1687,15 @@ class AuctionView(discord.ui.View):
     def total_pages(self):
         return max(1, (len(self.auctions) - 1) // AUCTIONS_PER_PAGE + 1)
 
+    def in_personal_view(self):
+        return self.show_mine or self.show_my_bids
+
     def build_filter_text(self):
         parts = []
         if self.show_mine:
             parts.append("Showing: Your Auctions")
+        elif self.show_my_bids:
+            parts.append("Showing: Your Highest Bids")
         if self.filters:
             for key, value in self.filters.items():
                 if key == "progress":
@@ -1600,6 +1712,13 @@ class AuctionView(discord.ui.View):
         self.add_item(self.next)
         self.add_item(self.refresh)
         self.add_item(self.mine)
+        if self.in_personal_view():
+            self.my_bids.row = 0
+            self.add_item(self.my_bids)
+            self.add_item(AuctionSelect(self.get_page_items(), self.cog, self.page_start()))
+            return
+
+        self.clear.row = 0
         self.add_item(self.clear)
         self.add_item(AuctionFilterTypeSelect(self))
 
@@ -1665,7 +1784,7 @@ class AuctionView(discord.ui.View):
                 value=(
                     f"{details}\n"
                     f"Seller: {seller_name}\n"
-                    f"{CASH_EMOJI} Bid: {auc['current_bid']}\n"
+                    f"{self.cog.format_bid_label(auc)}\n"
                     f"🛒 Buy Now: {buy_now}\n"
                     f"⏳ {self.cog.get_time_remaining(auc['expires_at'])}"
                 ),
@@ -1680,7 +1799,9 @@ class AuctionView(discord.ui.View):
         self.next.disabled = self.page >= self.total_pages() - 1
         self.mine.label = "All Auctions" if self.show_mine else "My Auctions"
         self.mine.style = discord.ButtonStyle.blurple if self.show_mine else discord.ButtonStyle.secondary
-        self.clear.disabled = not self.filters and not self.sort and not self.show_mine
+        self.my_bids.label = "All Auctions" if self.show_my_bids else "My Bids"
+        self.my_bids.style = discord.ButtonStyle.blurple if self.show_my_bids else discord.ButtonStyle.secondary
+        self.clear.disabled = not self.filters and not self.sort
 
     @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary, row=0)
     async def previous(self, interaction, button):
@@ -1704,17 +1825,38 @@ class AuctionView(discord.ui.View):
 
     @discord.ui.button(label="My Auctions", style=discord.ButtonStyle.secondary, row=0)
     async def mine(self, interaction, button):
-        self.show_mine = not self.show_mine
+        if self.show_mine:
+            self.show_mine = False
+        else:
+            self.filters = {}
+            self.sort = None
+            self.show_mine = True
+            self.show_my_bids = False
         self.page = 0
         self.reload_auctions()
         self.rebuild_items()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="Clear", style=discord.ButtonStyle.red, row=0)
+    @discord.ui.button(label="My Bids", style=discord.ButtonStyle.secondary, row=1)
+    async def my_bids(self, interaction, button):
+        if self.show_my_bids:
+            self.show_my_bids = False
+        else:
+            self.filters = {}
+            self.sort = None
+            self.show_my_bids = True
+            self.show_mine = False
+        self.page = 0
+        self.reload_auctions()
+        self.rebuild_items()
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
+    @discord.ui.button(label="Clear", style=discord.ButtonStyle.red, row=1)
     async def clear(self, interaction, button):
         self.filters = {}
         self.sort = None
         self.show_mine = False
+        self.show_my_bids = False
         self.page = 0
         self.reload_auctions()
         self.rebuild_items()

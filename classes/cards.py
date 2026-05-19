@@ -4,7 +4,6 @@ import random
 import uuid
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
-import hashlib
 from pathlib import Path
 from urllib.parse import unquote
 import discord
@@ -124,8 +123,8 @@ PACK_COMPLETION_MULTIPLIERS = {
     "Silver": 1.1,
     "Gold": 1.2,
     "Diamond": 1.3,
-    "Master": 1.4,
-    "Challenger": 1.5,
+    "Master": 1.5,
+    "Challenger": 1.7,
 }
 DEFAULT_ELO = 1000
 BASE_TEAM_STAT = 10
@@ -141,14 +140,15 @@ RANKED_CASH_MAX = 70
 RANKED_GOLD_ROLL_MIN = 100
 RANKED_GOLD_ROLL_MAX = 500
 RANKED_GOLD_ADVANTAGE_EXPONENT = 2
-RANKED_CHANCE_SIMULATIONS = 5000
+RANKED_ELO_SPREAD = 800
 RANKED_OPPONENT_MIN_POOL = 3
 RANKED_RECENT_OPPONENT_LIMIT = 3
 RANK_CASH_MULTIPLIERS = {
-    "Silver": 1.1,
-    "Gold": 1.2,
-    "Diamond": 1.3,
-    "Champ": 1.4,
+    "Silver": 1.0,
+    "Gold": 1.1,
+    "Diamond": 1.2,
+    "Champ": 1.3,
+    "Master": 1.3,
     "Challenger": 1.5,
 }
 RANK_THRESHOLDS = [
@@ -159,23 +159,12 @@ RANK_THRESHOLDS = [
     ("Silver", 0),
 ]
 
-MAIN_DISCORD_INVITE = os.getenv("MAIN_DISCORD_INVITE", "https://discord.gg/fbJYSF2RfV")
-MAIN_DISCORD_GUILD_ID = os.getenv("MAIN_DISCORD_GUILD_ID")
 CHALLENGER_PULL_CHANNEL_ID = os.getenv("CHALLENGER_PULL_CHANNEL_ID")
 CHALLENGER_PULL_CHANNEL_NAME = os.getenv("CHALLENGER_PULL_CHANNEL_NAME", "challenger-pulls")
 CREATE_MISSING_CHALLENGER_PULL_CHANNEL = os.getenv(
     "CREATE_MISSING_CHALLENGER_PULL_CHANNEL",
     "true",
 ).lower() not in {"0", "false", "no"}
-CREATE_MISSING_RANK_ROLES = os.getenv("CREATE_MISSING_RANK_ROLES", "true").lower() not in {"0", "false", "no"}
-RANK_ROLE_NAMES = {
-    rank_name: os.getenv(f"RANK_ROLE_{rank_name.upper()}_NAME", f"Ranked {rank_name}")
-    for rank_name, _ in RANK_THRESHOLDS
-}
-RANK_ROLE_IDS = {
-    rank_name: os.getenv(f"RANK_ROLE_{rank_name.upper()}_ID")
-    for rank_name, _ in RANK_THRESHOLDS
-}
 
 TEAM_EMOJI = "🏳️"
 ROLE_EMOJI = "🎮"
@@ -414,12 +403,24 @@ class CompletionView(discord.ui.View):
         return self.completion_data["sets"][start:start + CARDS_PER_PAGE]
 
     def set_completion_label(self, entry):
+        target_rarity = entry.get("target_rarity")
         completed_rarity = entry.get("completed_rarity")
+        if target_rarity and entry.get("missing_cards"):
+            symbol = self.cog.get_rarity_symbol(target_rarity)
+            if not completed_rarity:
+                return f"{symbol} {target_rarity}"
+            multiplier = PACK_COMPLETION_MULTIPLIERS.get(completed_rarity, 1.0)
+            return f"{symbol} {target_rarity} - {completed_rarity} {multiplier:g}x power"
         if not completed_rarity:
             return MISSING_CARD_SYMBOL
         symbol = self.cog.get_rarity_symbol(completed_rarity)
         multiplier = PACK_COMPLETION_MULTIPLIERS.get(completed_rarity, 1.0)
         return f"{symbol} {completed_rarity} - {multiplier:g}x power"
+
+    def set_completion_count(self, entry):
+        if entry.get("missing_cards"):
+            return entry.get("owned_count", 0)
+        return entry.get("overall_owned_count", 0)
 
     def build_embed(self):
         lines = []
@@ -436,7 +437,7 @@ class CompletionView(discord.ui.View):
             release_text = f" - {release_date}" if release_date else ""
             lines.append(
                 f"{self.set_completion_label(entry)} **{entry.get('name', entry.get('set', 'Unknown Set'))}**"
-                f"{release_text} ({entry['overall_owned_count']}/{entry['total_count']})"
+                f"{release_text} ({self.set_completion_count(entry)}/{entry['total_count']})"
             )
 
         description = "\n".join(lines) if lines else "No sets are available."
@@ -585,7 +586,8 @@ class CardInfoView(discord.ui.View):
         if isinstance(card_data, tuple):
             cid, card_data = card_data
         player = self.cog.get_player_for_card(card_data) or {}
-        counts = self.rarity_counts.get(card_data.get("card_id"), {})
+        card_id = card_data.get("card_id", card_data.get("id"))
+        counts = self.rarity_counts.get(card_id, {})
         total_pulled = sum(counts.values())
         rarity_lines = []
 
@@ -608,7 +610,7 @@ class CardInfoView(discord.ui.View):
             f"{LEAGUE_EMOJI} League: {card_data.get('league', 'Unknown')}",
             f"{SET_EMOJI} Set: {card_data.get('set', 'Unknown Set')}",
         ]
-        detail_lines.append(f"Card ID: `{card_data.get('card_id', card_data.get('id', 'unknown'))}`")
+        detail_lines.append(f"Card ID: `{card_id or 'unknown'}`")
         description_parts.append("\n".join(line for line in detail_lines if line is not None))
 
         embed = discord.Embed(
@@ -618,6 +620,11 @@ class CardInfoView(discord.ui.View):
         )
         embed.add_field(name="Pulled By Rarity", value="\n".join(rarity_lines), inline=False)
         embed.add_field(name="Total Pulled", value=str(total_pulled), inline=True)
+        embed.add_field(
+            name="Biggest Collector",
+            value=self.cog.format_biggest_collectors(card_id),
+            inline=True
+        )
 
         image_url = card_data.get("image_url", card_data.get("image", ""))
         if image_url:
@@ -723,6 +730,20 @@ class SetDefaultTeamGameButton(discord.ui.Button):
         await self.team_view.refresh_message()
 
 
+class UpgradeTeamRarityButton(discord.ui.Button):
+    def __init__(self, view):
+        super().__init__(label="Check Higher Rarity", style=discord.ButtonStyle.success, row=2)
+        self.team_view = view
+
+    async def callback(self, interaction: discord.Interaction):
+        message = self.team_view.cog.upgrade_team_rarities(
+            interaction.user.id,
+            self.team_view.game_name
+        )
+        await interaction.response.send_message(message, ephemeral=True)
+        await self.team_view.refresh_message()
+
+
 class TeamView(discord.ui.View):
     def __init__(self, cog, author_id, user_display_name, game_name=None):
         super().__init__(timeout=180)
@@ -740,6 +761,7 @@ class TeamView(discord.ui.View):
         self.clear_items()
         self.add_item(TeamGameSelect(self))
         self.add_item(TeamRoleSelect(self))
+        self.add_item(UpgradeTeamRarityButton(self))
         self.add_item(SetDefaultTeamGameButton(self))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -792,6 +814,42 @@ class TeamCardModal(discord.ui.Modal, title="Set Team Card"):
         )
         await interaction.response.send_message(message, ephemeral=True)
         await self.team_view.refresh_message()
+
+
+class OpenAllPacksView(discord.ui.View):
+    def __init__(self, cog, author_id):
+        super().__init__(timeout=120)
+        self.cog = cog
+        self.author_id = author_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message(
+                "You cannot open someone else's packs.",
+                ephemeral=True
+            )
+            return False
+        return True
+
+    @discord.ui.button(label="Open Next Pack", style=discord.ButtonStyle.green)
+    async def open_next_pack(self, interaction: discord.Interaction, button: discord.ui.Button):
+        result = self.cog.open_lowest_index_pack(interaction.user.id, interaction.user)
+        embed = result.get("embed")
+        error = result.get("error")
+
+        if error:
+            await interaction.response.send_message(error, ephemeral=True)
+            return
+
+        next_view = self if result.get("has_more_packs") else None
+        await interaction.response.edit_message(embed=embed, view=next_view)
+
+        for inst, card, player in result["results"]:
+            await self.cog.announce_challenger_pull(interaction, inst, card, player, result["pack_id"])
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
 
 
 class Cards(commands.Cog):
@@ -1217,6 +1275,64 @@ class Cards(commands.Cog):
             for owned_card in user_data.get("cards", []):
                 if isinstance(owned_card, dict):
                     yield owned_card
+
+    def get_user_display_name(self, user_id, user_data):
+        for key in ("discord_username", "display_name", "username", "name"):
+            value = user_data.get(key) if isinstance(user_data, dict) else None
+            if value:
+                return str(value)
+
+        if self.bot:
+            try:
+                cached_user = self.bot.get_user(int(user_id))
+            except (TypeError, ValueError):
+                cached_user = None
+            if cached_user:
+                return getattr(cached_user, "display_name", None) or cached_user.name
+
+        return str(user_id)
+
+    def get_biggest_collectors_for_card(self, card_id):
+        if not card_id:
+            return [], 0
+
+        users = self.load_users()
+        collector_counts = []
+        for user_id, user_data in users.items():
+            if not isinstance(user_data, dict):
+                continue
+
+            count = sum(
+                1
+                for owned_card in user_data.get("cards", [])
+                if isinstance(owned_card, dict) and owned_card.get("card_id") == card_id
+            )
+            if count:
+                collector_counts.append((self.get_user_display_name(user_id, user_data), count))
+
+        if not collector_counts:
+            return [], 0
+
+        max_count = max(count for _, count in collector_counts)
+        leaders = sorted(
+            (name for name, count in collector_counts if count == max_count),
+            key=lambda value: value.lower()
+        )
+        return leaders, max_count
+
+    def format_biggest_collectors(self, card_id):
+        leaders, count = self.get_biggest_collectors_for_card(card_id)
+        if not leaders:
+            return "No collectors yet"
+
+        visible_leaders = leaders[:3]
+        leader_text = ", ".join(visible_leaders)
+        remaining = len(leaders) - len(visible_leaders)
+        if remaining:
+            leader_text = f"{leader_text}, and {remaining} more"
+
+        copy_word = "copy" if count == 1 else "copies"
+        return f"{leader_text} ({count} {copy_word})"
 
     def iter_card_instances_from_auctions(self):
         for path in (AUCTIONS_PATH, AUCTIONS_HISTORY_PATH):
@@ -2147,9 +2263,22 @@ class Cards(commands.Cog):
         buffer.seek(0)
         return discord.File(buffer, filename=f"team_{user_id}.png")
 
-    def make_ranked_battle_file(self, user_slots, opponent_slots, user_id, user_team_name, opponent_team_name, game_name=None):
+    def make_ranked_battle_file(
+        self,
+        user_slots,
+        opponent_slots,
+        user_id,
+        user_team_name,
+        opponent_team_name,
+        game_name=None,
+        opponent_game_name=None,
+    ):
         user_file = self.make_team_lineup_file(user_slots, f"{user_id}_you", game_name)
-        opponent_file = self.make_team_lineup_file(opponent_slots, f"{user_id}_enemy", game_name)
+        opponent_file = self.make_team_lineup_file(
+            opponent_slots,
+            f"{user_id}_enemy",
+            opponent_game_name or game_name,
+        )
         if not user_file or not opponent_file:
             return None
 
@@ -2462,6 +2591,108 @@ class Cards(commands.Cog):
         player_name = player.get("name", card_data.get("ign", "Unknown"))
         return f"{TEAM_GAME_LABELS[game_name]} {labels[role]} updated to {player_name} from inventory #{index}."
 
+    def card_can_fill_team_role(self, card_data, role, game_name=None):
+        game_name = self.normalize_team_game(game_name)
+        if self.card_game(card_data) != game_name:
+            return False
+
+        player = self.get_player_for_card(card_data)
+        if game_name == GAME_LEAGUE:
+            card_role = self.normalize_team_role((player or {}).get("role", card_data.get("role", "")), game_name)
+            return card_role == role
+
+        return str((player or {}).get("role", card_data.get("role", ""))).upper() == "STARTER"
+
+    def find_team_rarity_upgrades(self, user_data, game_name=None):
+        game_name = self.normalize_team_game(game_name or self.get_default_team_game(user_data))
+        team = self.get_user_team(user_data, game_name)
+        assigned_by_role = {
+            role: instance_id
+            for role, instance_id in team.items()
+            if instance_id
+        }
+        assigned_elsewhere = set(assigned_by_role.values())
+        upgrades = []
+        reserved_instance_ids = set()
+
+        for role in self.get_team_roles(game_name):
+            current_id = team.get(role)
+            _current_index, current_card, _current_data, _current_player = self.resolve_team_card(user_data, current_id)
+            if not current_card:
+                continue
+
+            current_rarity = current_card.get("rarity")
+            current_rank = RARITY_RANK.get(current_rarity)
+            if current_rank is None:
+                continue
+
+            best = None
+            for index, owned_card in enumerate(user_data.get("cards", []), start=1):
+                if not isinstance(owned_card, dict):
+                    continue
+
+                instance_id = owned_card.get("instance_id")
+                if not instance_id or instance_id in reserved_instance_ids:
+                    continue
+                if instance_id != current_id and instance_id in assigned_elsewhere:
+                    continue
+
+                rarity = owned_card.get("rarity")
+                rarity_rank = RARITY_RANK.get(rarity)
+                if rarity_rank is None or rarity_rank <= current_rank:
+                    continue
+
+                card_data = self.get_card_by_id(owned_card.get("card_id"))
+                if not card_data and owned_card.get("snapshot"):
+                    card_data = owned_card["snapshot"]
+                if not card_data or not self.card_can_fill_team_role(card_data, role, game_name):
+                    continue
+
+                candidate = (rarity_rank, -index, index, owned_card, card_data)
+                if best is None or candidate > best:
+                    best = candidate
+
+            if best is None:
+                continue
+
+            _rank, _negative_index, index, owned_card, card_data = best
+            upgrades.append((role, current_card, index, owned_card, card_data))
+            reserved_instance_ids.add(owned_card.get("instance_id"))
+
+        return upgrades
+
+    def upgrade_team_rarities(self, user_id, game_name=None):
+        users, user_data = self.get_user_data(user_id)
+        if user_data is None:
+            return "You need to create a profile first with `.join`."
+
+        self.normalize_ranked_profile(user_data)
+        game_name = self.normalize_team_game(game_name or self.get_default_team_game(user_data))
+        labels = self.get_team_role_labels(game_name)
+        team = self.get_user_team(user_data, game_name)
+        upgrades = self.find_team_rarity_upgrades(user_data, game_name)
+
+        if not upgrades:
+            return f"No higher rarity {TEAM_GAME_LABELS[game_name]} team upgrades found."
+
+        lines = []
+        for role, current_card, index, owned_card, card_data in upgrades:
+            team[role] = owned_card.get("instance_id")
+            player = self.get_player_for_card(card_data) or {}
+            player_name = player.get("name", card_data.get("ign", "Unknown"))
+            old_rarity = current_card.get("rarity", "Unknown")
+            new_rarity = owned_card.get("rarity", "Unknown")
+            lines.append(
+                f"{labels.get(role, role)}: {player_name} {self.get_rarity_symbol(old_rarity)} {old_rarity} -> "
+                f"{self.get_rarity_symbol(new_rarity)} {new_rarity} (inventory #{index})"
+            )
+
+        image_slots, _ = self.get_team_image_slots(user_data, game_name)
+        self.remember_best_ranked_defense(user_data, game_name, image_slots)
+        self.save_users(users)
+
+        return f"Upgraded {len(upgrades)} {TEAM_GAME_LABELS[game_name]} team slot(s):\n" + "\n".join(lines)
+
     def is_card_in_user_team(self, user_id, card_instance):
         users, user_data = self.get_user_data(user_id)
         if user_data is None or not isinstance(card_instance, dict):
@@ -2492,6 +2723,11 @@ class Cards(commands.Cog):
         while self.xp_for_level(level + 1) <= xp:
             level += 1
         return level
+
+    def xp_progress_for_level(self, xp, level):
+        current_level_xp = self.xp_for_level(level)
+        next_level_xp = self.xp_for_level(level + 1)
+        return xp - current_level_xp, next_level_xp - current_level_xp
 
     def normalize_ranked_profile(self, user_data):
         user_data.setdefault("xp", 0)
@@ -2575,31 +2811,10 @@ class Cards(commands.Cog):
         return "Silver"
 
     async def get_main_discord_guild(self):
-        guild_id = int(MAIN_DISCORD_GUILD_ID) if str(MAIN_DISCORD_GUILD_ID or "").isdigit() else None
-
-        if guild_id is None and MAIN_DISCORD_INVITE:
-            try:
-                invite = await self.bot.fetch_invite(MAIN_DISCORD_INVITE)
-                guild_id = invite.guild.id if invite and invite.guild else None
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                guild_id = None
-
-        if guild_id is None:
-            return None, "Set MAIN_DISCORD_GUILD_ID or MAIN_DISCORD_INVITE so I know which server to manage."
-
-        guild = self.bot.get_guild(guild_id)
-        if guild is None:
-            try:
-                guild = await self.bot.fetch_guild(guild_id)
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                guild = None
-
-        if guild is None:
-            return None, "I could not access the main Discord. Make sure the bot is in that server."
-        return guild, None
-
-    async def get_main_rank_guild(self):
-        return await self.get_main_discord_guild()
+        users_cog = self.bot.get_cog("Users") if self.bot else None
+        if users_cog is None:
+            return None, "Users cog is not loaded, so I cannot access the main Discord."
+        return await users_cog.get_main_discord_guild()
 
     async def get_challenger_pull_channel(self):
         guild, error = await self.get_main_discord_guild()
@@ -2669,114 +2884,26 @@ class Cards(commands.Cog):
 
         pack_name = self.packs.get(pack_id, {}).get("name", pack_id)
         card_name = player.get("name") if player else card_data.get("ign", "Unknown")
-        puller_name = ctx.author.mention
+        puller = getattr(ctx, "author", None) or getattr(ctx, "user", None)
+        puller_name = (
+            getattr(puller, "display_name", None)
+            or getattr(puller, "name", None)
+            or "A player"
+        )
+        puller_name = discord.utils.escape_mentions(str(puller_name))
         users_cog = self.bot.get_cog("Users") if self.bot else None
-        if users_cog is not None:
-            profile = users_cog.get_profile_by_id(ctx.author.id)
+        if users_cog is not None and puller is not None:
+            profile = users_cog.get_profile_by_id(puller.id)
             settings = users_cog.normalize_settings(profile)
             if not settings.get("show_name_in_challenger_pulls", True):
                 puller_name = "A player"
         try:
             await channel.send(
-                f"{puller_name} pulled a **Challenger** card: **{card_name}** from **{pack_name}**."
+                f"{puller_name} pulled a **Challenger** card: **{card_name}** from **{pack_name}**.",
+                allowed_mentions=discord.AllowedMentions.none(),
             )
         except (discord.Forbidden, discord.HTTPException) as exc:
             print(f"Could not announce Challenger pull: {exc}")
-
-    async def get_rank_role(self, guild, rank_name, create_missing=False):
-        role_id = RANK_ROLE_IDS.get(rank_name)
-        if role_id and str(role_id).isdigit():
-            role = guild.get_role(int(role_id))
-            if role:
-                return role, None
-
-        role_name = RANK_ROLE_NAMES.get(rank_name, f"Ranked {rank_name}")
-        role = discord.utils.get(guild.roles, name=role_name)
-        if role:
-            return role, None
-
-        if not create_missing:
-            return None, None
-        if not CREATE_MISSING_RANK_ROLES:
-            return None, f"Missing role `{role_name}`."
-
-        me = guild.me or guild.get_member(self.bot.user.id)
-        if me is None:
-            try:
-                me = await guild.fetch_member(self.bot.user.id)
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                me = None
-        if not me or not me.guild_permissions.manage_roles:
-            return None, "I need Manage Roles permission to create missing ranked roles."
-
-        try:
-            role = await guild.create_role(
-                name=role_name,
-                reason="Create ProPulse ranked role",
-            )
-            return role, None
-        except (discord.Forbidden, discord.HTTPException) as exc:
-            return None, f"Could not create `{role_name}`: {exc}"
-
-    async def sync_rank_role_for_user(self, user_id, elo, reason="Sync ProPulse ranked role"):
-        guild, error = await self.get_main_rank_guild()
-        if error:
-            return error
-
-        try:
-            member = guild.get_member(int(user_id)) or await guild.fetch_member(int(user_id))
-        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-            return "I could not find that member in the main Discord."
-
-        rank_name = self.rank_for_elo(int(elo))
-        wanted_role, error = await self.get_rank_role(guild, rank_name, create_missing=True)
-        if error:
-            return error
-        if wanted_role is None:
-            return f"Missing role `{RANK_ROLE_NAMES.get(rank_name, rank_name)}`."
-
-        rank_roles = []
-        for existing_rank in RANK_ROLE_NAMES:
-            role, _ = await self.get_rank_role(guild, existing_rank, create_missing=False)
-            if role:
-                rank_roles.append(role)
-
-        current_role_ids = {role.id for role in member.roles}
-        roles_to_remove = [
-            role for role in rank_roles
-            if role.id != wanted_role.id and role.id in current_role_ids
-        ]
-
-        try:
-            if roles_to_remove:
-                await member.remove_roles(*roles_to_remove, reason=reason)
-            if wanted_role.id not in current_role_ids:
-                await member.add_roles(wanted_role, reason=reason)
-        except discord.Forbidden:
-            return "I need Manage Roles permission, and my bot role must be above the ranked roles."
-        except discord.HTTPException as exc:
-            return f"Discord rejected the role update: {exc}"
-
-        return None
-
-    async def sync_all_rank_roles(self):
-        users = self.load_users()
-        errors = []
-        synced = 0
-        for user_id, user_data in users.items():
-            if not isinstance(user_data, dict):
-                continue
-            self.normalize_ranked_profile(user_data)
-            error = await self.sync_rank_role_for_user(
-                user_id,
-                user_data.get("elo", DEFAULT_ELO),
-                "Sync all ProPulse ranked roles",
-            )
-            if error:
-                errors.append(f"{user_id}: {error}")
-                continue
-            synced += 1
-        return synced, errors
 
     def get_ranked_team_slots(self, user_data, game_name=None):
         game_name = self.normalize_team_game(game_name or self.get_default_team_game(user_data))
@@ -2886,28 +3013,27 @@ class Cards(commands.Cog):
         user_slots=None,
         opponent_slots=None,
         game_name=None,
+        opponent_game_name=None,
         user_empty_slot_multiplier=None,
         opponent_empty_slot_multiplier=None,
     ):
         game_name = self.normalize_team_game(game_name or self.get_default_team_game(user_data))
-        user_stats = self.ranked_effective_stats(user_data, user_slots, game_name, user_empty_slot_multiplier)
-        opponent_stats = self.ranked_effective_stats(opponent_data, opponent_slots, game_name, opponent_empty_slot_multiplier)
-        roles = self.get_team_roles(game_name)
-        seed_text = "|".join(
-            [str(user_stats.get(role, BASE_TEAM_STAT)) for role in roles]
-            + ["vs"]
-            + [str(opponent_stats.get(role, BASE_TEAM_STAT)) for role in roles]
+        opponent_game_name = self.normalize_team_game(
+            opponent_game_name or self.get_default_team_game(opponent_data)
         )
-        seed = int(hashlib.sha256(seed_text.encode("utf-8")).hexdigest()[:16], 16)
-        rng = random.Random(seed)
-        chance_total = 0
-
-        for _ in range(RANKED_CHANCE_SIMULATIONS):
-            _, user_gold = self.roll_ranked_gold_from_stats(user_stats, rng, game_name)
-            _, opponent_gold = self.roll_ranked_gold_from_stats(opponent_stats, rng, game_name)
-            chance_total += self.ranked_win_chance_from_gold(user_gold, opponent_gold)
-
-        return chance_total / RANKED_CHANCE_SIMULATIONS
+        user_power = self.ranked_team_power(
+            user_data,
+            user_slots if user_slots is not None else self.get_ranked_team_slots(user_data, game_name),
+            game_name,
+            user_empty_slot_multiplier,
+        )
+        opponent_power = self.ranked_team_power(
+            opponent_data,
+            opponent_slots if opponent_slots is not None else self.get_ranked_team_slots(opponent_data, opponent_game_name),
+            opponent_game_name,
+            opponent_empty_slot_multiplier,
+        )
+        return self.ranked_win_chance_from_gold(user_power, opponent_power)
 
     def apply_ranked_gold_to_image_slots(self, image_slots, role_rolls):
         for slot in image_slots:
@@ -2930,10 +3056,9 @@ class Cards(commands.Cog):
         recent.insert(0, opponent_id)
         user_data["recent_ranked_opponents"] = recent[:RANKED_RECENT_OPPONENT_LIMIT]
 
-    def find_ranked_opponent(self, users, user_id, user_elo, recent_opponent_ids=None, game_name=None):
-        game_name = self.normalize_team_game(game_name)
+    def find_ranked_opponent(self, users, user_id, user_elo, recent_opponent_ids=None):
         candidates = []
-        search_windows = [100, 200, 400, 800, 9999]
+        search_windows = [100, 200, 300, 400, 500, 9999]
         recent_opponent_ids = set(str(opponent_id) for opponent_id in (recent_opponent_ids or []))
 
         for window in search_windows:
@@ -2943,20 +3068,22 @@ class Cards(commands.Cog):
                     continue
 
                 self.normalize_ranked_profile(opponent_data)
-                if self.get_default_team_game(opponent_data) != game_name:
-                    continue
+                opponent_game_name = self.get_default_team_game(opponent_data)
                 self.fill_missing_starter_team_slots(opponent_data)
                 current_image_slots, _ = self.get_team_image_slots(
                     opponent_data,
-                    game_name,
+                    opponent_game_name,
                     PROTECTED_EMPTY_TEAM_SLOT_POWER_MULTIPLIER,
                 )
-                self.remember_best_ranked_defense(opponent_data, game_name, current_image_slots)
-                slots = self.get_best_ranked_defense_slots(opponent_data, game_name) or current_image_slots
+                self.remember_best_ranked_defense(opponent_data, opponent_game_name, current_image_slots)
+                slots = (
+                    self.get_best_ranked_defense_slots(opponent_data, opponent_game_name)
+                    or current_image_slots
+                )
 
                 opponent_elo = int(opponent_data.get("elo", DEFAULT_ELO))
                 if abs(opponent_elo - user_elo) <= window:
-                    candidates.append((opponent_id, opponent_data, slots))
+                    candidates.append((opponent_id, opponent_data, slots, opponent_game_name))
 
             if len(candidates) >= RANKED_OPPONENT_MIN_POOL or (window == search_windows[-1] and candidates):
                 fresh_candidates = [
@@ -2968,7 +3095,7 @@ class Cards(commands.Cog):
         return None
 
     def expected_elo_score(self, player_elo, opponent_elo):
-        return 1 / (1 + 10 ** ((opponent_elo - player_elo) / 400))
+        return 1 / (1 + 10 ** ((opponent_elo - player_elo) / RANKED_ELO_SPREAD))
 
     def ranked_elo_delta(self, player_elo, opponent_elo, won):
         expected = self.expected_elo_score(player_elo, opponent_elo)
@@ -2998,18 +3125,17 @@ class Cards(commands.Cog):
             user_id,
             user_elo_before,
             self.get_recent_ranked_opponents(user_data),
-            game_name,
         )
         if opponent_entry is None:
-            return None, f"No other users with {TEAM_GAME_LABELS[game_name]} as their default team are available for ranked yet."
+            return None, "No other users are available for ranked yet."
 
-        opponent_id, opponent_data, opponent_slots = opponent_entry
+        opponent_id, opponent_data, opponent_slots, opponent_game_name = opponent_entry
         opponent_elo_before = int(opponent_data.get("elo", DEFAULT_ELO))
         user_power = self.ranked_team_power(user_data, user_slots, game_name)
         opponent_power = self.ranked_team_power(
             opponent_data,
             opponent_slots,
-            game_name,
+            opponent_game_name,
             PROTECTED_EMPTY_TEAM_SLOT_POWER_MULTIPLIER,
         )
         win_chance = self.ranked_matchup_win_chance(
@@ -3018,13 +3144,14 @@ class Cards(commands.Cog):
             user_slots,
             opponent_slots,
             game_name,
+            opponent_game_name,
             opponent_empty_slot_multiplier=PROTECTED_EMPTY_TEAM_SLOT_POWER_MULTIPLIER,
         )
         user_gold_rolls, user_gold = self.roll_ranked_gold(user_data, user_slots, game_name)
         opponent_gold_rolls, opponent_gold = self.roll_ranked_gold(
             opponent_data,
             opponent_slots,
-            game_name,
+            opponent_game_name,
             PROTECTED_EMPTY_TEAM_SLOT_POWER_MULTIPLIER,
         )
 
@@ -3053,6 +3180,7 @@ class Cards(commands.Cog):
         level_gains = []
         leveled_up, level_gains = self.add_ranked_xp(user_data, xp_reward)
         user_data["cash"] = user_data.get("cash", 0) + cash_reward
+        current_xp, needed_xp = self.xp_progress_for_level(user_data["xp"], user_data["level"])
 
         ranked_used_at = self.utc_now()
         user_data["last_ranked"] = ranked_used_at.isoformat()
@@ -3066,6 +3194,7 @@ class Cards(commands.Cog):
         return {
             "opponent_id": opponent_id,
             "game": game_name,
+            "opponent_game": opponent_game_name,
             "opponent_name": opponent_data.get("discord_username") or f"User {opponent_id}",
             "user_name": user_data.get("discord_username") or "Your",
             "user_won": user_won,
@@ -3089,6 +3218,10 @@ class Cards(commands.Cog):
             "cash_reward": cash_reward,
             "base_cash_reward": base_cash_reward,
             "cash_multiplier": cash_multiplier,
+            "total_cash": user_data.get("cash", 0),
+            "total_xp": user_data.get("xp", 0),
+            "current_level_xp": current_xp,
+            "needed_level_xp": needed_xp,
             "leveled_up": leveled_up,
             "level": user_data["level"],
             "level_gains": level_gains,
@@ -3099,8 +3232,17 @@ class Cards(commands.Cog):
 
     def ranked_result_embed(self, ctx, result):
         game_label = TEAM_GAME_LABELS.get(result.get("game"), result.get("game", "Ranked"))
+        opponent_game_label = TEAM_GAME_LABELS.get(
+            result.get("opponent_game"),
+            result.get("opponent_game", "Ranked"),
+        )
+        matchup_label = (
+            game_label
+            if result.get("game") == result.get("opponent_game")
+            else f"{game_label} vs {opponent_game_label}"
+        )
         result_emoji = "🏆" if result["user_won"] else "💥"
-        title = f"{result_emoji} {game_label} Ranked Victory" if result["user_won"] else f"{result_emoji} {game_label} Ranked Defeat"
+        title = f"{result_emoji} {matchup_label} Ranked Victory" if result["user_won"] else f"{result_emoji} {matchup_label} Ranked Defeat"
         color = discord.Color.green() if result["user_won"] else discord.Color.red()
         delta = result["elo_delta"]
         delta_text = f"+{delta}" if delta > 0 else str(delta)
@@ -3123,6 +3265,15 @@ class Cards(commands.Cog):
         if reward_parts:
             reward_text += f" ({' '.join(reward_parts)})"
         embed.add_field(name="Rewards", value=reward_text, inline=False)
+        embed.add_field(
+            name="Totals",
+            value=(
+                f"{result['total_cash']} cash and "
+                f"{result['current_level_xp']}/{result['needed_level_xp']} XP "
+                f"towards Level {result['level'] + 1}"
+            ),
+            inline=False,
+        )
         if result["leveled_up"]:
             embed.add_field(name="Level Up", value=f"Leveled up to Level {result['level']}.", inline=False)
         embed.set_footer(text="Ranked has a 30 minute cooldown.")
@@ -3134,9 +3285,10 @@ class Cards(commands.Cog):
             result["user_image_slots"],
             result["opponent_image_slots"],
             ctx.author.id,
-            f"{result['user_name']}'s Team",
-            f"{result['opponent_name']}'s Team",
-            result.get("game")
+            f"{result['user_name']}'s {TEAM_GAME_LABELS.get(result.get('game'), 'Team')}",
+            f"{result['opponent_name']}'s {TEAM_GAME_LABELS.get(result.get('opponent_game'), 'Team')}",
+            result.get("game"),
+            result.get("opponent_game"),
         )
         if file:
             embed.set_image(url=f"attachment://{file.filename}")
@@ -3225,6 +3377,61 @@ class Cards(commands.Cog):
             results.append((card_instance, chosen_card, player))
 
         return results, None
+
+    def find_lowest_pack_slot(self, user_packs):
+        for index, pack_id in enumerate(user_packs):
+            if pack_id is not None:
+                return index, pack_id
+        return None, None
+
+    def has_unopened_packs(self, user_packs):
+        return any(pack_id is not None for pack_id in user_packs)
+
+    def build_open_pack_embed(self, user_display_name, pack_id, results, has_more_packs=False):
+        lines = []
+        for inst, card, player in results:
+            rarity = inst["rarity"]
+            player_name = player.get("name", "Unknown") if player else "Unknown"
+            lines.append(f"{player_name} - {card['team']} - {self.get_rarity_symbol(rarity)} {rarity}")
+
+        pack_name = self.packs.get(pack_id, {}).get("name", pack_id)
+        embed = discord.Embed(
+            title=f"{user_display_name} opened {pack_name}",
+            description="\n".join(lines),
+            color=discord.Color.dark_grey()
+        )
+        if not has_more_packs:
+            embed.set_footer(text="All packs opened.")
+        return embed
+
+    def open_lowest_index_pack(self, user_id, pulled_by_user=None):
+        users, user_data = self.get_user_data(user_id)
+        if user_data is None:
+            return {"error": "You need to create a profile first with `.join`."}
+
+        user_packs = user_data.get("packs", [])
+        slot_index, pack_id = self.find_lowest_pack_slot(user_packs)
+        if pack_id is None:
+            return {"error": "You have no packs."}
+
+        user_packs[slot_index] = None
+        self.save_users(users)
+
+        results, error = self.open_pack(user_id, pack_id, pulled_by_user)
+        if error:
+            return {"error": error}
+
+        has_more_packs = self.has_unopened_packs(user_packs)
+        display_name = getattr(pulled_by_user, "display_name", str(user_id))
+        embed = self.build_open_pack_embed(display_name, pack_id, results, has_more_packs)
+        return {
+            "embed": embed,
+            "error": None,
+            "results": results,
+            "pack_id": pack_id,
+            "slot_index": slot_index,
+            "has_more_packs": has_more_packs,
+        }
 
     # -----------------
     # Commands
@@ -3368,24 +3575,24 @@ class Cards(commands.Cog):
         else:
             await ctx.send(embed=embed)
 
-        role_errors = []
-        for ranked_user_id, ranked_elo in (
-            (ctx.author.id, result["user_elo_after"]),
-            (result["opponent_id"], result["opponent_elo_after"]),
-        ):
-            error = await self.sync_rank_role_for_user(
-                ranked_user_id,
-                ranked_elo,
-                "Update ProPulse ranked role after ranked match",
-            )
-            if error:
-                role_errors.append(error)
-        if role_errors:
-            unique_errors = list(dict.fromkeys(role_errors))
-            await ctx.send(f"Rank roles could not be fully updated: {unique_errors[0]}")
-
         users_cog = self.bot.get_cog("Users") if self.bot else None
         if users_cog is not None:
+            role_errors = []
+            for ranked_user_id, ranked_elo in (
+                (ctx.author.id, result["user_elo_after"]),
+                (result["opponent_id"], result["opponent_elo_after"]),
+            ):
+                error = await users_cog.sync_rank_role_for_user(
+                    ranked_user_id,
+                    ranked_elo,
+                    "Update ProPulse ranked role after ranked match",
+                )
+                if error:
+                    role_errors.append(error)
+            if role_errors:
+                unique_errors = list(dict.fromkeys(role_errors))
+                await ctx.send(f"Rank roles could not be fully updated: {unique_errors[0]}")
+
             user = users_cog.get_profile_by_id(ctx.author.id)
             users_cog.remember_reminder_channel(user, "ranked", ctx.channel.id)
             users_cog.save_users()
@@ -3396,16 +3603,6 @@ class Cards(commands.Cog):
                     "ranked",
                     result["ranked_ready_at"],
                 )
-
-    @commands.command(aliases=["syncranks"])
-    @commands.has_permissions(administrator=True)
-    async def syncrankroles(self, ctx):
-        await ctx.send("Syncing ranked roles in the main Discord...")
-        synced, errors = await self.sync_all_rank_roles()
-        message = f"Synced ranked roles for {synced} member(s)."
-        if errors:
-            message += f" {len(errors)} member(s) could not be synced. First issue: {errors[0]}"
-        await ctx.send(message)
 
     # Card info command to browse all bot cards with inventory-style filters.
     # EX: `.info -region LCK` lists LCK cards, `.info 1` opens full info for CID 1.
@@ -3479,9 +3676,27 @@ class Cards(commands.Cog):
         users, user_data = self.get_user_data(ctx.author.id)
         arg = arg.strip()
 
+        if user_data is None:
+            await ctx.send("You need to create a profile first with `.join`.")
+            return
+
         user_packs = user_data.get("packs", [])
 
-        if not user_packs:
+        if arg.lower() == "-all":
+            result = self.open_lowest_index_pack(ctx.author.id, ctx.author)
+            error = result.get("error")
+            if error:
+                await ctx.send(error)
+                return
+
+            view = OpenAllPacksView(self, ctx.author.id) if result.get("has_more_packs") else None
+            await ctx.send(embed=result["embed"], view=view)
+
+            for inst, card, player in result["results"]:
+                await self.announce_challenger_pull(ctx, inst, card, player, result["pack_id"])
+            return
+
+        if not self.has_unopened_packs(user_packs):
             await ctx.send("You have no packs.")
             return
 
@@ -3529,23 +3744,13 @@ class Cards(commands.Cog):
             await ctx.send(error)
             return
 
-        lines = []
-        for inst, card, player in results:
-            rarity = inst["rarity"]
-            lines.append(f"{player['name']} • {card['team']} • {self.get_rarity_symbol(rarity)} {rarity}")
-
-        pack_name = self.packs.get(pack_id, {}).get("name", pack_id)
-        embed = discord.Embed(
-            title=f"{ctx.author.display_name} opened {pack_name}",
-            description="\n".join(lines),
-            color=discord.Color.dark_grey()
-        )
-
+        embed = self.build_open_pack_embed(ctx.author.display_name, pack_id, results)
         await ctx.send(embed=embed)
 
         for inst, card, player in results:
             await self.announce_challenger_pull(ctx, inst, card, player, pack_id)
-        
+        return
+
 
         #Command to list users packs
         # EX: `.packs`

@@ -50,5 +50,73 @@
             "cash": 0
         },
         "completed_at": "2026-05-15T16:54:29.355648"
+    },
+    {
+        "trade_id": "4087499f-c930-4fa3-bd33-36b0c8d3e2a5",
+        "user1_id": "272473699909763072",
+        "user2_id": "656332144909746177",
+        "user1_offer": {
+            "cards": [
+                {
+                    "instance_id": "d0058d3c-f3bb-4702-a4d5-d877ac36e341",
+                    "card_id": "2026_cblol_vks_kaiwing",
+                    "rarity": "Diamond",
+                    "pulled_on": "2026-05-16T19:47:24.454558",
+                    "pulled_by_id": "272473699909763072",
+                    "pulled_by_username": "chauncey612",
+                    "snapshot": {
+                        "ign": "Kaiwing",
+                        "team": "Vivo Keyd Stars",
+                        "game": "League of Legends",
+                        "set": "LoL 26",
+                        "league": "CBLOL",
+                        "role": "SUP",
+                        "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/CBLOL/Vivo_Keyd_Stars/vivo-keyd-stars_kaiwing.png"
+                    }
+                }
+            ],
+            "packs": [],
+            "cash": 0
+        },
+        "user2_offer": {
+            "cards": [],
+            "packs": [],
+            "cash": 0
+        },
+        "completed_at": "2026-05-16T21:39:19.660638"
+    },
+    {
+        "trade_id": "07708417-7172-4402-95c0-f07c32a36adc",
+        "user1_id": "272473699909763072",
+        "user2_id": "766143687980744706",
+        "user1_offer": {
+            "cards": [
+                {
+                    "instance_id": "8b471e11-324d-46a2-86c0-9050f982bdf9",
+                    "card_id": "2026_lcp_fshg_vsta",
+                    "rarity": "Diamond",
+                    "pulled_on": "2026-05-16T02:59:33.380257",
+                    "pulled_by_id": "272473699909763072",
+                    "pulled_by_username": "chauncey612",
+                    "snapshot": {
+                        "ign": "Vsta",
+                        "team": "Fukuoka SoftBank Hawks Gaming",
+                        "game": "League of Legends",
+                        "set": "LoL 26",
+                        "league": "LCP",
+                        "role": "SUP",
+                        "image_url": "https://raw.githubusercontent.com/NotChauncey612/ProPulse/main/player_images/LOL%20%2726/LCP/Fukuoka_SoftBank_Hawks_Gaming/fukuoka-softbank-hawks-gaming_vsta.png"
+                    }
+                }
+            ],
+            "packs": [],
+            "cash": 0
+        },
+        "user2_offer": {
+            "cards": [],
+            "packs": [],
+            "cash": 0
+        },
+        "completed_at": "2026-05-16T22:22:52.624533"
     }
 ]

@@ -1,15 +1,35 @@
 import discord
 from discord.ext import commands
+import asyncio
 import math
+import os
 import random
+import tempfile
+import zipfile
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from urllib.parse import quote
 
-from .storage import load_json, save_json
+import requests
+
+from .i18n import available_languages, translator
+from .storage import data_path, load_json, save_json
 
 DATA_PATH = 'data/users.json'
+MODERATORS_PATH = 'data/moderators.json'
 PRACTICE_COOLDOWN = timedelta(minutes=10)
 DAILY_COOLDOWN = timedelta(hours=24)
 RANKED_COOLDOWN = timedelta(minutes=30)
+VOTE_CASH_REWARD = 50
+VOTE_GOLD_REWARD = 5
+TOPGG_TOKEN = os.getenv("TOPGG_TOKEN")
+TOPGG_BOT_ID = os.getenv("TOPGG_BOT_ID", "1370559950496993440")
+MODERATOR_MANAGER_IDS = {
+    user_id.strip()
+    for user_id in os.getenv("MODERATOR_MANAGER_IDS", "").replace(";", ",").split(",")
+    if user_id.strip().isdigit()
+}
+VOTE_EMOJI = "\U0001f5f3\ufe0f"
 PROFILE_EMOJI = "👤"
 COOLDOWN_EMOJI = "⏱️"
 PRACTICE_EMOJI = "🏋️"
@@ -52,11 +72,30 @@ RANK_THRESHOLDS = [
     ("Gold", 1200),
     ("Silver", 0),
 ]
+MAIN_DISCORD_INVITE = os.getenv("MAIN_DISCORD_INVITE", "https://discord.gg/fbJYSF2RfV")
+MAIN_DISCORD_GUILD_ID = os.getenv("MAIN_DISCORD_GUILD_ID")
+CREATE_MISSING_RANK_ROLES = os.getenv("CREATE_MISSING_RANK_ROLES", "true").lower() not in {"0", "false", "no"}
+RANK_ROLE_NAMES = {
+    rank_name: os.getenv(f"RANK_ROLE_{rank_name.upper()}_NAME", rank_name)
+    for rank_name, _ in RANK_THRESHOLDS
+}
+RANK_ROLE_IDS = {
+    rank_name: os.getenv(f"RANK_ROLE_{rank_name.upper()}_ID")
+    for rank_name, _ in RANK_THRESHOLDS
+}
+RANK_ROLE_COLORS = {
+    "Silver": discord.Color(0xC0C0C0),
+    "Gold": discord.Color.gold(),
+    "Diamond": discord.Color.purple(),
+    "Champ": discord.Color.red(),
+    "Challenger": discord.Color.blue(),
+}
 RANK_CASH_MULTIPLIERS = {
-    "Silver": 1.1,
-    "Gold": 1.2,
-    "Diamond": 1.3,
-    "Champ": 1.4,
+    "Silver": 1.0,
+    "Gold": 1.1,
+    "Diamond": 1.2,
+    "Champ": 1.3,
+    "Master": 1.3,
     "Challenger": 1.5,
 }
 
@@ -65,6 +104,7 @@ class Users(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.users = self.load_users()
+        self.moderators = self.load_moderators()
         self.reminder_tasks = {}
 
     async def cog_load(self):
@@ -81,6 +121,68 @@ class Users(commands.Cog):
 
     def save_users(self):
         save_json(DATA_PATH, self.users)
+
+    def load_moderators(self):
+        data = load_json(MODERATORS_PATH, default=[])
+        if isinstance(data, list):
+            return {str(user_id) for user_id in data if str(user_id).isdigit()}
+        if isinstance(data, dict):
+            return {str(user_id) for user_id in data.get("moderators", []) if str(user_id).isdigit()}
+        return set()
+
+    def save_moderators(self):
+        save_json(MODERATORS_PATH, sorted(self.moderators, key=int))
+
+    async def is_bot_owner(self, user):
+        try:
+            return await self.bot.is_owner(user)
+        except discord.DiscordException:
+            return False
+
+    async def is_moderator_manager(self, ctx):
+        if str(ctx.author.id) in MODERATOR_MANAGER_IDS:
+            return True
+        if await self.is_bot_owner(ctx.author):
+            return True
+        guild_permissions = getattr(ctx.author, "guild_permissions", None)
+        return bool(getattr(guild_permissions, "administrator", False))
+
+    async def is_moderator(self, ctx):
+        if await self.is_moderator_manager(ctx):
+            return True
+        return str(ctx.author.id) in self.moderators
+
+    async def moderator_check(self, ctx):
+        if await self.is_moderator(ctx):
+            return True
+        raise commands.MissingPermissions(["bot_moderator"])
+
+    async def moderator_manager_check(self, ctx):
+        if await self.is_moderator_manager(ctx):
+            return True
+        raise commands.MissingPermissions(["administrator"])
+
+    def build_data_backup(self):
+        source_dir = data_path("data")
+        source_dir.mkdir(parents=True, exist_ok=True)
+
+        backup = tempfile.NamedTemporaryFile(
+            prefix=f"propulse-data-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}-",
+            suffix=".zip",
+            delete=False,
+        )
+        backup_path = Path(backup.name)
+        backup.close()
+
+        with zipfile.ZipFile(backup_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for file_path in sorted(source_dir.rglob("*")):
+                if not file_path.is_file():
+                    continue
+                if file_path.suffix == ".tmp" or file_path.name.startswith("."):
+                    continue
+                archive.write(file_path, Path("data") / file_path.relative_to(source_dir))
+
+        return backup_path
 
     def get_profile(self, member: discord.Member):
         uid = str(member.id)
@@ -300,11 +402,222 @@ class Users(commands.Cog):
                 return rank_name
         return "Silver"
 
+    async def get_main_discord_guild(self):
+        guild_id = int(MAIN_DISCORD_GUILD_ID) if str(MAIN_DISCORD_GUILD_ID or "").isdigit() else None
+
+        if guild_id is None and MAIN_DISCORD_INVITE:
+            try:
+                invite = await self.bot.fetch_invite(MAIN_DISCORD_INVITE)
+                guild_id = invite.guild.id if invite and invite.guild else None
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                guild_id = None
+
+        if guild_id is None:
+            return None, "Set MAIN_DISCORD_GUILD_ID or MAIN_DISCORD_INVITE so I know which server to manage."
+
+        guild = self.bot.get_guild(guild_id)
+        if guild is None:
+            try:
+                guild = await self.bot.fetch_guild(guild_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                guild = None
+
+        if guild is None:
+            return None, "I could not access the main Discord. Make sure the bot is in that server."
+        return guild, None
+
+    async def get_rank_role(self, guild, rank_name, create_missing=False):
+        role_name = RANK_ROLE_NAMES.get(rank_name, rank_name)
+        role_color = RANK_ROLE_COLORS.get(rank_name, discord.Color.default())
+        role_id = RANK_ROLE_IDS.get(rank_name)
+        if role_id and str(role_id).isdigit():
+            role = guild.get_role(int(role_id))
+            if role:
+                if create_missing:
+                    error = await self.update_rank_role_appearance(role, rank_name, role_name, role_color)
+                    if error:
+                        return None, error
+                return role, None
+
+        role = discord.utils.get(guild.roles, name=role_name)
+        if role:
+            if create_missing:
+                error = await self.update_rank_role_appearance(role, rank_name, role_name, role_color)
+                if error:
+                    return None, error
+            return role, None
+
+        legacy_role = discord.utils.get(guild.roles, name=f"Ranked {rank_name}")
+        if legacy_role and create_missing:
+            error = await self.update_rank_role_appearance(legacy_role, rank_name, role_name, role_color)
+            if error:
+                return None, error
+            return legacy_role, None
+
+        if not create_missing:
+            return None, None
+        if not CREATE_MISSING_RANK_ROLES:
+            return None, f"Missing role `{role_name}`."
+
+        me = guild.me or guild.get_member(self.bot.user.id)
+        if me is None:
+            try:
+                me = await guild.fetch_member(self.bot.user.id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                me = None
+        if not me or not me.guild_permissions.manage_roles:
+            return None, "I need Manage Roles permission to create missing ranked roles."
+
+        try:
+            role = await guild.create_role(
+                name=role_name,
+                color=role_color,
+                reason="Create ProPulse ranked role",
+            )
+            return role, None
+        except (discord.Forbidden, discord.HTTPException) as exc:
+            return None, f"Could not create `{role_name}`: {exc}"
+
+    async def update_rank_role_appearance(self, role, rank_name, role_name, role_color):
+        if role.name == role_name and role.color == role_color:
+            return None
+
+        try:
+            await role.edit(
+                name=role_name,
+                color=role_color,
+                reason=f"Update ProPulse {rank_name} rank role appearance",
+            )
+            return None
+        except discord.Forbidden:
+            return "I need Manage Roles permission, and my bot role must be above the ranked roles."
+        except discord.HTTPException as exc:
+            return f"Discord rejected the role update: {exc}"
+
+    async def sync_rank_role_for_user(self, user_id, elo, reason="Sync ProPulse ranked role"):
+        guild, error = await self.get_main_discord_guild()
+        if error:
+            return error
+
+        try:
+            member = guild.get_member(int(user_id)) or await guild.fetch_member(int(user_id))
+        except discord.NotFound:
+            return None
+        except discord.Forbidden:
+            return "I could not check members in the main Discord."
+        except discord.HTTPException as exc:
+            return f"Discord rejected the member lookup: {exc}"
+
+        rank_name = self.rank_for_elo(int(elo))
+        wanted_role, error = await self.get_rank_role(guild, rank_name, create_missing=True)
+        if error:
+            return error
+        if wanted_role is None:
+            return f"Missing role `{RANK_ROLE_NAMES.get(rank_name, rank_name)}`."
+
+        rank_roles = []
+        for existing_rank in RANK_ROLE_NAMES:
+            role, _ = await self.get_rank_role(guild, existing_rank, create_missing=False)
+            if role:
+                rank_roles.append(role)
+            legacy_role = discord.utils.get(guild.roles, name=f"Ranked {existing_rank}")
+            if legacy_role:
+                rank_roles.append(legacy_role)
+
+        current_role_ids = {role.id for role in member.roles}
+        roles_to_remove = [
+            role for role in rank_roles
+            if role.id != wanted_role.id and role.id in current_role_ids
+        ]
+
+        try:
+            if roles_to_remove:
+                await member.remove_roles(*roles_to_remove, reason=reason)
+            if wanted_role.id not in current_role_ids:
+                await member.add_roles(wanted_role, reason=reason)
+        except discord.Forbidden:
+            return "I need Manage Roles permission, and my bot role must be above the ranked roles."
+        except discord.HTTPException as exc:
+            return f"Discord rejected the role update: {exc}"
+
+        return None
+
+    async def ensure_all_rank_roles(self):
+        guild, error = await self.get_main_discord_guild()
+        if error:
+            return [error]
+
+        errors = []
+        for rank_name, _ in RANK_THRESHOLDS:
+            _role, error = await self.get_rank_role(guild, rank_name, create_missing=True)
+            if error:
+                errors.append(f"{rank_name}: {error}")
+        return errors
+
+    async def sync_all_rank_roles(self):
+        setup_errors = await self.ensure_all_rank_roles()
+        errors = []
+        synced = 0
+        for user_id, user_data in self.users.items():
+            if not isinstance(user_data, dict):
+                continue
+            self.normalize_profile_progress(user_data)
+            error = await self.sync_rank_role_for_user(
+                user_id,
+                user_data.get("elo", DEFAULT_ELO),
+                "Sync all ProPulse ranked roles",
+            )
+            if error:
+                errors.append(f"{user_id}: {error}")
+                continue
+            synced += 1
+        return synced, setup_errors + errors
+
     def daily_cash_reward(self, profile):
         rank = self.rank_for_elo(int(profile.get("elo", DEFAULT_ELO)))
         multiplier = RANK_CASH_MULTIPLIERS.get(rank, 1.0)
         base_reward = random.randint(20, 50)
         return base_reward, round(base_reward * multiplier), rank, multiplier
+
+    def topgg_bot_id(self):
+        if TOPGG_BOT_ID:
+            return TOPGG_BOT_ID
+        if self.bot and self.bot.user:
+            return str(self.bot.user.id)
+        return None
+
+    def topgg_vote_url(self):
+        bot_id = self.topgg_bot_id()
+        if not bot_id:
+            return "https://top.gg/"
+        return f"https://top.gg/bot/{bot_id}/vote"
+
+    def parse_topgg_time(self, value):
+        if not value:
+            return None
+        try:
+            saved = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if saved.tzinfo is None:
+            return saved.replace(tzinfo=timezone.utc)
+        return saved.astimezone(timezone.utc)
+
+    def fetch_topgg_vote_status_sync(self, user_id):
+        url = f"https://top.gg/api/v1/projects/@me/votes/{quote(str(user_id))}"
+        response = requests.get(
+            url,
+            headers={"Authorization": f"Bearer {TOPGG_TOKEN}"},
+            params={"source": "discord"},
+            timeout=10,
+        )
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return response.json()
+
+    async def fetch_topgg_vote_status(self, user_id):
+        return await asyncio.to_thread(self.fetch_topgg_vote_status_sync, user_id)
 
     def team_slot_has_card(self, profile, role):
         teams = self.normalize_game_teams(profile)
@@ -395,6 +708,7 @@ class Users(commands.Cog):
             "confirm_auction_buy": True,
             "confirm_pack_buy": True,
             "show_name_in_challenger_pulls": True,
+            "language": "en",
         }
 
     def normalize_settings(self, profile):
@@ -405,6 +719,7 @@ class Users(commands.Cog):
         defaults = self.default_settings()
         for key, value in defaults.items():
             settings.setdefault(key, value)
+        settings["language"] = translator.normalize_language(settings.get("language"))
         return settings
 
     def add_pack_to_first_slot(self, profile, pack_id):
@@ -535,16 +850,38 @@ class Users(commands.Cog):
     # Commands 
 
     # Help command to list available commands and filters
+    def add_moderator_help(self, embed):
+        embed.add_field(
+            name="Moderator",
+            value=(
+                "`.help -mod` - Show moderator commands.\n"
+                "`.backupdata` - Send a zip of the current data files.\n"
+                "`.syncrankroles` or `.syncranks` - Sync ranked Discord roles.\n"
+                "`.mods` - List bot moderators.\n"
+                "`.addmod @user` - Add a bot moderator. Admins, bot owners, and manager IDs only.\n"
+                "`.removemod @user` - Remove a bot moderator. Admins, bot owners, and manager IDs only."
+            ),
+            inline=False
+        )
+
     @commands.command()
-    async def help(self, ctx):
+    async def help(self, ctx, section: str = None):
+        if str(section or "").lower() in {"-mod", "mod", "mods", "moderator", "moderators"}:
+            await self.moderator_check(ctx)
+            embed = discord.Embed(title="Moderator Commands", color=discord.Color.dark_grey())
+            self.add_moderator_help(embed)
+            await ctx.send(embed=embed)
+            return
+
         embed = discord.Embed(title="Available Commands", color=discord.Color.dark_grey())
         embed.add_field(
             name="User",
             value=(
                 "`.help` - Show this command list.\n"
                 "`.profile [@user]` or `.prof [@user]` - View a profile.\n"
-                "`.cd` - Check practice, daily, and ranked cooldowns.\n"
-                "`.daily` - Earn cash and gold every 24 hours."
+                "`.cd` - Check practice, daily, ranked, and vote cooldowns.\n"
+                "`.daily` - Earn cash and gold every 24 hours.\n"
+                "`.vote` - Vote on Top.gg and claim 50 cash plus 5 gold."
             ),
             inline=False
         )
@@ -569,7 +906,8 @@ class Users(commands.Cog):
                 "`.info [filters]` or `.info <CID>` - List or inspect bot cards.\n"
                 "`.view <inventory #>` - View one inventory card.\n"
                 "`.packs` - View unopened packs.\n"
-                "`.open <pack #|pack id|pack name>` - Open a pack."
+                "`.open <pack #|pack id|pack name>` - Open a pack.\n"
+                "`.open -all` - Open your packs one at a time from lowest index."
             ),
             inline=False
         )
@@ -621,7 +959,8 @@ class Users(commands.Cog):
                 f"{DM_EMOJI} Auction DMs: {'ON' if settings['dm_auction_notis'] else 'OFF'}\n"
                 f"{CONFIRM_EMOJI} Auction Confirm Buy: {'ON' if settings['confirm_auction_buy'] else 'OFF'}\n"
                 f"{PACK_EMOJI} Shop Confirm Buy: {'ON' if settings['confirm_pack_buy'] else 'OFF'}\n"
-                f"{CARDS_EMOJI} Show name in Challenger-Pulls: {'ON' if settings['show_name_in_challenger_pulls'] else 'OFF'}"
+                f"{CARDS_EMOJI} Show name in Challenger-Pulls: {'ON' if settings['show_name_in_challenger_pulls'] else 'OFF'}\n"
+                f"Language: {available_languages().get(settings['language'], 'English')}"
             ),
             inline=False
         )
@@ -635,6 +974,87 @@ class Users(commands.Cog):
         view = LeaderboardView(self, entries)
         await ctx.send(embed=view.build_embed(), view=view)
 
+    @commands.command(aliases=["addmoderator", "modadd"])
+    @commands.check(lambda ctx: ctx.cog.moderator_manager_check(ctx))
+    async def addmod(self, ctx, member: discord.Member):
+        self.moderators.add(str(member.id))
+        self.save_moderators()
+        await ctx.send(f"{member.mention} can now use bot moderator commands.")
+
+    @commands.command(aliases=["removemoderator", "modremove", "delmod"])
+    @commands.check(lambda ctx: ctx.cog.moderator_manager_check(ctx))
+    async def removemod(self, ctx, member: discord.Member):
+        if str(member.id) not in self.moderators:
+            await ctx.send(f"{member.mention} is not a bot moderator.")
+            return
+
+        self.moderators.remove(str(member.id))
+        self.save_moderators()
+        await ctx.send(f"{member.mention} can no longer use bot moderator commands.")
+
+    @commands.command(aliases=["moderators"])
+    @commands.check(lambda ctx: ctx.cog.moderator_check(ctx))
+    async def mods(self, ctx):
+        if not self.moderators:
+            await ctx.send("No bot moderators have been added yet. Server admins and bot owners can still manage moderator commands.")
+            return
+
+        mentions = []
+        for user_id in sorted(self.moderators, key=int):
+            member = ctx.guild.get_member(int(user_id)) if ctx.guild else None
+            mentions.append(member.mention if member else f"`{user_id}`")
+        await ctx.send("Bot moderators: " + ", ".join(mentions))
+
+    @commands.command(aliases=["syncranks"])
+    @commands.check(lambda ctx: ctx.cog.moderator_check(ctx))
+    async def syncrankroles(self, ctx):
+        await ctx.send("Syncing ranked roles in the main Discord...")
+        synced, errors = await self.sync_all_rank_roles()
+        message = f"Synced ranked roles for {synced} member(s)."
+        if errors:
+            message += f" {len(errors)} member(s) could not be synced. First issue: {errors[0]}"
+        await ctx.send(message)
+
+    @commands.command(aliases=["backup", "databackup", "zipdata"])
+    @commands.check(lambda ctx: ctx.cog.moderator_check(ctx))
+    async def backupdata(self, ctx):
+        await ctx.send("Creating data backup...")
+        backup_path = self.build_data_backup()
+        filename = f"propulse-data-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}.zip"
+
+        try:
+            await ctx.send(
+                "Here is the current ProPulse data backup.",
+                file=discord.File(backup_path, filename=filename),
+            )
+        except discord.HTTPException as exc:
+            await ctx.send(f"Discord rejected the backup upload: {exc}")
+        finally:
+            try:
+                backup_path.unlink()
+            except OSError:
+                pass
+
+    @commands.command(aliases=["lang"])
+    async def language(self, ctx, language_code: str = None):
+        user = self.get_profile(ctx.author)
+        settings = self.normalize_settings(user)
+
+        if language_code is None:
+            available = ", ".join(
+                f"`{code}` ({name})"
+                for code, name in available_languages().items()
+            )
+            await ctx.send(
+                f"Your language is `{settings['language']}`. Available languages: {available}."
+            )
+            return
+
+        language_code = translator.normalize_language(language_code)
+        settings["language"] = language_code
+        self.save_users()
+        await ctx.send(f"Language set to {available_languages()[language_code]}.")
+
     # CD (cooldown) command to show how long until user can practice or claim daily again
     @commands.command()
     async def cd(self, ctx):
@@ -644,6 +1064,7 @@ class Users(commands.Cog):
         practice_cd = f"{READY_EMOJI} Ready"
         daily_cd = f"{READY_EMOJI} Ready"
         ranked_cd = f"{READY_EMOJI} Ready"
+        vote_cd = f"{READY_EMOJI} Ready"
 
         last_practice = self.parse_saved_time(user.get("last_practice"))
         if last_practice:
@@ -663,10 +1084,53 @@ class Users(commands.Cog):
             if now < ranked_ready_at:
                 ranked_cd = self.format_remaining(ranked_ready_at)
 
+        if TOPGG_TOKEN:
+            try:
+                vote_data = await self.fetch_topgg_vote_status(ctx.author.id)
+            except requests.exceptions.HTTPError as exc:
+                status = exc.response.status_code if exc.response is not None else None
+                if status == 429:
+                    vote_cd = "Rate limited"
+                elif status in {401, 403}:
+                    vote_cd = "Token rejected"
+                else:
+                    vote_cd = "Check failed"
+            except requests.exceptions.RequestException:
+                vote_cd = "Check failed"
+            else:
+                if vote_data:
+                    expires_at = self.parse_topgg_time(vote_data.get("expires_at"))
+                    reward_key = str(vote_data.get("created_at") or vote_data.get("expires_at") or "")
+                    if reward_key and user.get("last_topgg_vote_rewarded_at") != reward_key:
+                        vote_cd = "Claim"
+                    elif expires_at and now < expires_at:
+                        vote_cd = self.format_remaining(expires_at)
+                    else:
+                        vote_cd = f"{READY_EMOJI} Ready"
+        else:
+            vote_cd = "Vote link ready"
+
         embed = discord.Embed(title=f"{COOLDOWN_EMOJI} {ctx.author.display_name}'s Cooldowns")
-        embed.add_field(name=f"{PRACTICE_EMOJI} Practice", value=practice_cd, inline=True)
-        embed.add_field(name=f"{DAILY_EMOJI} Daily", value=daily_cd, inline=True)
-        embed.add_field(name=f"{RANKED_EMOJI} Ranked", value=ranked_cd, inline=True)
+        embed.add_field(
+            name="\u200b",
+            value=(
+                f"{PRACTICE_EMOJI} **Practice**\n"
+                f"{practice_cd}\n\n"
+                f"{VOTE_EMOJI} **Vote**\n"
+                f"{vote_cd}"
+            ),
+            inline=True,
+        )
+        embed.add_field(
+            name="\u200b",
+            value=(
+                f"{RANKED_EMOJI} **Ranked**\n"
+                f"{ranked_cd}\n\n"
+                f"{DAILY_EMOJI} **Daily**\n"
+                f"{daily_cd}"
+            ),
+            inline=True,
+        )
 
         await ctx.send(embed=embed)
 
@@ -709,13 +1173,102 @@ class Users(commands.Cog):
             level_text = f" You leveled up to **Level {user['level']}**."
             if gain_text:
                 level_text += f" Stat gains: {gain_text}."
+        current_xp, needed_xp = self.xp_progress_for_level(user["xp"], user["level"])
         await ctx.send(
             f"{PRACTICE_EMOJI} {ctx.author.mention} You practiced and earned "
-            f"{reward} {CASH_EMOJI} cash and {xp_reward} XP.{level_text}"
+            f"{reward} {CASH_EMOJI} and {xp_reward} XP.{level_text}\n"
+            f"Total: {user['cash']} {CASH_EMOJI} \n"
+            f"{current_xp}/{needed_xp} XP towards Level {user['level'] + 1}."
         )
         if self.normalize_settings(user).get("alert_daily_practice"):
             ready_at = now + PRACTICE_COOLDOWN
             self.schedule_ready_notification(ctx.channel.id, ctx.author.id, "practice", ready_at)
+
+    @commands.command()
+    async def vote(self, ctx):
+        user = self.get_profile(ctx.author)
+        vote_url = self.topgg_vote_url()
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(label="Vote on Top.gg", url=vote_url))
+
+        if not TOPGG_TOKEN:
+            await ctx.send(
+                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
+                "After voting use `.vote` to claim your reward.\n"
+                "I need `TOPGG_TOKEN` configured before I can verify votes and give rewards.",
+                view=view,
+            )
+            return
+
+        try:
+            vote_data = await self.fetch_topgg_vote_status(ctx.author.id)
+        except requests.exceptions.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+            if status in {401, 403}:
+                await ctx.send(
+                    f"Please vote on top.gg with this link:\n{vote_url}\n\n"
+                    "After voting use `.vote` to claim your reward.\n"
+                    "I could not verify votes because the Top.gg token was rejected.",
+                    view=view,
+                )
+                return
+            if status == 429:
+                await ctx.send("Top.gg is rate limiting vote checks right now. Try again in a minute.", view=view)
+                return
+            await ctx.send(
+                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
+                "After voting use `.vote` to claim your reward.\n"
+                "I could not verify Top.gg right now.",
+                view=view,
+            )
+            return
+        except requests.exceptions.RequestException:
+            await ctx.send(
+                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
+                "After voting use `.vote` to claim your reward.\n"
+                "I could not reach Top.gg right now.",
+                view=view,
+            )
+            return
+
+        if not vote_data:
+            await ctx.send(
+                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
+                "After voting use `.vote` to claim your reward.",
+                view=view,
+            )
+            return
+
+        created_at_raw = vote_data.get("created_at")
+        expires_at = self.parse_topgg_time(vote_data.get("expires_at"))
+        if expires_at and self.utc_now() >= expires_at:
+            await ctx.send(
+                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
+                "After voting use `.vote` to claim your reward.",
+                view=view,
+            )
+            return
+
+        reward_key = str(created_at_raw or vote_data.get("expires_at") or "")
+        if reward_key and user.get("last_topgg_vote_rewarded_at") == reward_key:
+            wait_text = f" You can vote again in {self.format_remaining(expires_at)}." if expires_at else ""
+            await ctx.send(
+                f"You already claimed the reward for your latest Top.gg vote.{wait_text}",
+                view=view,
+            )
+            return
+
+        user["cash"] = int(user.get("cash", 0)) + VOTE_CASH_REWARD
+        user["gold"] = int(user.get("gold", 0)) + VOTE_GOLD_REWARD
+        if reward_key:
+            user["last_topgg_vote_rewarded_at"] = reward_key
+        self.save_users()
+
+        await ctx.send(
+            f"Thanks for voting, {ctx.author.mention}! You earned "
+            f"{VOTE_CASH_REWARD} {CASH_EMOJI} cash and {VOTE_GOLD_REWARD} {GOLD_EMOJI} gold.\n"
+            f"Total: {user['cash']} {CASH_EMOJI} cash and {user['gold']} {GOLD_EMOJI} gold."
+        )
 
     # Daily command to earn cash and gold once every 24 hours
     @commands.command()
@@ -825,6 +1378,57 @@ class LeaderboardView(discord.ui.View):
             item.disabled = True
 
 
+class LanguageSelect(discord.ui.Select):
+    def __init__(self, settings_view):
+        self.settings_view = settings_view
+        settings = settings_view.get_settings()
+        current_language = settings.get("language", "en")
+        options = [
+            discord.SelectOption(
+                label=name,
+                value=code,
+                description=f"Use {name} for bot messages.",
+                default=code == current_language,
+            )
+            for code, name in available_languages().items()
+        ]
+        super().__init__(
+            placeholder="Choose a language",
+            min_values=1,
+            max_values=1,
+            options=options[:25],
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        language_code = translator.normalize_language(self.values[0])
+        profile = self.settings_view.users_cog.get_profile_by_id(self.settings_view.target_uid)
+        settings = self.settings_view.users_cog.normalize_settings(profile)
+        settings["language"] = language_code
+        self.settings_view.users_cog.save_users()
+        self.settings_view.refresh_button_styles()
+
+        language_name = available_languages()[language_code]
+        await interaction.response.edit_message(
+            content=f"Language set to {language_name}.",
+            view=None,
+        )
+        if self.settings_view.message is not None:
+            await self.settings_view.message.edit(view=self.settings_view)
+
+
+class LanguageSelectView(discord.ui.View):
+    def __init__(self, settings_view):
+        super().__init__(timeout=60)
+        self.settings_view = settings_view
+        self.add_item(LanguageSelect(settings_view))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.settings_view.requester_id:
+            await interaction.response.send_message("You can only edit your own settings.", ephemeral=True)
+            return False
+        return True
+
+
 class ProfileSettingsView(discord.ui.View):
     BUTTON_SETTINGS = {
         "profile_settings:alert_daily_practice": "alert_daily_practice",
@@ -839,6 +1443,7 @@ class ProfileSettingsView(discord.ui.View):
         self.users_cog = users_cog
         self.requester_id = requester_id
         self.target_uid = target_uid
+        self.message = None
         self.refresh_button_styles()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -873,6 +1478,7 @@ class ProfileSettingsView(discord.ui.View):
 
     async def send_toggle_response(self, interaction: discord.Interaction, message: str):
         await interaction.response.send_message(message, ephemeral=True)
+        self.message = interaction.message
         await interaction.message.edit(view=self)
 
     @discord.ui.button(label=f"{ALERT_EMOJI} Toggle Cooldown Alerts", style=discord.ButtonStyle.secondary, custom_id="profile_settings:alert_daily_practice")
@@ -899,6 +1505,15 @@ class ProfileSettingsView(discord.ui.View):
     async def toggle_challenger_pull_name(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self.toggle("show_name_in_challenger_pulls")
         await self.send_toggle_response(interaction, f"Challenger-Pulls name display is now {'ON' if state else 'OFF'}.")
+
+    @discord.ui.button(label="Language", style=discord.ButtonStyle.secondary, custom_id="profile_settings:language")
+    async def choose_language(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.message = interaction.message
+        await interaction.response.send_message(
+            "Choose your bot language.",
+            view=LanguageSelectView(self),
+            ephemeral=True,
+        )
 
 async def setup(bot):
     await bot.add_cog(Users(bot))

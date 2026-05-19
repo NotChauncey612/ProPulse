@@ -72,7 +72,7 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933406+00:00"
+            "last_fetched_at": "2026-05-17T17:26:58.112842+00:00"
         },
         "115548128962971943": {
             "id": "115548128962971943",
@@ -109,7 +109,7 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933445+00:00"
+            "last_fetched_at": "2026-05-18T04:33:55.028449+00:00"
         },
         "115615926677896639": {
             "id": "115615926677896639",
@@ -146,7 +146,7 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933470+00:00"
+            "last_fetched_at": "2026-05-18T08:48:55.190222+00:00"
         },
         "115548128962971935": {
             "id": "115548128962971935",
@@ -183,7 +183,7 @@
             },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933567+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115564793879403720": {
             "id": "115564793879403720",
@@ -192,15 +192,15 @@
             "league_slug": "lcs",
             "block_name": "Week 7",
             "start_time": "2026-05-16T23:00:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
                 "name": "Shopify Rebellion",
                 "source_name": "Shopify Rebellion",
                 "code": "SR",
                 "key": "shopifyrebellion",
                 "result": {
-                    "outcome": null,
-                    "gameWins": 0
+                    "outcome": "win",
+                    "gameWins": 2
                 }
             },
             "team2": {
@@ -209,15 +209,18 @@
                 "code": "DSG",
                 "key": "disguised",
                 "result": {
-                    "outcome": null,
+                    "outcome": "loss",
                     "gameWins": 0
                 }
             },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "shopifyrebellion",
+                "name": "Shopify Rebellion"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933632+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971871": {
             "id": "115548128962971871",
@@ -226,32 +229,35 @@
             "league_slug": "lck",
             "block_name": "Week 7",
             "start_time": "2026-05-17T08:00:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
-                "name": "Hanwha Life Esports",
-                "source_name": "Hanwha Life Esports",
-                "code": "HLE",
-                "key": "hanwhalifeesports",
-                "result": {
-                    "outcome": null,
-                    "gameWins": 0
-                }
-            },
-            "team2": {
                 "name": "KT Rolster",
                 "source_name": "kt Rolster",
                 "code": "KT",
                 "key": "ktrolster",
                 "result": {
-                    "outcome": null,
-                    "gameWins": 0
+                    "outcome": "win",
+                    "gameWins": 2
+                }
+            },
+            "team2": {
+                "name": "Hanwha Life Esports",
+                "source_name": "Hanwha Life Esports",
+                "code": "HLE",
+                "key": "hanwhalifeesports",
+                "result": {
+                    "outcome": "loss",
+                    "gameWins": 1
                 }
             },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "ktrolster",
+                "name": "KT Rolster"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933648+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115570683341249979": {
             "id": "115570683341249979",
@@ -260,15 +266,15 @@
             "league_slug": "lcp",
             "block_name": "Week 7",
             "start_time": "2026-05-17T09:00:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
                 "name": "DetonatioN FocusMe",
                 "source_name": "DetonatioN FocusMe",
                 "code": "DFM",
                 "key": "detonationfocusme",
                 "result": {
-                    "outcome": null,
-                    "gameWins": 0
+                    "outcome": "loss",
+                    "gameWins": 1
                 }
             },
             "team2": {
@@ -277,15 +283,18 @@
                 "code": "TSW",
                 "key": "teamsecretwhales",
                 "result": {
-                    "outcome": null,
-                    "gameWins": 0
+                    "outcome": "win",
+                    "gameWins": 2
                 }
             },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "teamsecretwhales",
+                "name": "Team Secret Whales"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933671+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128963037519": {
             "id": "115548128963037519",
@@ -294,32 +303,35 @@
             "league_slug": "lck",
             "block_name": "Week 7",
             "start_time": "2026-05-17T10:00:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
-                "name": "Kiwoom DRX",
-                "source_name": "KIWOOM DRX",
-                "code": "KRX",
-                "key": "kiwoomdrx",
-                "result": {
-                    "outcome": null,
-                    "gameWins": 0
-                }
-            },
-            "team2": {
                 "name": "HANJIN BRION",
                 "source_name": "HANJIN BRION",
                 "code": "BRO",
                 "key": "hanjinbrion",
                 "result": {
-                    "outcome": null,
-                    "gameWins": 0
+                    "outcome": "loss",
+                    "gameWins": 1
+                }
+            },
+            "team2": {
+                "name": "Kiwoom DRX",
+                "source_name": "KIWOOM DRX",
+                "code": "KRX",
+                "key": "kiwoomdrx",
+                "result": {
+                    "outcome": "win",
+                    "gameWins": 2
                 }
             },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "kiwoomdrx",
+                "name": "Kiwoom DRX"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933686+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115570683341184403": {
             "id": "115570683341184403",
@@ -328,32 +340,35 @@
             "league_slug": "lcp",
             "block_name": "Week 7",
             "start_time": "2026-05-17T11:30:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
-                "name": "GAM Esports",
-                "source_name": "GAM Esports",
-                "code": "GAM",
-                "key": "gamesports",
-                "result": {
-                    "outcome": null,
-                    "gameWins": 0
-                }
-            },
-            "team2": {
                 "name": "CTBC Flying Oyster",
                 "source_name": "CTBC Flying Oyster",
                 "code": "CFO",
                 "key": "ctbcflyingoyster",
                 "result": {
-                    "outcome": null,
-                    "gameWins": 0
+                    "outcome": "loss",
+                    "gameWins": 1
+                }
+            },
+            "team2": {
+                "name": "GAM Esports",
+                "source_name": "GAM Esports",
+                "code": "GAM",
+                "key": "gamesports",
+                "result": {
+                    "outcome": "win",
+                    "gameWins": 2
                 }
             },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "gamesports",
+                "name": "GAM Esports"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933714+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115565670260181833": {
             "id": "115565670260181833",
@@ -362,32 +377,35 @@
             "league_slug": "cblol-brazil",
             "block_name": "Playoffs",
             "start_time": "2026-05-17T16:00:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
-                "name": "FURIA",
-                "source_name": "FURIA",
-                "code": "FUR",
-                "key": "furia",
-                "result": {
-                    "outcome": null,
-                    "gameWins": 0
-                }
-            },
-            "team2": {
                 "name": "LOUD",
                 "source_name": "LOUD",
                 "code": "LOUD",
                 "key": "loud",
                 "result": {
-                    "outcome": null,
+                    "outcome": "loss",
                     "gameWins": 0
                 }
             },
+            "team2": {
+                "name": "FURIA",
+                "source_name": "FURIA",
+                "code": "FUR",
+                "key": "furia",
+                "result": {
+                    "outcome": "win",
+                    "gameWins": 3
+                }
+            },
             "best_of": 5,
-            "winner": null,
+            "winner": {
+                "key": "furia",
+                "name": "FURIA"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933738+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115564793879338108": {
             "id": "115564793879338108",
@@ -396,32 +414,35 @@
             "league_slug": "lcs",
             "block_name": "Week 7",
             "start_time": "2026-05-17T20:00:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
-                "name": "Sentinels",
-                "source_name": "Sentinels",
-                "code": "SEN",
-                "key": "sentinels",
-                "result": {
-                    "outcome": null,
-                    "gameWins": 0
-                }
-            },
-            "team2": {
                 "name": "Dignitas",
                 "source_name": "Dignitas",
                 "code": "DIG",
                 "key": "dignitas",
                 "result": {
-                    "outcome": null,
+                    "outcome": "loss",
                     "gameWins": 0
                 }
             },
+            "team2": {
+                "name": "Sentinels",
+                "source_name": "Sentinels",
+                "code": "SEN",
+                "key": "sentinels",
+                "result": {
+                    "outcome": "win",
+                    "gameWins": 2
+                }
+            },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "sentinels",
+                "name": "Sentinels"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933758+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115564793879469264": {
             "id": "115564793879469264",
@@ -430,40 +451,43 @@
             "league_slug": "lcs",
             "block_name": "Week 7",
             "start_time": "2026-05-17T23:00:00Z",
-            "state": "unstarted",
+            "state": "completed",
             "team1": {
-                "name": "FlyQuest",
-                "source_name": "FlyQuest",
-                "code": "FLY",
-                "key": "flyquest",
-                "result": {
-                    "outcome": null,
-                    "gameWins": 0
-                }
-            },
-            "team2": {
                 "name": "LYON",
                 "source_name": "LYON",
                 "code": "LYON",
                 "key": "lyon",
                 "result": {
-                    "outcome": null,
-                    "gameWins": 0
+                    "outcome": "loss",
+                    "gameWins": 1
+                }
+            },
+            "team2": {
+                "name": "FlyQuest",
+                "source_name": "FlyQuest",
+                "code": "FLY",
+                "key": "flyquest",
+                "result": {
+                    "outcome": "win",
+                    "gameWins": 2
                 }
             },
             "best_of": 3,
-            "winner": null,
+            "winner": {
+                "key": "flyquest",
+                "name": "FlyQuest"
+            },
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933771+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971911": {
             "id": "115548128962971911",
             "match_id": "115548128962971911",
             "league": "LCK",
             "league_slug": "lck",
-            "block_name": "Week 8",
-            "start_time": "2026-05-20T08:00:00Z",
+            "block_name": null,
+            "start_time": null,
             "state": "unstarted",
             "team1": {
                 "name": "T1",
@@ -471,7 +495,6 @@
                 "code": "T1",
                 "key": "t1",
                 "result": {
-                    "outcome": null,
                     "gameWins": 0
                 }
             },
@@ -481,7 +504,6 @@
                 "code": "KRX",
                 "key": "kiwoomdrx",
                 "result": {
-                    "outcome": null,
                     "gameWins": 0
                 }
             },
@@ -489,7 +511,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933867+00:00"
+            "last_fetched_at": "2026-05-19T13:30:56.042179+00:00"
         },
         "115548128963037551": {
             "id": "115548128963037551",
@@ -523,7 +545,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933881+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962906315": {
             "id": "115548128962906315",
@@ -557,7 +579,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.933984+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128963037507": {
             "id": "115548128963037507",
@@ -591,7 +613,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934009+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971963": {
             "id": "115548128962971963",
@@ -625,7 +647,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934130+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971927": {
             "id": "115548128962971927",
@@ -659,7 +681,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934208+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971875": {
             "id": "115548128962971875",
@@ -693,7 +715,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934232+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548668059589358": {
             "id": "115548668059589358",
@@ -727,7 +749,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934251+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115565670260181845": {
             "id": "115565670260181845",
@@ -761,7 +783,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934265+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971891": {
             "id": "115548128962971891",
@@ -795,7 +817,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934294+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548668059589352": {
             "id": "115548668059589352",
@@ -829,7 +851,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934308+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971939": {
             "id": "115548128962971939",
@@ -863,7 +885,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934434+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971959": {
             "id": "115548128962971959",
@@ -897,7 +919,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934511+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971903": {
             "id": "115548128962971903",
@@ -931,7 +953,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934535+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128963037547": {
             "id": "115548128963037547",
@@ -965,7 +987,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934592+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971955": {
             "id": "115548128962971955",
@@ -999,7 +1021,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934636+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971883": {
             "id": "115548128962971883",
@@ -1033,7 +1055,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934659+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128962971859": {
             "id": "115548128962971859",
@@ -1067,7 +1089,7 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934693+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
         },
         "115548128963037543": {
             "id": "115548128963037543",
@@ -1101,7 +1123,41 @@
             "winner": null,
             "source": "LoL Esports",
             "source_url": "https://lolesports.com/schedule",
-            "last_fetched_at": "2026-05-16T15:43:24.934716+00:00"
+            "last_fetched_at": "2026-05-19T13:30:55.633162+00:00"
+        },
+        "115570683341512193": {
+            "id": "115570683341512193",
+            "match_id": "115570683341512193",
+            "league": "LCP",
+            "league_slug": "lcp",
+            "block_name": "Playoffs",
+            "start_time": "2026-05-24T09:00:00Z",
+            "state": "unstarted",
+            "team1": {
+                "name": "Fukuoka SoftBank Hawks Gaming",
+                "source_name": "Fukuoka SoftBank HAWKS gaming",
+                "code": "SHG",
+                "key": "fukuokasoftbankhawksgaming",
+                "result": {
+                    "outcome": null,
+                    "gameWins": 0
+                }
+            },
+            "team2": {
+                "name": "CTBC Flying Oyster",
+                "source_name": "CTBC Flying Oyster",
+                "code": "CFO",
+                "key": "ctbcflyingoyster",
+                "result": {
+                    "outcome": null,
+                    "gameWins": 0
+                }
+            },
+            "best_of": 5,
+            "winner": null,
+            "source": "LoL Esports",
+            "source_url": "https://lolesports.com/schedule",
+            "last_fetched_at": "2026-05-19T06:00:55.686114+00:00"
         }
     },
     "predictions": [
@@ -1150,7 +1206,48 @@
             "winner_name": "BNK FEARX",
             "winning_pool": 50,
             "losing_pool": 50
+        },
+        {
+            "prediction_id": "06873f12-a32a-4661-bd68-67a92b66b8ae",
+            "user_id": "272473699909763072",
+            "match_id": "115548128962971871",
+            "source_match_id": "115548128962971871",
+            "team_key": "hanwhalifeesports",
+            "team_name": "Hanwha Life Esports",
+            "amount": 50,
+            "status": "refunded",
+            "placed_at": "2026-05-16T21:33:34.615131+00:00",
+            "resolved_at": "2026-05-17T10:51:19.330386+00:00",
+            "payout": 50,
+            "refund_reason": "no_opposing_predictions"
+        },
+        {
+            "prediction_id": "f26f8865-0232-4b02-ad15-d8f2af5c5bda",
+            "user_id": "272473699909763072",
+            "match_id": "115548128962971911",
+            "source_match_id": "115548128962971911",
+            "team_key": "t1",
+            "team_name": "T1",
+            "amount": 100,
+            "status": "active",
+            "placed_at": "2026-05-17T12:31:19.931941+00:00",
+            "resolved_at": null,
+            "payout": 0
+        },
+        {
+            "prediction_id": "3fe1fb7e-c022-4466-b4bb-425fcf6d4391",
+            "user_id": "272473699909763072",
+            "match_id": "115564793879469264",
+            "source_match_id": "115564793879469264",
+            "team_key": "lyon",
+            "team_name": "LYON",
+            "amount": 100,
+            "status": "refunded",
+            "placed_at": "2026-05-17T12:31:39.010860+00:00",
+            "resolved_at": "2026-05-18T00:56:58.209906+00:00",
+            "payout": 100,
+            "refund_reason": "no_opposing_predictions"
         }
     ],
-    "last_refresh": "2026-05-16T15:43:24.935035+00:00"
+    "last_refresh": "2026-05-19T13:30:55.633162+00:00"
 }

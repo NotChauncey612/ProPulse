@@ -7,6 +7,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from classes.i18n import install_discord_translation
 from classes.storage import configured_data_dir
 
 load_dotenv()
@@ -18,12 +19,14 @@ if not TOKEN:
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
+intents.reactions = True
 
 bot = commands.Bot(
     command_prefix=".",
     intents=intents,
     help_command=None,
 )
+install_discord_translation(bot)
 
 initial_extensions = [
     "classes.users",
@@ -32,6 +35,7 @@ initial_extensions = [
     "classes.shop",
     "classes.trades",
     "classes.predictions",
+    "classes.reaction_roles",
 ]
 
 

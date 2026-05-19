@@ -3,3 +3,5 @@ python-dotenv
 Pillow
 requests
 playwright
+boto3
+deep-translator
