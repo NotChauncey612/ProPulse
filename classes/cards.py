@@ -2567,7 +2567,8 @@ class Cards(commands.Cog):
         buffer = io.BytesIO()
         canvas.save(buffer, format="PNG")
         buffer.seek(0)
-        return discord.File(buffer, filename=f"team_{user_id}.png")
+        game_slug = self._slug(game_name or "")
+        return discord.File(buffer, filename=f"team_{user_id}_{game_slug}_{uuid.uuid4().hex[:8]}.png")
 
     def make_ranked_battle_file(
         self,
@@ -2945,6 +2946,7 @@ class Cards(commands.Cog):
             _current_index, current_card, _current_data, _current_player = self.resolve_team_card(user_data, current_id)
             current_rarity = current_card.get("rarity") if current_card else None
             current_rank = RARITY_RANK.get(current_rarity, -1)
+            slot_is_empty = current_card is None
 
             best = None
             for index, owned_card in enumerate(user_data.get("cards", []), start=1):
@@ -2959,7 +2961,9 @@ class Cards(commands.Cog):
 
                 rarity = owned_card.get("rarity")
                 rarity_rank = RARITY_RANK.get(rarity)
-                if rarity_rank is None or rarity_rank <= current_rank:
+                if rarity_rank is None:
+                    continue
+                if not slot_is_empty and rarity_rank <= current_rank:
                     continue
 
                 card_data = self.get_card_by_id(owned_card.get("card_id"))
