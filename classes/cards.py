@@ -3098,12 +3098,12 @@ class Cards(commands.Cog):
         self.normalize_ranked_profile(user_data)
         game_name = self.normalize_team_game(game_name or self.get_default_team_game(user_data))
         labels = self.get_team_role_labels(game_name)
-        team = self.get_user_team(user_data, game_name)
         upgrades = self.find_team_rarity_upgrades(user_data, game_name)
 
         if not upgrades:
             return f"No higher rarity {TEAM_GAME_LABELS[game_name]} team upgrades found."
 
+        team = self.get_user_team(user_data, game_name)
         lines = []
         for role, current_card, index, owned_card, card_data in upgrades:
             team[role] = owned_card.get("instance_id")
