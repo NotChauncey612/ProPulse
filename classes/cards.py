@@ -988,6 +988,90 @@ class Cards(commands.Cog):
 
         return indexed
 
+    def iter_raw_card_definitions(self, raw):
+        if isinstance(raw, list):
+            for card in raw:
+                if isinstance(card, dict):
+                    yield card, {}
+            return
+
+        games = raw.get("games", {}) if isinstance(raw, dict) else {}
+        for game_name, game_data in games.items():
+            sets = game_data.get("sets", {}) if isinstance(game_data, dict) else {}
+            for set_name, set_data in sets.items():
+                leagues = set_data.get("leagues", {}) if isinstance(set_data, dict) else {}
+                for league_name, league_data in leagues.items():
+                    teams = league_data.get("teams", {}) if isinstance(league_data, dict) else {}
+                    for team_name, team_data in teams.items():
+                        cards = team_data.get("cards", []) if isinstance(team_data, dict) else []
+                        for card in cards:
+                            if isinstance(card, dict):
+                                yield card, {
+                                    "game": game_name,
+                                    "set": set_name,
+                                    "league": league_name,
+                                    "team": team_name,
+                                }
+
+    def normalize_card_definition_entry(self, card, context=None):
+        context = context or {}
+        changes = []
+
+        card_id = card.get("card_id") or card.get("id") or card.get("player_id")
+        if card_id and card.get("card_id") != card_id:
+            card["card_id"] = card_id
+            changes.append("card_id")
+        if card_id and card.get("id") != card_id:
+            card["id"] = card_id
+            changes.append("id")
+        if card_id and card.get("player_id") != card_id:
+            card["player_id"] = card_id
+            changes.append("player_id")
+
+        for key in ("game", "set", "league", "team"):
+            value = context.get(key)
+            if value and card.get(key) != value:
+                card[key] = value
+                changes.append(key)
+
+        image = card.get("image") or card.get("image_url")
+        if image and card.get("image_url") != image:
+            card["image_url"] = image
+            changes.append("image_url")
+        if image and card.get("image") != image:
+            card["image"] = image
+            changes.append("image")
+
+        if self.card_looks_like_valorant(card):
+            if card.get("game") != GAME_VALORANT:
+                card["game"] = GAME_VALORANT
+                changes.append("game")
+            normalized_role = self.normalize_card_role(card.get("role", ""), GAME_VALORANT)
+            if normalized_role and card.get("role") != normalized_role:
+                card["role"] = normalized_role
+                changes.append("role")
+
+        return changes
+
+    def normalize_cards_catalog_file(self):
+        raw = self.load_json(CARDS_PATH, default={})
+        updated_cards = 0
+        changed_fields = defaultdict(int)
+
+        for card, context in self.iter_raw_card_definitions(raw):
+            changes = self.normalize_card_definition_entry(card, context)
+            if changes:
+                updated_cards += 1
+                for field in set(changes):
+                    changed_fields[field] += 1
+
+        if updated_cards:
+            save_json(CARDS_PATH, raw)
+            self.cards = self.load_cards()
+            self.card_aliases = self.build_card_aliases()
+
+        return updated_cards, changed_fields
+
     def _slug(self, value):
         return "".join(ch for ch in str(value).lower() if ch.isalnum())
 
@@ -3886,6 +3970,28 @@ class Cards(commands.Cog):
         )
         embed.set_footer(text=f"Given by {ctx.author.name}")
         await ctx.send(embed=embed)
+
+    @commands.command(aliases=["updatecardsjson", "normalizecardsjson"])
+    async def normalizecards(self, ctx):
+        users_cog = self.bot.get_cog("Users")
+        if users_cog is not None:
+            await users_cog.moderator_check(ctx)
+        elif not getattr(ctx.author.guild_permissions, "administrator", False):
+            raise commands.MissingPermissions(["administrator"])
+
+        updated_cards, changed_fields = self.normalize_cards_catalog_file()
+        if not updated_cards:
+            await ctx.send("No cards.json updates needed.")
+            return
+
+        field_text = ", ".join(
+            f"{field}: {count}"
+            for field, count in sorted(changed_fields.items())
+        )
+        await ctx.send(
+            f"Updated {updated_cards} cards.json entr{'y' if updated_cards == 1 else 'ies'} and reloaded card data.\n"
+            f"Fields changed: {field_text}"
+        )
 
 
     # Inventory command to view all users cards with filtering options
