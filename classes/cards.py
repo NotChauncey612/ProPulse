@@ -1858,7 +1858,20 @@ class Cards(commands.Cog):
         game = str(card_data.get("game", "")).strip()
         if game.lower() == GAME_LEAGUE_SHORT.lower():
             return GAME_LEAGUE
+        if not game and self.card_looks_like_valorant(card_data):
+            return GAME_VALORANT
         return self.normalize_team_game(game)
+
+    def card_looks_like_valorant(self, card_data):
+        role = str(card_data.get("role", "")).strip()
+        if self.normalize_card_role(role, GAME_VALORANT) in VALORANT_CARD_ROLE_ORDER:
+            return True
+
+        searchable = " ".join(
+            str(card_data.get(key, ""))
+            for key in ("card_id", "id", "league", "set", "image", "image_url")
+        ).lower()
+        return "valorant" in searchable or "vct" in searchable
 
     def get_team_roles(self, game_name=None):
         game_name = self.normalize_team_game(game_name)
@@ -1879,7 +1892,7 @@ class Cards(commands.Cog):
         game_name = self.normalize_team_game(game_name)
         text = str(role).strip()
         if game_name == GAME_VALORANT:
-            return VALORANT_CARD_ROLE_ALIASES.get(text.lower())
+            return VALORANT_CARD_ROLE_ALIASES.get(text.lower()) or VALORANT_TEAM_ROLE_ALIASES.get(text.lower())
         return self.normalize_team_role(text, game_name)
 
     def card_role_label(self, role, game_name=None):
