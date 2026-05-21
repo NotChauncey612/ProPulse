@@ -12,6 +12,7 @@ from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from .storage import load_json, save_json
+from .valorant_role_overrides import VALORANT_CARD_ROLE_OVERRIDES
 
 PLAYERS_PATH = "data/players.json"
 CARDS_PATH = "data/cards.json"
@@ -955,6 +956,9 @@ class Cards(commands.Cog):
                     continue
                 card_id = entry.get("card_id") or entry.get("id")
                 if card_id:
+                    if entry.get("game") == GAME_VALORANT and card_id in VALORANT_CARD_ROLE_OVERRIDES:
+                        entry = dict(entry)
+                        entry["role"] = VALORANT_CARD_ROLE_OVERRIDES[card_id]
                     indexed[card_id] = entry
             return indexed
 
@@ -984,6 +988,8 @@ class Cards(commands.Cog):
                             normalized.setdefault("image_url", normalized.get("image", ""))
                             normalized.setdefault("id", card_id)
                             normalized.setdefault("player_id", card_id)
+                            if game_name == GAME_VALORANT and card_id in VALORANT_CARD_ROLE_OVERRIDES:
+                                normalized["role"] = VALORANT_CARD_ROLE_OVERRIDES[card_id]
                             indexed[card_id] = normalized
 
         return indexed
