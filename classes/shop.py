@@ -20,35 +20,53 @@ def load_packs():
     return [pack for pack in packs if isinstance(pack, dict)]
 
 
-class QuantitySelect(discord.ui.Select):
+class QuantityModal(discord.ui.Modal, title="Pack Quantity"):
+    quantity = discord.ui.TextInput(
+        label="Quantity",
+        placeholder="Enter number of packs",
+        default="1",
+        min_length=1,
+        max_length=6,
+    )
+
     def __init__(self, purchase_view):
+        super().__init__(timeout=60)
         self.purchase_view = purchase_view
-        options = [
-            discord.SelectOption(
-                label=f"{quantity} pack{'s' if quantity != 1 else ''}",
-                description=(
-                    f"🃏 {quantity * purchase_view.cards_per_pack} cards • "
-                    f"{CASH_EMOJI} {quantity * purchase_view.price} cash"
-                )[:100],
-                value=str(quantity),
-                default=quantity == purchase_view.quantity
+        self.quantity.default = str(purchase_view.quantity)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        raw_quantity = str(self.quantity.value).strip()
+        if not raw_quantity.isdigit():
+            await interaction.response.send_message(
+                "Please enter a whole number of packs.", ephemeral=True
             )
-            for quantity in (1, 2, 3, 5, 10)
-        ]
+            return
 
-        super().__init__(
-            placeholder="Choose quantity...",
-            min_values=1,
-            max_values=1,
-            options=options,
-            row=0
-        )
+        quantity = int(raw_quantity)
+        if quantity < 1:
+            await interaction.response.send_message(
+                "Please enter at least 1 pack.", ephemeral=True
+            )
+            return
 
-    async def callback(self, interaction: discord.Interaction):
-        self.purchase_view.quantity = int(self.values[0])
-        for option in self.options:
-            option.default = option.value == self.values[0]
+        total_price = self.purchase_view.price * quantity
+        users_cog = interaction.client.get_cog("Users")
+        profile = users_cog.get_profile(interaction.user) if users_cog else None
+        if profile and profile["cash"] < total_price:
+            await interaction.response.send_message(
+                embed=discord.Embed(
+                    title="Not Enough Cash",
+                    description=(
+                        f"You need {CASH_EMOJI} {total_price} cash to buy "
+                        f"{quantity} pack{'s' if quantity != 1 else ''}."
+                    ),
+                    color=discord.Color.red()
+                ),
+                ephemeral=True
+            )
+            return
 
+        self.purchase_view.quantity = quantity
         await interaction.response.edit_message(
             embed=self.purchase_view.create_embed(),
             view=self.purchase_view
@@ -62,7 +80,6 @@ class ConfirmPurchaseView(discord.ui.View):
         self.quantity = 1
         self.price = pack_data.get("price", 0)
         self.cards_per_pack = pack_data.get("cards_per_pack", 0)
-        self.add_item(QuantitySelect(self))
 
     def total_price(self):
         return self.price * self.quantity
@@ -82,6 +99,10 @@ class ConfirmPurchaseView(discord.ui.View):
             color=discord.Color.orange()
         )
 
+    @discord.ui.button(label="Enter Quantity", style=discord.ButtonStyle.blurple, row=0)
+    async def enter_quantity(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(QuantityModal(self))
+
     @discord.ui.button(label="Confirm Purchase", style=discord.ButtonStyle.green, row=1)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         user = interaction.user
@@ -100,7 +121,14 @@ class ConfirmPurchaseView(discord.ui.View):
 
         if profile["cash"] < total_price:
             await interaction.response.send_message(
-                f"❌ You need {total_price} cash to buy that many packs.",
+                embed=discord.Embed(
+                    title="Not Enough Cash",
+                    description=(
+                        f"You need {CASH_EMOJI} {total_price} cash to buy "
+                        f"{self.quantity} pack{'s' if self.quantity != 1 else ''}."
+                    ),
+                    color=discord.Color.red()
+                ),
                 ephemeral=True
             )
             return
@@ -173,7 +201,14 @@ class PackSelect(discord.ui.Select):
         if not should_confirm and users_cog:
             price = pack_data.get("price", 0)
             if profile["cash"] < price:
-                await interaction.response.send_message("❌ You don't have enough cash to purchase that.", ephemeral=True)
+                await interaction.response.send_message(
+                    embed=discord.Embed(
+                        title="Not Enough Cash",
+                        description=f"You need {CASH_EMOJI} {price} cash to buy that pack.",
+                        color=discord.Color.red()
+                    ),
+                    ephemeral=True
+                )
                 return
             profile["cash"] -= price
             users_cog.add_pack_to_first_slot(profile, pack_data.get("pack_id"))

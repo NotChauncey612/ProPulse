@@ -134,39 +134,40 @@ class Auction(commands.Cog):
             winner_id,
             f"You won **{item_name}** for {CASH_EMOJI} {final_price} cash."
         )
-        await self.send_auction_dm(
-            users_cog,
-            auction["seller_id"],
-            f"Your auction for **{item_name}** sold for {CASH_EMOJI} {final_price} cash."
-        )
+        self.queue_auction_summary(users_cog, auction["seller_id"], "sold", item_name, final_price)
 
     async def notify_auction_returned(self, auction):
         users_cog = self.bot.get_cog("Users")
         if users_cog is None:
             return
 
-        if not self.should_send_returned_auction_dm(users_cog, auction["seller_id"]):
+        item_name = self.get_auction_item_name(auction, self.bot.get_cog("Cards"))
+        self.queue_auction_summary(users_cog, auction["seller_id"], "returned", item_name)
+
+    def queue_auction_summary(self, users_cog, seller_id, event_type, item_name, final_price=None, save=True):
+        seller_id = str(seller_id)
+        profile = users_cog.users.get(seller_id)
+        if profile is None:
+            profile = users_cog.get_profile_by_id(seller_id)
+        settings = users_cog.normalize_settings(profile)
+        if not settings.get("dm_auction_notis", True):
             return
 
-        await self.send_auction_dm(
-            users_cog,
-            auction["seller_id"],
-            "One or more of your auctions ended with no bids today. Returned items were placed back in your inventory."
-        )
-
-    def should_send_returned_auction_dm(self, users_cog, seller_id):
-        if not self.auction_dms_enabled(users_cog, seller_id):
-            return False
-
-        profile = users_cog.get_profile_by_id(str(seller_id))
-        settings = users_cog.normalize_settings(profile)
-        today = datetime.utcnow().date().isoformat()
-        if settings.get("last_returned_auction_dm_date") == today:
-            return False
-
-        settings["last_returned_auction_dm_date"] = today
-        users_cog.save_users()
-        return True
+        summary = profile.setdefault("pending_auction_summary", {"sold": [], "returned": []})
+        if not isinstance(summary, dict):
+            summary = {"sold": [], "returned": []}
+            profile["pending_auction_summary"] = summary
+        summary.setdefault("sold", [])
+        summary.setdefault("returned", [])
+        entry = {
+            "item_name": item_name,
+            "at": datetime.utcnow().isoformat(),
+        }
+        if final_price is not None:
+            entry["final_price"] = final_price
+        summary.setdefault(event_type, []).append(entry)
+        if save:
+            users_cog.save_users()
 
     def get_time_remaining(self, expires_at):
         now = datetime.utcnow()
@@ -190,6 +191,10 @@ class Auction(commands.Cog):
     def format_bid_label(self, auction):
         label = "Highest Bid" if auction.get("highest_bidder") else "Starting Bid"
         return f"{label}: {CASH_EMOJI} {auction.get('current_bid', 0)}"
+
+    def minimum_bid_for(self, auction):
+        current_bid = auction.get("current_bid", 0)
+        return current_bid if auction.get("highest_bidder") is None else current_bid + 1
 
     def get_pack_display_name(self, pack_id, cards_cog=None):
         pack = getattr(cards_cog, "packs", {}).get(pack_id, {}) if cards_cog else {}
@@ -354,8 +359,159 @@ class Auction(commands.Cog):
             "ended_at": datetime.utcnow().isoformat()
         })
         self.save_history(history)
-        self.bot.loop.create_task(self.notify_auction_sale(target, buyer_id, price, item_name))
+        self.queue_auction_summary(users_cog, target["seller_id"], "sold", item_name, price)
         return item_name, None
+
+    def is_bulk_buy_candidate(self, auction, buyer_id):
+        if auction.get("item_type") != "card":
+            return False
+        if auction.get("buy_now_price") is None:
+            return False
+        if str(buyer_id) == auction.get("seller_id"):
+            return False
+        if datetime.utcnow() >= datetime.fromisoformat(auction["expires_at"]):
+            return False
+        return True
+
+    def is_bulk_bid_candidate(self, auction, bidder_id):
+        if auction.get("item_type") != "card":
+            return False
+        if str(bidder_id) == auction.get("seller_id"):
+            return False
+        if auction.get("highest_bidder") == str(bidder_id):
+            return False
+        if datetime.utcnow() >= datetime.fromisoformat(auction["expires_at"]):
+            return False
+        return True
+
+    def get_bulk_candidates(self, action, user_id, auction_ids):
+        by_id = {auction.get("auction_id"): auction for auction in self.load_auctions()}
+        candidates = []
+        for auction_id in auction_ids:
+            auction = by_id.get(auction_id)
+            if not auction:
+                continue
+            if action == "buy" and self.is_bulk_buy_candidate(auction, user_id):
+                candidates.append(auction)
+            elif action == "bid" and self.is_bulk_bid_candidate(auction, user_id):
+                candidates.append(auction)
+        return candidates
+
+    def complete_bulk_buy_now(self, auction_ids, buyer_id):
+        users_cog = self.bot.get_cog("Users")
+        cards_cog = self.bot.get_cog("Cards")
+        if users_cog is None or cards_cog is None:
+            return [], ["Auction purchases are unavailable right now."], 0
+
+        buyer_id = str(buyer_id)
+        auction_id_set = set(auction_ids)
+        auctions = self.load_auctions()
+        targets = [
+            auction for auction in auctions
+            if auction.get("auction_id") in auction_id_set
+            and self.is_bulk_buy_candidate(auction, buyer_id)
+        ]
+        if not targets:
+            return [], ["No eligible auctions remain. Please refresh and try again."], 0
+
+        total = self.bulk_total("buy", buyer_id, targets)
+        buyer_profile = users_cog.get_profile_by_id(buyer_id)
+        if buyer_profile["cash"] < total:
+            return [], [f"Not enough cash. You need {CASH_EMOJI} {total} cash."], 0
+
+        users = users_cog.users
+        users.setdefault(buyer_id, buyer_profile)
+        remaining = []
+        completed = []
+        failed = []
+        total_spent = 0
+        history = self.load_history()
+
+        for auction in auctions:
+            if auction.get("auction_id") not in auction_id_set:
+                remaining.append(auction)
+                continue
+            if auction not in targets:
+                failed.append(f"{self.get_auction_item_name(auction, cards_cog)}: no longer eligible")
+                remaining.append(auction)
+                continue
+
+            price = auction.get("buy_now_price") or 0
+            item_name = self.get_auction_item_name(auction, cards_cog)
+            highest_bidder = auction.get("highest_bidder")
+            current_bid = auction.get("current_bid", 0)
+
+            if highest_bidder and highest_bidder != buyer_id:
+                previous_bidder = users.get(highest_bidder) or users_cog.get_profile_by_id(highest_bidder)
+                previous_bidder["cash"] += current_bid
+            elif highest_bidder == buyer_id:
+                buyer_profile["cash"] += current_bid
+
+            seller_profile = users.get(auction["seller_id"]) or users_cog.get_profile_by_id(auction["seller_id"])
+            buyer_profile["cash"] -= price
+            seller_profile["cash"] += price
+            users[buyer_id].setdefault("cards", [])
+            cards_cog.add_card_instance_to_slots(users[buyer_id], auction["card_instance"])
+            completed.append(item_name)
+            total_spent += price
+            self.queue_auction_summary(users_cog, auction["seller_id"], "sold", item_name, price, save=False)
+            history.append({
+                "auction_id": auction["auction_id"],
+                "item_type": auction["item_type"],
+                "card_instance": auction["card_instance"],
+                "pack_name": auction["pack_name"],
+                "seller_id": auction["seller_id"],
+                "winner_id": buyer_id,
+                "final_price": price,
+                "sold": True,
+                "ended_at": datetime.utcnow().isoformat()
+            })
+
+        users_cog.save_users()
+        self.save_auctions(remaining)
+        self.save_history(history)
+        return completed, failed, total_spent
+
+    def bulk_total(self, action, user_id, auctions):
+        user_id = str(user_id)
+        if action == "buy":
+            total = 0
+            for auction in auctions:
+                price = auction.get("buy_now_price") or 0
+                held_bid = auction.get("current_bid", 0) if auction.get("highest_bidder") == user_id else 0
+                total += max(0, price - held_bid)
+            return total
+        return sum(self.minimum_bid_for(auction) for auction in auctions)
+
+    def build_bulk_confirm_embed(self, action, user_id, auctions, skipped_count=0):
+        cards_cog = self.bot.get_cog("Cards")
+        title = "Confirm Buy All" if action == "buy" else "Confirm Bid All"
+        total = self.bulk_total(action, user_id, auctions)
+        action_text = "Buy Now purchases" if action == "buy" else "minimum bids"
+        embed = discord.Embed(
+            title=title,
+            description=(
+                f"{len(auctions)} card auction(s) from this page are eligible for {action_text}.\n"
+                f"Total cost: {CASH_EMOJI} {total} cash"
+            )
+        )
+        if skipped_count:
+            embed.set_footer(text=f"Skipped {skipped_count} page item(s) without an eligible card action.")
+
+        for index, auction in enumerate(auctions, start=1):
+            item_name = self.get_auction_item_name(auction, cards_cog)
+            if action == "buy":
+                amount = auction.get("buy_now_price") or 0
+                label = "Buy Now"
+            else:
+                amount = self.minimum_bid_for(auction)
+                label = "Bid"
+            embed.add_field(
+                name=f"{index}. {item_name}"[:256],
+                value=f"{label}: {CASH_EMOJI} {amount}",
+                inline=False
+            )
+        return embed
 
     def cancel_auction(self, auction_id, seller_id):
         auctions = self.load_auctions()
@@ -1484,6 +1640,104 @@ class ConfirmAuctionBuyView(discord.ui.View):
         await interaction.response.edit_message(content="Purchase cancelled.", view=None)
 
 
+class ConfirmBulkAuctionView(discord.ui.View):
+    def __init__(self, cog, user_id, action, auctions):
+        super().__init__(timeout=60)
+        self.cog = cog
+        self.user_id = str(user_id)
+        self.action = action
+        self.auction_ids = [auction["auction_id"] for auction in auctions]
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if str(interaction.user.id) != self.user_id:
+            await interaction.response.send_message("This confirmation is not for you.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            content="Processing auction page purchase..." if self.action == "buy" else "Processing auction page bids...",
+            embed=None,
+            view=None,
+        )
+        users_cog = interaction.client.get_cog("Users")
+        try:
+            candidates = self.cog.get_bulk_candidates(self.action, self.user_id, self.auction_ids)
+            if not candidates:
+                await interaction.edit_original_response(
+                    content="No eligible auctions remain. Please refresh and try again.",
+                    embed=None,
+                    view=None
+                )
+                return
+
+            total = self.cog.bulk_total(self.action, self.user_id, candidates)
+            profile = users_cog.get_profile_by_id(self.user_id)
+            if profile["cash"] < total:
+                await interaction.edit_original_response(
+                    content=f"Not enough cash. You need {CASH_EMOJI} {total} cash.",
+                    embed=None,
+                    view=None
+                )
+                return
+
+            if self.action == "buy":
+                completed, failed, total_committed = self.cog.complete_bulk_buy_now(self.auction_ids, self.user_id)
+            else:
+                completed = []
+                failed = []
+                total_committed = 0
+                for auction in candidates:
+                    item_name = self.cog.get_auction_item_name(auction, interaction.client.get_cog("Cards"))
+                    amount = self.cog.minimum_bid_for(auction)
+                    error = self.cog.place_bid(auction["auction_id"], self.user_id, amount)
+                    if error:
+                        failed.append(f"{item_name}: {error}")
+                        continue
+                    completed.append(item_name)
+                    total_committed += amount
+        except Exception as exc:
+            await interaction.edit_original_response(
+                content=f"Bulk auction action failed: {type(exc).__name__}: {exc}",
+                embed=None,
+                view=None
+            )
+            return
+
+        if self.action == "buy":
+            title = f"You bought {len(completed)} card auction(s)"
+            total_label = "Spent"
+            completed_label = "You Bought"
+        else:
+            title = f"You bid on {len(completed)} card auction(s)"
+            total_label = "Committed"
+            completed_label = "Bids Placed"
+
+        embed = discord.Embed(
+            title=title,
+            description=f"{total_label}: {CASH_EMOJI} {total_committed} cash"
+        )
+        if completed:
+            embed.add_field(
+                name=completed_label,
+                value="\n".join(f"- {name}" for name in completed[:12])[:1024],
+                inline=False
+            )
+        if failed:
+            embed.add_field(
+                name="Skipped",
+                value="\n".join(f"- {error}" for error in failed[:8])[:1024],
+                inline=False
+            )
+
+        await interaction.edit_original_response(content=None, embed=embed, view=None)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="Bulk auction action cancelled.", embed=None, view=None)
+
+
 class AuctionSelect(discord.ui.Select):
     def __init__(self, auctions, cog, page_start=0):
         self.auctions = auctions
@@ -1504,7 +1758,7 @@ class AuctionSelect(discord.ui.Select):
         if not options:
             options = [discord.SelectOption(label="No auctions", value="0")]
 
-        super().__init__(placeholder="Select auction", options=options, min_values=1, max_values=1, row=4)
+        super().__init__(placeholder="Select auction", options=options, min_values=1, max_values=1, row=3)
 
     def get_option_label(self, auction):
         cards_cog = self.cog.bot.get_cog("Cards")
@@ -1688,6 +1942,40 @@ class AuctionView(discord.ui.View):
         start = self.page_start()
         return self.auctions[start:start + AUCTIONS_PER_PAGE]
 
+    def get_page_bulk_candidates(self, action):
+        page_items = self.get_page_items()
+        if action == "buy":
+            return [
+                auction for auction in page_items
+                if self.cog.is_bulk_buy_candidate(auction, self.user_id)
+            ]
+        return [
+            auction for auction in page_items
+            if self.cog.is_bulk_bid_candidate(auction, self.user_id)
+        ]
+
+    async def send_bulk_confirmation(self, interaction, action):
+        page_items = self.get_page_items()
+        eligible = self.get_page_bulk_candidates(action)
+        if not page_items:
+            await interaction.response.send_message("No auctions available.", ephemeral=True)
+            return
+        if not eligible:
+            action_label = "buy now" if action == "buy" else "bid on"
+            await interaction.response.send_message(
+                f"No eligible card auctions to {action_label} on this page.",
+                ephemeral=True
+            )
+            return
+
+        skipped_count = len(page_items) - len(eligible)
+        view = ConfirmBulkAuctionView(self.cog, self.user_id, action, eligible)
+        await interaction.response.send_message(
+            embed=self.cog.build_bulk_confirm_embed(action, self.user_id, eligible, skipped_count),
+            view=view,
+            ephemeral=True
+        )
+
     def page_start(self):
         return self.page * AUCTIONS_PER_PAGE
 
@@ -1749,8 +2037,9 @@ class AuctionView(discord.ui.View):
         if filter_options:
             self.add_item(AuctionFilterValueSelect(self, self.selected_filter_key, filter_options))
 
-        self.add_item(AuctionSortSelect(self))
         self.add_item(AuctionSelect(self.get_page_items(), self.cog, self.page_start()))
+        self.add_item(self.buy_page)
+        self.add_item(self.bid_page)
 
     def build_embed(self):
         cards_cog = self.cog.bot.get_cog("Cards")
@@ -1809,6 +2098,8 @@ class AuctionView(discord.ui.View):
         self.my_bids.label = "All Auctions" if self.show_my_bids else "My Bids"
         self.my_bids.style = discord.ButtonStyle.blurple if self.show_my_bids else discord.ButtonStyle.secondary
         self.clear.disabled = not self.filters and not self.sort
+        self.buy_page.disabled = self.in_personal_view() or not self.get_page_bulk_candidates("buy")
+        self.bid_page.disabled = self.in_personal_view() or not self.get_page_bulk_candidates("bid")
 
     @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary, row=0)
     async def previous(self, interaction, button):
@@ -1868,6 +2159,14 @@ class AuctionView(discord.ui.View):
         self.reload_auctions()
         self.rebuild_items()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
+    @discord.ui.button(label="Buy Page", style=discord.ButtonStyle.green, row=4)
+    async def buy_page(self, interaction, button):
+        await self.send_bulk_confirmation(interaction, "buy")
+
+    @discord.ui.button(label="Bid Page", style=discord.ButtonStyle.blurple, row=4)
+    async def bid_page(self, interaction, button):
+        await self.send_bulk_confirmation(interaction, "bid")
 
 
 async def setup(bot):

@@ -1,6 +1,7 @@
 import io
 import os
 import random
+import shlex
 import uuid
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
@@ -8,7 +9,7 @@ from pathlib import Path
 from urllib.parse import unquote
 import discord
 from discord.ext import commands
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from .storage import load_json, save_json
 
@@ -18,6 +19,9 @@ USERS_PATH = "data/users.json"
 PACKS_PATH = "data/packs.json"
 AUCTIONS_PATH = "data/auctions.json"
 AUCTIONS_HISTORY_PATH = "data/auctions_history.json"
+CARD_ASSETS_PATH = Path("assets/cards")
+TEAM_LOGOS_PATH = CARD_ASSETS_PATH / "team_logos"
+ROLE_ICONS_PATH = CARD_ASSETS_PATH / "role_icons"
 
 CARDS_PER_PAGE = 20
 RARITY_ORDER = ["Silver", "Gold", "Diamond", "Master", "Challenger"]
@@ -61,36 +65,47 @@ TEAM_ROLE_ALIASES = {
     "sup": "SUP",
     "support": "SUP",
 }
-VALORANT_TEAM_ROLE_ORDER = ["S1", "S2", "S3", "S4", "S5"]
-VALORANT_TEAM_ROLE_LABELS = {
-    "S1": "Starter 1",
-    "S2": "Starter 2",
-    "S3": "Starter 3",
-    "S4": "Starter 4",
-    "S5": "Starter 5",
+VALORANT_CARD_ROLE_ORDER = ["INITIATOR", "DUELIST", "CONTROLLER", "SENTINEL", "FLEX"]
+VALORANT_CARD_ROLE_LABELS = {
+    "INITIATOR": "Initiator",
+    "DUELIST": "Duelist",
+    "CONTROLLER": "Controller",
+    "SENTINEL": "Sentinel",
+    "FLEX": "Flex",
 }
+VALORANT_CARD_ROLE_ALIASES = {
+    "initiator": "INITIATOR",
+    "duelist": "DUELIST",
+    "controller": "CONTROLLER",
+    "sentinel": "SENTINEL",
+    "flex": "FLEX",
+}
+VALORANT_TEAM_ROLE_ORDER = VALORANT_CARD_ROLE_ORDER
+VALORANT_TEAM_ROLE_LABELS = VALORANT_CARD_ROLE_LABELS
 VALORANT_TEAM_ROLE_ALIASES = {
-    "s1": "S1",
-    "starter1": "S1",
-    "starter 1": "S1",
-    "1": "S1",
-    "s2": "S2",
-    "starter2": "S2",
-    "starter 2": "S2",
-    "2": "S2",
-    "s3": "S3",
-    "starter3": "S3",
-    "starter 3": "S3",
-    "3": "S3",
-    "s4": "S4",
-    "starter4": "S4",
-    "starter 4": "S4",
-    "4": "S4",
-    "s5": "S5",
-    "starter5": "S5",
-    "starter 5": "S5",
-    "5": "S5",
+    **VALORANT_CARD_ROLE_ALIASES,
+    "s1": "INITIATOR",
+    "starter1": "INITIATOR",
+    "starter 1": "INITIATOR",
+    "1": "INITIATOR",
+    "s2": "DUELIST",
+    "starter2": "DUELIST",
+    "starter 2": "DUELIST",
+    "2": "DUELIST",
+    "s3": "CONTROLLER",
+    "starter3": "CONTROLLER",
+    "starter 3": "CONTROLLER",
+    "3": "CONTROLLER",
+    "s4": "SENTINEL",
+    "starter4": "SENTINEL",
+    "starter 4": "SENTINEL",
+    "4": "SENTINEL",
+    "s5": "FLEX",
+    "starter5": "FLEX",
+    "starter 5": "FLEX",
+    "5": "FLEX",
 }
+VALORANT_LEGACY_SLOT_ORDER = ["S1", "S2", "S3", "S4", "S5"]
 TEAM_ROLES_BY_GAME = {
     GAME_LEAGUE: TEAM_ROLE_ORDER,
     GAME_VALORANT: VALORANT_TEAM_ROLE_ORDER,
@@ -835,10 +850,11 @@ class TeamCardModal(discord.ui.Modal, title="Set Team Card"):
 
 
 class OpenAllPacksView(discord.ui.View):
-    def __init__(self, cog, author_id):
+    def __init__(self, cog, author_id, set_filter=None):
         super().__init__(timeout=120)
         self.cog = cog
         self.author_id = author_id
+        self.set_filter = set_filter
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
@@ -851,7 +867,11 @@ class OpenAllPacksView(discord.ui.View):
 
     @discord.ui.button(label="Open Next Pack", style=discord.ButtonStyle.green)
     async def open_next_pack(self, interaction: discord.Interaction, button: discord.ui.Button):
-        result = self.cog.open_lowest_index_pack(interaction.user.id, interaction.user)
+        result = self.cog.open_lowest_index_pack(
+            interaction.user.id,
+            interaction.user,
+            set_filter=self.set_filter
+        )
         embed = result.get("embed")
         error = result.get("error")
 
@@ -859,8 +879,21 @@ class OpenAllPacksView(discord.ui.View):
             await interaction.response.send_message(error, ephemeral=True)
             return
 
-        next_view = self if result.get("has_more_packs") else None
-        await interaction.response.edit_message(embed=embed, view=next_view)
+        await interaction.response.defer()
+
+        if interaction.message:
+            await interaction.message.edit(view=None)
+        self.stop()
+
+        next_view = (
+            OpenAllPacksView(self.cog, self.author_id, self.set_filter)
+            if result.get("has_more_packs")
+            else None
+        )
+        if interaction.channel:
+            await interaction.channel.send(embed=embed, view=next_view)
+        else:
+            await interaction.followup.send(embed=embed, view=next_view)
 
         for inst, card, player in result["results"]:
             await self.cog.announce_challenger_pull(interaction, inst, card, player, result["pack_id"])
@@ -1481,7 +1514,19 @@ class Cards(commands.Cog):
         return "ProPulse"
 
     def progress_card_sort_key(self, card):
-        role_order = {"TOP": 0, "JNG": 1, "MID": 2, "BOT": 3, "SUP": 4, "STARTER": 5}
+        role_order = {
+            "TOP": 0,
+            "JNG": 1,
+            "MID": 2,
+            "BOT": 3,
+            "SUP": 4,
+            "INITIATOR": 5,
+            "DUELIST": 6,
+            "CONTROLLER": 7,
+            "SENTINEL": 8,
+            "FLEX": 9,
+            "STARTER": 10,
+        }
         return (
             str(card.get("game", "")).lower(),
             str(card.get("league", "")).lower(),
@@ -1830,6 +1875,20 @@ class Cards(commands.Cog):
         aliases = TEAM_ROLE_ALIASES_BY_GAME.get(game_name, TEAM_ROLE_ALIASES)
         return aliases.get(str(role).strip().lower())
 
+    def normalize_card_role(self, role, game_name=None):
+        game_name = self.normalize_team_game(game_name)
+        text = str(role).strip()
+        if game_name == GAME_VALORANT:
+            return VALORANT_CARD_ROLE_ALIASES.get(text.lower())
+        return self.normalize_team_role(text, game_name)
+
+    def card_role_label(self, role, game_name=None):
+        game_name = self.normalize_team_game(game_name)
+        normalized_role = self.normalize_card_role(role, game_name)
+        if game_name == GAME_VALORANT:
+            return VALORANT_CARD_ROLE_LABELS.get(normalized_role, role)
+        return self.get_team_role_labels(game_name).get(normalized_role, role)
+
     def default_team_stats_for_game(self, game_name=None):
         game_name = self.normalize_team_game(game_name)
         if game_name == GAME_VALORANT:
@@ -1844,6 +1903,40 @@ class Cards(commands.Cog):
             valorant_role: int(league_stats.get(league_role, BASE_TEAM_STAT))
             for valorant_role, league_role in VALORANT_STAT_ROLE_MAP.items()
         }
+
+    def get_owned_card_by_instance_id(self, user_data, instance_id):
+        if not instance_id:
+            return None
+        for owned_card in user_data.get("cards", []):
+            if isinstance(owned_card, dict) and owned_card.get("instance_id") == instance_id:
+                return owned_card
+        return None
+
+    def owned_valorant_team_role(self, user_data, instance_id):
+        owned_card = self.get_owned_card_by_instance_id(user_data, instance_id)
+        if not owned_card:
+            return None
+        card_data = self.get_card_by_id(owned_card.get("card_id")) or owned_card.get("snapshot") or {}
+        role = self.normalize_card_role(card_data.get("role", ""), GAME_VALORANT)
+        return role if role in VALORANT_TEAM_ROLE_ORDER else None
+
+    def migrate_valorant_team_slots(self, user_data, valorant_team):
+        migrated = {}
+        if not isinstance(valorant_team, dict):
+            return migrated
+
+        for role in VALORANT_TEAM_ROLE_ORDER:
+            instance_id = valorant_team.get(role)
+            if instance_id and self.owned_valorant_team_role(user_data, instance_id) == role:
+                migrated[role] = instance_id
+
+        for legacy_role in VALORANT_LEGACY_SLOT_ORDER:
+            instance_id = valorant_team.get(legacy_role)
+            card_role = self.owned_valorant_team_role(user_data, instance_id)
+            if card_role and card_role not in migrated:
+                migrated[card_role] = instance_id
+
+        return migrated
 
     def normalize_game_teams(self, user_data):
         teams = user_data.get("teams")
@@ -1867,7 +1960,8 @@ class Cards(commands.Cog):
 
         valorant_team = teams.get(GAME_VALORANT)
         if not isinstance(valorant_team, dict):
-            teams[GAME_VALORANT] = {}
+            valorant_team = {}
+        teams[GAME_VALORANT] = self.migrate_valorant_team_slots(user_data, valorant_team)
 
         default_game = self.normalize_team_game(user_data.get("default_team_game"))
         if default_game not in TEAM_GAME_OPTIONS:
@@ -2150,36 +2244,162 @@ class Cards(commands.Cog):
         }
         return colors.get(rarity, (128, 136, 148))
 
-    def fit_line(self, draw, text, max_width):
+    def get_card_font(self, size=12, bold=False):
+        font_names = ["arialbd.ttf" if bold else "arial.ttf", "segoeuib.ttf" if bold else "segoeui.ttf"]
+        for font_name in font_names:
+            try:
+                return ImageFont.truetype(font_name, size)
+            except OSError:
+                continue
+        return ImageFont.load_default()
+
+    def fit_line(self, draw, text, max_width, font=None):
         original = str(text)
-        if draw.textbbox((0, 0), original)[2] <= max_width:
+        if draw.textbbox((0, 0), original, font=font)[2] <= max_width:
             return original
 
         text = original
-        while text and draw.textbbox((0, 0), f"{text}...")[2] > max_width:
+        while text and draw.textbbox((0, 0), f"{text}...", font=font)[2] > max_width:
             text = text[:-1]
         return f"{text}..." if text else ""
 
-    def draw_centered_text(self, draw, box, text, fill):
+    def draw_centered_text(self, draw, box, text, fill, font=None):
         left, top, right, bottom = box
-        text_box = draw.textbbox((0, 0), text)
+        text_box = draw.textbbox((0, 0), text, font=font)
         text_width = text_box[2] - text_box[0]
         text_height = text_box[3] - text_box[1]
         x = left + ((right - left) - text_width) // 2
         y = top + ((bottom - top) - text_height) // 2
-        draw.text((x, y), text, fill=fill)
+        draw.text((x, y), text, fill=fill, font=font)
 
-    def draw_centered_lines(self, draw, box, lines, fill, line_gap=2):
+    def draw_centered_lines(self, draw, box, lines, fill, line_gap=2, font=None):
         left, top, right, bottom = box
-        line_boxes = [draw.textbbox((0, 0), line) for line in lines]
+        line_boxes = [draw.textbbox((0, 0), line, font=font) for line in lines]
         line_heights = [line_box[3] - line_box[1] for line_box in line_boxes]
         total_height = sum(line_heights) + line_gap * max(0, len(lines) - 1)
         y = top + ((bottom - top) - total_height) // 2
         for line, line_box, line_height in zip(lines, line_boxes, line_heights):
             text_width = line_box[2] - line_box[0]
             x = left + ((right - left) - text_width) // 2
-            draw.text((x, y), line, fill=fill)
+            draw.text((x, y), line, fill=fill, font=font)
             y += line_height + line_gap
+
+    def make_asset_slug(self, value):
+        value = str(value).lower()
+        value = "".join(ch if ch.isalnum() else "-" for ch in value)
+        return "-".join(part for part in value.split("-") if part)
+
+    def get_team_logo_path(self, card_data):
+        team_slug = self.make_asset_slug(card_data.get("team", ""))
+        if not team_slug:
+            return None
+        for extension in (".png", ".jpg", ".jpeg", ".webp"):
+            candidate = TEAM_LOGOS_PATH / f"{team_slug}{extension}"
+            if candidate.exists():
+                return candidate
+        return None
+
+    def get_role_icon_path(self, role, game_name=None):
+        game_name = self.normalize_team_game(game_name)
+        normalized_role = self.normalize_card_role(role, game_name)
+        icon_name = normalized_role or str(role).strip()
+        candidate = ROLE_ICONS_PATH / f"{str(icon_name).lower()}.png"
+        return candidate if candidate.exists() else None
+
+    def paste_contained_image(self, canvas, image, box):
+        left, top, right, bottom = box
+        max_size = (max(1, right - left), max(1, bottom - top))
+        fitted = ImageOps.contain(image.convert("RGBA"), max_size)
+        x = left + (max_size[0] - fitted.width) // 2
+        y = top + (max_size[1] - fitted.height) // 2
+        canvas.paste(fitted, (x, y), fitted)
+
+    def draw_badge_asset(self, canvas, draw, path, box, outline=None):
+        left, top, right, bottom = box
+        draw.rounded_rectangle(box, radius=7, fill=(9, 13, 20), outline=outline or (58, 65, 78), width=1)
+        if path:
+            with Image.open(path) as badge:
+                self.paste_contained_image(canvas, badge, (left + 5, top + 5, right - 5, bottom - 5))
+
+    def format_pull_date(self, pulled_on):
+        if not pulled_on:
+            return None
+        try:
+            dt = datetime.fromisoformat(str(pulled_on).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        return f"{dt.strftime('%B')} {dt.day}, {dt.year}"
+
+    def make_card_view_file(self, card_data, card_instance, player, user_id):
+        card_width = 312
+        card_height = 476
+        padding = 14
+        width = card_width + padding * 2
+        height = card_height + padding * 2
+        rarity = card_instance.get("rarity", "Unknown")
+        rarity_color = self.get_rarity_rgb(rarity)
+        game_name = self.card_game(card_data)
+        role = self.normalize_card_role((player or {}).get("role", card_data.get("role", "")), game_name)
+
+        canvas = Image.new("RGB", (width, height), (15, 19, 29))
+        draw = ImageDraw.Draw(canvas)
+        name_font = self.get_card_font(28, bold=True)
+        team_font = self.get_card_font(16)
+        meta_font = self.get_card_font(14, bold=True)
+        small_font = self.get_card_font(12)
+
+        x = padding
+        y = padding
+        draw.rounded_rectangle(
+            (x, y, x + card_width, y + card_height),
+            radius=12,
+            fill=(20, 25, 36),
+            outline=rarity_color,
+            width=5,
+        )
+
+        image_box = (x + 10, y + 10, x + card_width - 10, y + card_height - 10)
+        image_path = self.get_local_card_image_path(card_data)
+        if image_path:
+            with Image.open(image_path) as card_image:
+                fitted = self.fit_player_art(card_image, (image_box[2] - image_box[0], image_box[3] - image_box[1]))
+                canvas.paste(fitted, (image_box[0], image_box[1]))
+        else:
+            draw.rounded_rectangle(image_box, radius=8, fill=(26, 31, 43), outline=(56, 63, 77), width=1)
+            self.draw_centered_text(draw, image_box, "No Image", (170, 176, 186), font=meta_font)
+
+        top_shadow = Image.new("RGBA", (card_width - 20, 108), (0, 0, 0, 0))
+        shadow_draw = ImageDraw.Draw(top_shadow)
+        for row in range(top_shadow.height):
+            alpha = int(150 * (1 - row / top_shadow.height))
+            shadow_draw.line((0, row, top_shadow.width, row), fill=(0, 0, 0, alpha))
+        canvas.paste(top_shadow, (x + 10, y + 10), top_shadow)
+
+        bottom_height = 116
+        bottom_shadow = Image.new("RGBA", (card_width - 20, bottom_height), (0, 0, 0, 0))
+        shadow_draw = ImageDraw.Draw(bottom_shadow)
+        for row in range(bottom_height):
+            alpha = int(230 * (row / max(1, bottom_height - 1)))
+            shadow_draw.line((0, row, bottom_shadow.width, row), fill=(0, 0, 0, alpha))
+        canvas.paste(bottom_shadow, (x + 10, y + card_height - 10 - bottom_height), bottom_shadow)
+
+        team_logo = self.get_team_logo_path(card_data)
+        self.draw_badge_asset(canvas, draw, team_logo, (x + 24, y + 24, x + 88, y + 88), outline=rarity_color)
+        role_icon = self.get_role_icon_path(role or card_data.get("role", ""), game_name)
+        self.draw_badge_asset(canvas, draw, role_icon, (x + card_width - 88, y + 24, x + card_width - 24, y + 88), outline=rarity_color)
+
+        player_label = self.fit_line(draw, (player or {}).get("name", card_data.get("ign", "Unknown")), card_width - 48, font=name_font)
+        team_label = self.fit_line(draw, card_data.get("team", "Unknown"), card_width - 48, font=team_font)
+        set_label = self.fit_line(draw, self.format_team_set_label(card_data), card_width - 48, font=small_font)
+
+        self.draw_centered_text(draw, (x + 24, y + card_height - 104, x + card_width - 24, y + card_height - 70), player_label, (248, 250, 253), font=name_font)
+        self.draw_centered_text(draw, (x + 24, y + card_height - 74, x + card_width - 24, y + card_height - 52), team_label, (202, 208, 218), font=team_font)
+        self.draw_centered_text(draw, (x + 24, y + card_height - 54, x + card_width - 24, y + card_height - 32), set_label, (164, 173, 188), font=small_font)
+
+        buffer = io.BytesIO()
+        canvas.save(buffer, format="PNG")
+        buffer.seek(0)
+        return discord.File(buffer, filename=f"card_{user_id}_{card_data.get('card_id', 'view')}.png")
 
     def fit_card_image(self, card_image, size, background=(0, 0, 0)):
         fitted = ImageOps.contain(card_image.convert("RGBA"), size)
@@ -2190,6 +2410,27 @@ class Cards(commands.Cog):
         background_image.alpha_composite(fitted)
         return background_image.convert("RGB")
 
+    def make_card_art_background(self, size):
+        width, height = size
+        background = Image.new("RGBA", size, (0, 0, 0, 255))
+        draw = ImageDraw.Draw(background)
+        for row in range(height):
+            ratio = row / max(1, height - 1)
+            r = int(18 + 16 * ratio)
+            g = int(24 + 18 * ratio)
+            b = int(35 + 24 * ratio)
+            draw.line((0, row, width, row), fill=(r, g, b, 255))
+        return background
+
+    def fit_player_art(self, card_image, size):
+        fitted = ImageOps.fit(card_image.convert("RGBA"), size)
+        if fitted.getchannel("A").getextrema()[0] == 255:
+            return fitted.convert("RGB")
+
+        background = self.make_card_art_background(size)
+        background.alpha_composite(fitted)
+        return background.convert("RGB")
+
     def make_team_lineup_file(self, slots, user_id, game_name=None):
         if not slots:
             return None
@@ -2197,100 +2438,130 @@ class Cards(commands.Cog):
         roles = self.get_team_roles(game_name)
         labels = self.get_team_role_labels(game_name)
 
-        card_width = 140
-        image_height = 168
-        header_height = 44
-        footer_height = 32
+        card_width = 156
+        card_height = 238
         gap = 10
         padding = 12
         width = padding * 2 + len(roles) * card_width + (len(roles) - 1) * gap
-        height = padding * 2 + header_height + image_height + footer_height
+        height = padding * 2 + card_height
 
-        canvas = Image.new("RGB", (width, height), (31, 34, 40))
+        canvas = Image.new("RGB", (width, height), (15, 19, 29))
         draw = ImageDraw.Draw(canvas)
+        name_font = self.get_card_font(15, bold=True)
+        team_font = self.get_card_font(10)
+        meta_font = self.get_card_font(11, bold=True)
+        small_font = self.get_card_font(9)
 
         slot_by_role = {slot["role"]: slot for slot in slots}
         for column, role in enumerate(roles):
             x = padding + column * (card_width + gap)
             y = padding
-            draw.rounded_rectangle(
-                (x, y, x + card_width, y + header_height + image_height + footer_height),
-                radius=8,
-                fill=(43, 47, 54),
-                outline=(82, 88, 99)
-            )
+            card_box = (x, y, x + card_width, y + card_height)
+            rarity_color = (82, 88, 99)
+            role_label = labels.get(role, role)
 
             slot = slot_by_role.get(role)
-            if slot and slot.get("card_data"):
-                image_path = self.get_local_card_image_path(slot["card_data"])
+            has_card = bool(slot and slot.get("card_data"))
+            if has_card:
                 rarity_color = self.get_rarity_rgb(slot["rarity"])
-                header_lines = [
-                    self.fit_line(draw, f"{labels[role]} - {slot['player_name']}", card_width - 14),
-                    self.fit_line(draw, f"Power - {slot['power']}", card_width - 14),
-                ]
+
+            draw.rounded_rectangle(
+                card_box,
+                radius=8,
+                fill=(20, 25, 36),
+                outline=rarity_color,
+                width=3
+            )
+
+            image_box = (x + 6, y + 6, x + card_width - 6, y + card_height - 6)
+            if has_card:
+                image_path = self.get_local_card_image_path(slot["card_data"])
+                if image_path:
+                    with Image.open(image_path) as card_image:
+                        fitted = self.fit_player_art(card_image, (image_box[2] - image_box[0], image_box[3] - image_box[1]))
+                        canvas.paste(fitted, (image_box[0], image_box[1]))
+                else:
+                    self.draw_centered_text(draw, image_box, "No Image", (170, 176, 186), font=meta_font)
             else:
-                image_path = None
-                rarity_color = (82, 88, 99)
-                stat = slot.get("power", slot.get("stat", BASE_TEAM_STAT)) if slot else self.team_slot_power({}, role, False)
-                header_lines = [
-                    labels[role],
-                    f"Power - {stat}",
-                ]
+                draw.rounded_rectangle(image_box, radius=5, fill=(26, 31, 43), outline=(56, 63, 77), width=1)
+                self.draw_centered_text(draw, image_box, "Empty", (170, 176, 186), font=meta_font)
+
+            top_shadow = Image.new("RGBA", (card_width - 12, 54), (0, 0, 0, 0))
+            shadow_draw = ImageDraw.Draw(top_shadow)
+            for row in range(top_shadow.height):
+                alpha = int(145 * (1 - row / top_shadow.height))
+                shadow_draw.line((0, row, top_shadow.width, row), fill=(0, 0, 0, alpha))
+            canvas.paste(top_shadow, (x + 6, y + 6), top_shadow)
+
+            bottom_height = 58
+            bottom_shadow = Image.new("RGBA", (card_width - 12, bottom_height), (0, 0, 0, 0))
+            shadow_draw = ImageDraw.Draw(bottom_shadow)
+            for row in range(bottom_height):
+                alpha = int(220 * (row / max(1, bottom_height - 1)))
+                shadow_draw.line((0, row, bottom_shadow.width, row), fill=(0, 0, 0, alpha))
+            canvas.paste(bottom_shadow, (x + 6, y + card_height - 6 - bottom_height), bottom_shadow)
 
             if slot and "gold" in slot:
-                set_label = self.fit_line(draw, f"{slot['gold']:,}g", card_width - 14)
-            elif slot and slot.get("card_data"):
+                meta_label = self.fit_line(draw, f"{slot['gold']:,}g", card_width - 18, font=small_font)
+            elif has_card:
                 completion_multiplier = float(slot.get("completion_multiplier", 1.0) or 1.0)
                 if completion_multiplier > 1:
-                    set_label = self.fit_line(
+                    meta_label = self.fit_line(
                         draw,
                         f"{slot['set_label']} - {completion_multiplier:g}x",
-                        card_width - 14
+                        card_width - 18,
+                        font=small_font
                     )
                 else:
-                    set_label = self.fit_line(draw, slot["set_label"], card_width - 14)
+                    meta_label = self.fit_line(draw, slot["set_label"], card_width - 18, font=small_font)
             else:
                 stat = slot.get("power", slot.get("stat", BASE_TEAM_STAT)) if slot else self.team_slot_power({}, role, False)
-                set_label = f"Power {stat}"
+                meta_label = f"Power {stat}"
 
-            self.draw_centered_lines(
-                draw,
-                (x + 6, y + 5, x + card_width - 6, y + header_height - 5),
-                header_lines,
-                (238, 240, 244)
-            )
-
-            image_y = y + header_height
-            border_width = 4
-            draw.rounded_rectangle(
-                (x + 5, image_y, x + card_width - 5, image_y + image_height),
-                radius=6,
-                outline=rarity_color,
-                width=border_width,
-                fill=(0, 0, 0)
-            )
-            image_box = (
-                x + 5 + border_width,
-                image_y + border_width,
-                x + card_width - 5 - border_width,
-                image_y + image_height - border_width,
-            )
-            inner_width = image_box[2] - image_box[0]
-            inner_height = image_box[3] - image_box[1]
-            if image_path:
-                with Image.open(image_path) as card_image:
-                    card_image = self.fit_card_image(card_image, (inner_width, inner_height))
-                    paste_x = image_box[0] + (inner_width - card_image.width) // 2
-                    paste_y = image_box[1] + (inner_height - card_image.height) // 2
-                    canvas.paste(card_image, (paste_x, paste_y))
+            if has_card:
+                team_logo = self.get_team_logo_path(slot["card_data"])
+                self.draw_badge_asset(canvas, draw, team_logo, (x + 12, y + 12, x + 48, y + 48), outline=rarity_color)
             else:
-                self.draw_centered_text(draw, image_box, "Empty", (170, 176, 186))
+                self.draw_centered_text(draw, (x + 12, y + 12, x + 48, y + 48), role_label[:3].upper(), (210, 215, 224), font=small_font)
+
+            icon_role = role
+            if game_name == GAME_VALORANT and has_card:
+                icon_role = self.normalize_card_role(slot["card_data"].get("role", ""), game_name)
+            role_icon = self.get_role_icon_path(icon_role, game_name)
+            self.draw_badge_asset(canvas, draw, role_icon, (x + card_width - 48, y + 12, x + card_width - 12, y + 48), outline=rarity_color)
+
+            power_label = str(slot.get("power", slot.get("stat", BASE_TEAM_STAT))) if slot else str(self.team_slot_power({}, role, False))
+            power_box = (x + 58, y + 20, x + card_width - 58, y + 40)
+            draw.rounded_rectangle(power_box, radius=4, fill=(12, 17, 27), outline=rarity_color, width=1)
+            self.draw_centered_text(draw, power_box, power_label, (238, 240, 244), font=small_font)
+
+            if has_card:
+                player_label = self.fit_line(draw, slot["player_name"], card_width - 28, font=name_font)
+                team_label = self.fit_line(draw, slot["card_data"].get("team", "Unknown"), card_width - 28, font=team_font)
+            else:
+                player_label = role_label
+                team_label = "Open slot"
 
             self.draw_centered_text(
                 draw,
-                (x + 6, image_y + image_height + 4, x + card_width - 6, y + header_height + image_height + footer_height - 4),
-                set_label,
-                (210, 215, 224)
+                (x + 12, y + card_height - 55, x + card_width - 12, y + card_height - 35),
+                player_label,
+                (248, 250, 253),
+                font=name_font
+            )
+            self.draw_centered_text(
+                draw,
+                (x + 12, y + card_height - 40, x + card_width - 12, y + card_height - 25),
+                team_label,
+                (202, 208, 218),
+                font=team_font
+            )
+            self.draw_centered_text(
+                draw,
+                (x + 12, y + card_height - 26, x + card_width - 12, y + card_height - 12),
+                meta_label,
+                (164, 173, 188),
+                font=small_font
             )
 
         buffer = io.BytesIO()
@@ -2470,6 +2741,20 @@ class Cards(commands.Cog):
                 continue
 
             if not card_data or not player:
+                if instance_id:
+                    team.pop(role, None)
+                    changed = True
+                image_slots.append({
+                    "role": role,
+                    "game": game_name,
+                    "stat": stats.get(role, BASE_TEAM_STAT),
+                    "power": self.team_slot_power(stats, role, False, empty_slot_multiplier),
+                })
+                continue
+
+            if not self.card_can_fill_team_role(card_data, role, game_name):
+                team.pop(role, None)
+                changed = True
                 image_slots.append({
                     "role": role,
                     "game": game_name,
@@ -2607,8 +2892,14 @@ class Cards(commands.Cog):
                 wanted = labels[role]
                 actual = labels.get(card_role, card_data.get("role", "Unknown"))
                 return f"You can't do that. This card is {actual}, not {wanted}."
-        elif str((player or {}).get("role", card_data.get("role", ""))).upper() != "STARTER":
-            return "Only starter Valorant cards can be added to a Valorant roster."
+        else:
+            card_role = self.normalize_card_role((player or {}).get("role", card_data.get("role", "")), game_name)
+            if card_role not in VALORANT_TEAM_ROLE_ORDER:
+                return "Only Valorant roster cards can be added to a Valorant roster."
+            if card_role != role:
+                wanted = labels[role]
+                actual = self.card_role_label(card_role, game_name)
+                return f"You can't do that. This card is {actual}, not {wanted}."
 
         team = self.get_user_team(user_data, game_name)
         instance_id = owned_card.get("instance_id")
@@ -2634,7 +2925,8 @@ class Cards(commands.Cog):
             card_role = self.normalize_team_role((player or {}).get("role", card_data.get("role", "")), game_name)
             return card_role == role
 
-        return str((player or {}).get("role", card_data.get("role", ""))).upper() == "STARTER"
+        card_role = self.normalize_card_role((player or {}).get("role", card_data.get("role", "")), game_name)
+        return card_role == role
 
     def find_team_rarity_upgrades(self, user_data, game_name=None):
         game_name = self.normalize_team_game(game_name or self.get_default_team_game(user_data))
@@ -2651,13 +2943,8 @@ class Cards(commands.Cog):
         for role in self.get_team_roles(game_name):
             current_id = team.get(role)
             _current_index, current_card, _current_data, _current_player = self.resolve_team_card(user_data, current_id)
-            if not current_card:
-                continue
-
-            current_rarity = current_card.get("rarity")
-            current_rank = RARITY_RANK.get(current_rarity)
-            if current_rank is None:
-                continue
+            current_rarity = current_card.get("rarity") if current_card else None
+            current_rank = RARITY_RANK.get(current_rarity, -1)
 
             best = None
             for index, owned_card in enumerate(user_data.get("cards", []), start=1):
@@ -2713,18 +3000,24 @@ class Cards(commands.Cog):
             team[role] = owned_card.get("instance_id")
             player = self.get_player_for_card(card_data) or {}
             player_name = player.get("name", card_data.get("ign", "Unknown"))
-            old_rarity = current_card.get("rarity", "Unknown")
             new_rarity = owned_card.get("rarity", "Unknown")
-            lines.append(
-                f"{labels.get(role, role)}: {player_name} {self.get_rarity_symbol(old_rarity)} {old_rarity} -> "
-                f"{self.get_rarity_symbol(new_rarity)} {new_rarity} (inventory #{index})"
-            )
+            if current_card:
+                old_rarity = current_card.get("rarity", "Unknown")
+                lines.append(
+                    f"{labels.get(role, role)}: {player_name} {self.get_rarity_symbol(old_rarity)} {old_rarity} -> "
+                    f"{self.get_rarity_symbol(new_rarity)} {new_rarity} (inventory #{index})"
+                )
+            else:
+                lines.append(
+                    f"{labels.get(role, role)}: {player_name} -> "
+                    f"{self.get_rarity_symbol(new_rarity)} {new_rarity} (inventory #{index})"
+                )
 
         image_slots, _ = self.get_team_image_slots(user_data, game_name)
         self.remember_best_ranked_defense(user_data, game_name, image_slots)
         self.save_users(users)
 
-        return f"Upgraded {len(upgrades)} {TEAM_GAME_LABELS[game_name]} team slot(s):\n" + "\n".join(lines)
+        return f"Updated {len(upgrades)} {TEAM_GAME_LABELS[game_name]} team slot(s):\n" + "\n".join(lines)
 
     def is_card_in_user_team(self, user_id, card_instance):
         users, user_data = self.get_user_data(user_id)
@@ -2946,6 +3239,17 @@ class Cards(commands.Cog):
             instance_id = self.get_user_team(user_data, game_name).get(role)
             index, owned_card, card_data, player = self.resolve_team_card(user_data, instance_id)
             if not owned_card or not card_data or not player:
+                slots.append({
+                    "role": role,
+                    "game": game_name,
+                    "index": None,
+                    "owned_card": None,
+                    "card_data": None,
+                    "player": None,
+                })
+                continue
+
+            if not self.card_can_fill_team_role(card_data, role, game_name):
                 slots.append({
                     "role": role,
                     "game": game_name,
@@ -3343,15 +3647,11 @@ class Cards(commands.Cog):
         return colors.get(rarity, discord.Color.default())
 
     def display_card_role(self, card_data, player=None):
-        if self.card_game(card_data) == GAME_VALORANT:
-            return None
-
         player = player or self.get_player_for_card(card_data) or {}
         role = player.get("role", card_data.get("role", "Unknown"))
-        normalized_role = self.normalize_team_role(role, self.card_game(card_data))
-        return self.get_team_role_labels(self.card_game(card_data)).get(normalized_role, role)
+        return self.card_role_label(role, self.card_game(card_data))
 
-    def card_embed(self, player, card_data, card_instance, pulled_by_name):
+    def card_embed(self, player, card_data, card_instance, pulled_by_name, show_card_details=True, show_image=True):
         rarity = card_instance.get("rarity", "Unknown")
         rarity_label = f"{self.get_rarity_symbol(rarity)} {rarity}"
         game_name = self.card_game(card_data)
@@ -3362,15 +3662,16 @@ class Cards(commands.Cog):
             color=self.get_rarity_color(rarity)
         )
 
-        embed.add_field(name=f"{TEAM_EMOJI} Team", value=card_data.get("team", "Unknown"), inline=False)
-        if role_label:
-            embed.add_field(name=f"{ROLE_EMOJI} Role", value=role_label, inline=False)
-        embed.add_field(name=f"{LEAGUE_EMOJI} League", value=card_data.get("league", "Unknown"), inline=False)
-        embed.add_field(name=f"{SET_EMOJI} Set", value=card_data.get("set", "Unknown Set"), inline=False)
-        embed.add_field(name="Rarity", value=rarity_label, inline=False)
+        if show_card_details:
+            embed.add_field(name=f"{TEAM_EMOJI} Team", value=card_data.get("team", "Unknown"), inline=False)
+            if role_label:
+                embed.add_field(name=f"{ROLE_EMOJI} Role", value=role_label, inline=False)
+            embed.add_field(name=f"{LEAGUE_EMOJI} League", value=card_data.get("league", "Unknown"), inline=False)
+            embed.add_field(name=f"{SET_EMOJI} Set", value=card_data.get("set", "Unknown Set"), inline=False)
+            embed.add_field(name="Rarity", value=rarity_label, inline=False)
 
         image_url = card_data.get("image_url", "")
-        if image_url:
+        if show_image and image_url:
             embed.set_image(url=image_url)
 
         embed.set_footer(text=f"Pulled by {pulled_by_name}")
@@ -3425,14 +3726,59 @@ class Cards(commands.Cog):
 
         return results, None
 
-    def find_lowest_pack_slot(self, user_packs):
+    def pack_matches_set_filter(self, pack_id, set_filter):
+        if not set_filter:
+            return True
+
+        pack = self.packs.get(pack_id)
+        if not pack:
+            return False
+
+        target = set_filter.strip().lower()
+        set_name = str(pack.get("set", "")).lower()
+        pack_name = str(pack.get("name", "")).lower()
+        return target in {set_name, pack_name}
+
+    def parse_open_all_args(self, arg):
+        try:
+            tokens = shlex.split(arg)
+        except ValueError:
+            return None, "Invalid open command. Use `.open all` or `.open all -set VCT 26`."
+
+        if not tokens or tokens[0].lower() != "all":
+            return None, None
+
+        set_filter = None
+        i = 1
+        while i < len(tokens):
+            flag = tokens[i].lower()
+            if flag != "-set":
+                return None, "Invalid open-all option. Use `.open all -set VCT 26`."
+
+            i += 1
+            value_parts = []
+            while i < len(tokens) and not tokens[i].startswith("-"):
+                value_parts.append(tokens[i])
+                i += 1
+
+            if not value_parts:
+                return None, "Please include a set after `-set`, like `.open all -set VCT 26`."
+
+            set_filter = " ".join(value_parts)
+
+        return set_filter, None
+
+    def find_lowest_pack_slot(self, user_packs, set_filter=None):
         for index, pack_id in enumerate(user_packs):
-            if pack_id is not None:
+            if pack_id is not None and self.pack_matches_set_filter(pack_id, set_filter):
                 return index, pack_id
         return None, None
 
-    def has_unopened_packs(self, user_packs):
-        return any(pack_id is not None for pack_id in user_packs)
+    def has_unopened_packs(self, user_packs, set_filter=None):
+        return any(
+            pack_id is not None and self.pack_matches_set_filter(pack_id, set_filter)
+            for pack_id in user_packs
+        )
 
     def build_open_pack_embed(self, user_display_name, pack_id, results, has_more_packs=False):
         lines = []
@@ -3451,14 +3797,16 @@ class Cards(commands.Cog):
             embed.set_footer(text="All packs opened.")
         return embed
 
-    def open_lowest_index_pack(self, user_id, pulled_by_user=None):
+    def open_lowest_index_pack(self, user_id, pulled_by_user=None, set_filter=None):
         users, user_data = self.get_user_data(user_id)
         if user_data is None:
             return {"error": "You need to create a profile first with `.join`."}
 
         user_packs = user_data.get("packs", [])
-        slot_index, pack_id = self.find_lowest_pack_slot(user_packs)
+        slot_index, pack_id = self.find_lowest_pack_slot(user_packs, set_filter)
         if pack_id is None:
+            if set_filter:
+                return {"error": f"You have no unopened packs for `{set_filter}`."}
             return {"error": "You have no packs."}
 
         user_packs[slot_index] = None
@@ -3468,7 +3816,7 @@ class Cards(commands.Cog):
         if error:
             return {"error": error}
 
-        has_more_packs = self.has_unopened_packs(user_packs)
+        has_more_packs = self.has_unopened_packs(user_packs, set_filter)
         display_name = getattr(pulled_by_user, "display_name", str(user_id))
         embed = self.build_open_pack_embed(display_name, pack_id, results, has_more_packs)
         return {
@@ -3703,18 +4051,23 @@ class Cards(commands.Cog):
             player=player,
             card_data=card_data,
             card_instance=owned_card,
-            pulled_by_name=owned_card.get("pulled_by_username", ctx.author.name)
+            pulled_by_name=owned_card.get("pulled_by_username", ctx.author.name),
+            show_card_details=False,
+            show_image=False,
         )
+        embed.title = f"Inv #: {inventory_number}"
 
-        pulled_on = owned_card.get("pulled_on")
-        if pulled_on:
-            dt = datetime.fromisoformat(pulled_on)
-            formatted = dt.strftime("%B %d, %Y")
-            embed.add_field(name="Pulled on", value=formatted, inline=False)
+        pulled_by = owned_card.get("pulled_by_username", ctx.author.name)
+        pulled_date = self.format_pull_date(owned_card.get("pulled_on"))
+        if pulled_date:
+            embed.set_footer(text=f"Pulled by {pulled_by} on {pulled_date}")
+        else:
+            embed.set_footer(text=f"Pulled by {pulled_by}")
 
-        embed.set_footer(text=f"Pulled by {owned_card.get('pulled_by_username', ctx.author.name)}")
+        file = self.make_card_view_file(card_data, owned_card, player, ctx.author.id)
+        embed.set_image(url=f"attachment://{file.filename}")
 
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, file=file)
 
     # Command to open a pack 
     # EX: `.open "LCK Spring 2026 Pack"` or `.open 1` to open the first pack in the list
@@ -3729,14 +4082,23 @@ class Cards(commands.Cog):
 
         user_packs = user_data.get("packs", [])
 
-        if arg.lower() == "all":
-            result = self.open_lowest_index_pack(ctx.author.id, ctx.author)
+        if arg.lower() == "all" or arg.lower().startswith("all "):
+            set_filter, error = self.parse_open_all_args(arg)
+            if error:
+                await ctx.send(error)
+                return
+
+            result = self.open_lowest_index_pack(ctx.author.id, ctx.author, set_filter=set_filter)
             error = result.get("error")
             if error:
                 await ctx.send(error)
                 return
 
-            view = OpenAllPacksView(self, ctx.author.id) if result.get("has_more_packs") else None
+            view = (
+                OpenAllPacksView(self, ctx.author.id, set_filter)
+                if result.get("has_more_packs")
+                else None
+            )
             await ctx.send(embed=result["embed"], view=view)
 
             for inst, card, player in result["results"]:

@@ -56,7 +56,7 @@ TEAM_STAT_ROLES = ["TOP", "JNG", "MID", "BOT", "SUP"]
 GAME_LEAGUE = "League of Legends"
 GAME_VALORANT = "Valorant"
 DEFAULT_TEAM_GAME = GAME_LEAGUE
-VALORANT_TEAM_STAT_ROLES = ["S1", "S2", "S3", "S4", "S5"]
+VALORANT_TEAM_STAT_ROLES = ["INITIATOR", "DUELIST", "CONTROLLER", "SENTINEL", "FLEX"]
 TEAM_STAT_ROLES_BY_GAME = {
     GAME_LEAGUE: TEAM_STAT_ROLES,
     GAME_VALORANT: VALORANT_TEAM_STAT_ROLES,
@@ -114,6 +114,7 @@ class Users(commands.Cog):
         self.users = self.load_users()
         self.moderators = self.load_moderators()
         self.reminder_tasks = {}
+        self.vote_reward_locks = {}
 
     async def cog_load(self):
         self.schedule_pending_ready_notifications()
@@ -627,6 +628,86 @@ class Users(commands.Cog):
     async def fetch_topgg_vote_status(self, user_id):
         return await asyncio.to_thread(self.fetch_topgg_vote_status_sync, user_id)
 
+    def build_vote_view(self, requester_id=None):
+        return VoteView(self, requester_id, self.topgg_vote_url())
+
+    def topgg_vote_prompt(self, vote_url, extra_text=""):
+        return (
+            f"Please vote on top.gg with this link:\n{vote_url}\n\n"
+            "After voting press **I Voted** below to claim your reward, or use `.vote` again."
+            f"{extra_text}"
+        )
+
+    async def claim_topgg_vote_reward(self, member, reminder_channel_id=None):
+        lock = self.vote_reward_locks.setdefault(str(member.id), asyncio.Lock())
+        async with lock:
+            return await self.claim_topgg_vote_reward_unlocked(member, reminder_channel_id)
+
+    async def claim_topgg_vote_reward_unlocked(self, member, reminder_channel_id=None):
+        user = self.get_profile(member)
+        vote_url = self.topgg_vote_url()
+
+        if not TOPGG_TOKEN:
+            return self.topgg_vote_prompt(
+                vote_url,
+                "\nI need `TOPGG_TOKEN` configured before I can verify votes and give rewards.",
+            )
+
+        try:
+            vote_data = await self.fetch_topgg_vote_status(member.id)
+        except requests.exceptions.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+            if status in {401, 403}:
+                return self.topgg_vote_prompt(
+                    vote_url,
+                    "\nI could not verify votes because the Top.gg token was rejected.",
+                )
+            if status == 429:
+                return "Top.gg is rate limiting vote checks right now. Try again in a minute."
+            return self.topgg_vote_prompt(vote_url, "\nI could not verify Top.gg right now.")
+        except requests.exceptions.RequestException:
+            return self.topgg_vote_prompt(vote_url, "\nI could not reach Top.gg right now.")
+
+        if not vote_data:
+            return self.topgg_vote_prompt(vote_url)
+
+        created_at_raw = vote_data.get("created_at")
+        expires_at = self.parse_topgg_time(vote_data.get("expires_at"))
+        if expires_at and self.utc_now() >= expires_at:
+            return self.topgg_vote_prompt(vote_url)
+
+        reward_key = str(created_at_raw or vote_data.get("expires_at") or "")
+        if not reward_key:
+            return self.topgg_vote_prompt(vote_url)
+
+        if reward_key and user.get("last_topgg_vote_rewarded_at") == reward_key:
+            wait_text = f" You can vote again in {self.format_remaining(expires_at)}." if expires_at else ""
+            if reminder_channel_id and expires_at and self.utc_now() < expires_at:
+                self.remember_reminder_channel(user, "vote", reminder_channel_id)
+                user["last_topgg_vote_expires_at"] = expires_at.isoformat()
+                self.save_users()
+                if self.normalize_settings(user).get("alert_daily_practice"):
+                    self.schedule_ready_notification(reminder_channel_id, member.id, "vote", expires_at)
+            return f"You already claimed the reward for your latest Top.gg vote.{wait_text}"
+
+        user["cash"] = int(user.get("cash", 0)) + VOTE_CASH_REWARD
+        user["gold"] = int(user.get("gold", 0)) + VOTE_GOLD_REWARD
+        if reward_key:
+            user["last_topgg_vote_rewarded_at"] = reward_key
+        if expires_at:
+            user["last_topgg_vote_expires_at"] = expires_at.isoformat()
+        if reminder_channel_id:
+            self.remember_reminder_channel(user, "vote", reminder_channel_id)
+        self.save_users()
+        if reminder_channel_id and expires_at and self.normalize_settings(user).get("alert_daily_practice"):
+            self.schedule_ready_notification(reminder_channel_id, member.id, "vote", expires_at)
+
+        return (
+            f"Thanks for voting, {member.mention}! You earned "
+            f"{VOTE_CASH_REWARD} {CASH_EMOJI} cash and {VOTE_GOLD_REWARD} {GOLD_EMOJI} gold.\n"
+            f"Total: {user['cash']} {CASH_EMOJI} cash and {user['gold']} {GOLD_EMOJI} gold."
+        )
+
     def team_slot_has_card(self, profile, role):
         teams = self.normalize_game_teams(profile)
         game_name = profile.get("default_team_game", DEFAULT_TEAM_GAME)
@@ -793,8 +874,64 @@ class Users(commands.Cog):
             "practice": PRACTICE_EMOJI,
             "daily": DAILY_EMOJI,
             "ranked": RANKED_EMOJI,
+            "vote": VOTE_EMOJI,
         }
         return f"{action_emojis.get(action, '')} {action}".strip()
+
+    def get_pending_auction_summary(self, user_id):
+        profile = self.get_profile_by_id(str(user_id))
+        settings = self.normalize_settings(profile)
+        if not settings.get("dm_auction_notis", True):
+            return None
+
+        summary = profile.get("pending_auction_summary")
+        if not isinstance(summary, dict):
+            return None
+
+        sold = summary.get("sold") if isinstance(summary.get("sold"), list) else []
+        returned = summary.get("returned") if isinstance(summary.get("returned"), list) else []
+        sold = [entry for entry in sold if isinstance(entry, dict)]
+        returned = [entry for entry in returned if isinstance(entry, dict)]
+        if not sold and not returned:
+            return None
+
+        return profile, sold, returned
+
+    def clear_pending_auction_summary(self, profile):
+        profile["pending_auction_summary"] = {"sold": [], "returned": []}
+        self.save_users()
+
+    def format_auction_summary_lines(self, sold, returned):
+        lines = [f"{READY_EMOJI} Your **daily** is ready."]
+        if sold:
+            total_cash = sum(int(entry.get("final_price", 0) or 0) for entry in sold)
+            lines.append("")
+            lines.append(f"Auction summary: {len(sold)} sold for {CASH_EMOJI} {total_cash} cash.")
+            for entry in sold[:10]:
+                lines.append(f"- {entry.get('item_name', 'Unknown Item')} ({CASH_EMOJI} {entry.get('final_price', 0)})")
+            if len(sold) > 10:
+                lines.append(f"- and {len(sold) - 10} more sold")
+        if returned:
+            lines.append("")
+            lines.append(f"{len(returned)} auction(s) ended with no bids and were returned.")
+            for entry in returned[:10]:
+                lines.append(f"- {entry.get('item_name', 'Unknown Item')}")
+            if len(returned) > 10:
+                lines.append(f"- and {len(returned) - 10} more returned")
+        return "\n".join(lines)
+
+    async def send_daily_auction_summary(self, user_id):
+        summary = self.get_pending_auction_summary(user_id)
+        if not summary:
+            return
+
+        profile, sold, returned = summary
+        try:
+            user = self.bot.get_user(int(user_id)) or await self.bot.fetch_user(int(user_id))
+            await user.send(self.format_auction_summary_lines(sold, returned))
+            self.clear_pending_auction_summary(profile)
+        except Exception:
+            pass
 
     def schedule_ready_notification(self, channel_id: int, user_id: int, action: str, ready_at: datetime):
         task_key = (str(user_id), action)
@@ -812,7 +949,7 @@ class Users(commands.Cog):
         task.add_done_callback(remove_finished_task)
 
     def cancel_ready_notifications(self, user_id, action=None):
-        actions = [action] if action else ["practice", "daily", "ranked"]
+        actions = [action] if action else ["practice", "daily", "ranked", "vote"]
         for action_name in actions:
             task = self.reminder_tasks.pop((str(user_id), action_name), None)
             if task and not task.done():
@@ -844,6 +981,17 @@ class Users(commands.Cog):
                 self.schedule_ready_notification(int(channel_id), int(user_id), action, ready_at)
             except (TypeError, ValueError):
                 continue
+
+        vote_channel_id = user.get("vote_reminder_channel_id")
+        try:
+            vote_ready_at = self.parse_saved_time(user.get("last_topgg_vote_expires_at"))
+        except (TypeError, ValueError):
+            vote_ready_at = None
+        if vote_channel_id and vote_ready_at and vote_ready_at > now:
+            try:
+                self.schedule_ready_notification(int(vote_channel_id), int(user_id), "vote", vote_ready_at)
+            except (TypeError, ValueError):
+                pass
 
     def schedule_pending_ready_notifications(self):
         now = self.utc_now()
@@ -916,7 +1064,7 @@ class Users(commands.Cog):
                 "`.view <inventory #>` - View one inventory card.\n"
                 "`.packs` - View unopened packs.\n"
                 "`.open <pack #|pack id|pack name>` - Open a pack.\n"
-                "`.open all` - Open your packs one at a time from lowest index."
+                "`.open all [-set set name]` - Open your packs one at a time from lowest index."
             ),
             inline=False
         )
@@ -1185,89 +1333,8 @@ class Users(commands.Cog):
 
     @commands.command(aliases=["v"])
     async def vote(self, ctx):
-        user = self.get_profile(ctx.author)
-        vote_url = self.topgg_vote_url()
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Vote on Top.gg", url=vote_url))
-
-        if not TOPGG_TOKEN:
-            await ctx.send(
-                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
-                "After voting use `.vote` to claim your reward.\n"
-                "I need `TOPGG_TOKEN` configured before I can verify votes and give rewards.",
-                view=view,
-            )
-            return
-
-        try:
-            vote_data = await self.fetch_topgg_vote_status(ctx.author.id)
-        except requests.exceptions.HTTPError as exc:
-            status = exc.response.status_code if exc.response is not None else None
-            if status in {401, 403}:
-                await ctx.send(
-                    f"Please vote on top.gg with this link:\n{vote_url}\n\n"
-                    "After voting use `.vote` to claim your reward.\n"
-                    "I could not verify votes because the Top.gg token was rejected.",
-                    view=view,
-                )
-                return
-            if status == 429:
-                await ctx.send("Top.gg is rate limiting vote checks right now. Try again in a minute.", view=view)
-                return
-            await ctx.send(
-                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
-                "After voting use `.vote` to claim your reward.\n"
-                "I could not verify Top.gg right now.",
-                view=view,
-            )
-            return
-        except requests.exceptions.RequestException:
-            await ctx.send(
-                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
-                "After voting use `.vote` to claim your reward.\n"
-                "I could not reach Top.gg right now.",
-                view=view,
-            )
-            return
-
-        if not vote_data:
-            await ctx.send(
-                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
-                "After voting use `.vote` to claim your reward.",
-                view=view,
-            )
-            return
-
-        created_at_raw = vote_data.get("created_at")
-        expires_at = self.parse_topgg_time(vote_data.get("expires_at"))
-        if expires_at and self.utc_now() >= expires_at:
-            await ctx.send(
-                f"Please vote on top.gg with this link:\n{vote_url}\n\n"
-                "After voting use `.vote` to claim your reward.",
-                view=view,
-            )
-            return
-
-        reward_key = str(created_at_raw or vote_data.get("expires_at") or "")
-        if reward_key and user.get("last_topgg_vote_rewarded_at") == reward_key:
-            wait_text = f" You can vote again in {self.format_remaining(expires_at)}." if expires_at else ""
-            await ctx.send(
-                f"You already claimed the reward for your latest Top.gg vote.{wait_text}",
-                view=view,
-            )
-            return
-
-        user["cash"] = int(user.get("cash", 0)) + VOTE_CASH_REWARD
-        user["gold"] = int(user.get("gold", 0)) + VOTE_GOLD_REWARD
-        if reward_key:
-            user["last_topgg_vote_rewarded_at"] = reward_key
-        self.save_users()
-
-        await ctx.send(
-            f"Thanks for voting, {ctx.author.mention}! You earned "
-            f"{VOTE_CASH_REWARD} {CASH_EMOJI} cash and {VOTE_GOLD_REWARD} {GOLD_EMOJI} gold.\n"
-            f"Total: {user['cash']} {CASH_EMOJI} cash and {user['gold']} {GOLD_EMOJI} gold."
-        )
+        view = self.build_vote_view(ctx.author.id)
+        await ctx.send(await self.claim_topgg_vote_reward(ctx.author, ctx.channel.id), view=view)
 
     # Daily command to earn cash and gold once every 24 hours
     @commands.command()
@@ -1315,6 +1382,32 @@ class Users(commands.Cog):
                 await channel.send(f"{READY_EMOJI} <@{user_id}> your **{self.format_action_name(action)}** is ready.")
         except Exception:
             pass
+        if action == "daily":
+            await self.send_daily_auction_summary(user_id)
+
+
+class VoteView(discord.ui.View):
+    def __init__(self, users_cog: Users, requester_id, vote_url):
+        super().__init__(timeout=1800)
+        self.users_cog = users_cog
+        self.requester_id = requester_id
+        self.add_item(discord.ui.Button(label="Vote on Top.gg", url=vote_url, row=0))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if self.requester_id is not None and interaction.user.id != self.requester_id:
+            await interaction.response.send_message(
+                "Only the person who ran `.vote` can use this button.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    @discord.ui.button(label="I Voted", style=discord.ButtonStyle.success, row=1)
+    async def claim_vote(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+        channel_id = interaction.channel.id if interaction.channel else None
+        message = await self.users_cog.claim_topgg_vote_reward(interaction.user, channel_id)
+        await interaction.followup.send(message, ephemeral=True)
 
 
 class LeaderboardView(discord.ui.View):
