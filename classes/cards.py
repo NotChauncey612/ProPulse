@@ -775,7 +775,7 @@ class UpgradeTeamRarityButton(discord.ui.Button):
             self.team_view.game_name
         )
         await interaction.response.send_message(message, ephemeral=True)
-        await self.team_view.refresh_message()
+        await self.team_view.refresh_message(interaction.message)
 
 
 class TeamView(discord.ui.View):
@@ -816,11 +816,13 @@ class TeamView(discord.ui.View):
     def build_message(self):
         return self.cog.build_team_message(self.author_id, self.user_display_name, self.game_name)
 
-    async def refresh_message(self):
-        if self.message:
+    async def refresh_message(self, message=None):
+        target_message = message or self.message
+        if target_message:
+            self.message = target_message
             embed, file = self.build_message()
             attachments = [file] if file else []
-            await self.message.edit(embed=embed, attachments=attachments, view=self)
+            await target_message.edit(embed=embed, attachments=attachments, view=self)
 
     async def on_timeout(self):
         for item in self.children:
