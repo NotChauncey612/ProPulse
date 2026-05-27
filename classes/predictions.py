@@ -13,6 +13,7 @@ from .storage import load_json, save_json
 
 DATA_PATH = "data/predictions.json"
 USERS_PATH = "data/users.json"
+TEAM_EMOJIS_PATH = "data/team_emojis.json"
 LOLESPORTS_BASE_URL = "https://esports-api.lolesports.com/persisted/gw"
 LOLESPORTS_PUBLIC_KEY = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z"
 LOLESPORTS_LOCALE = "en-US"
@@ -26,6 +27,18 @@ PREDICTION_SOURCE_URL = "https://lolesports.com/schedule"
 GAME_LEAGUE = "League of Legends"
 SORT_START = "start"
 SORT_POOL = "pool"
+SORT_TEAM = "team"
+SORT_GAME = "game"
+SORT_REGION = "region"
+
+
+PREDICTION_SORT_LABELS = {
+    SORT_START: "Start Time",
+    SORT_POOL: "Biggest Pool",
+    SORT_TEAM: "Team",
+    SORT_GAME: "Game",
+    SORT_REGION: "Region",
+}
 
 
 class PredictionBidModal(discord.ui.Modal, title="Make Prediction"):
@@ -49,6 +62,10 @@ class PredictionBidModal(discord.ui.Modal, title="Make Prediction"):
         match = self.view_ref.cog.data.get("matches", {}).get(self.match_id)
         if not match:
             await interaction.response.send_message("That match is no longer available.", ephemeral=True)
+            return
+        if not self.view_ref.cog.is_match_open(self.match_id):
+            await interaction.response.send_message("That match is no longer open on `.predictions`.", ephemeral=True)
+            await self.view_ref.refresh_message()
             return
 
         try:
@@ -85,7 +102,7 @@ class PredictionMatchSelect(discord.ui.Select):
             pool = view.cog.total_pool(match["id"])
             options.append(discord.SelectOption(
                 label=view.cog.match_label(match)[:100],
-                description=f"{match.get('league', 'LoL')} - {view.cog.format_match_time(match)} - Pool {pool}"[:100],
+                description=f"{match.get('league', 'Esports')} - {view.cog.format_match_time(match)} - Pool {pool}"[:100],
                 value=match["id"],
             ))
 
@@ -94,20 +111,111 @@ class PredictionMatchSelect(discord.ui.Select):
             min_values=1,
             max_values=1,
             options=options,
-            row=1,
+            row=2,
         )
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_modal(PredictionBidModal(self.prediction_view, self.values[0]))
 
 
+class PredictionSortSelect(discord.ui.Select):
+    def __init__(self, view):
+        self.prediction_view = view
+        options = [
+            discord.SelectOption(label=label, value=value, default=view.sort_mode == value)
+            for value, label in PREDICTION_SORT_LABELS.items()
+        ]
+        super().__init__(
+            placeholder="Sort predictions",
+            options=options,
+            min_values=1,
+            max_values=1,
+            row=0,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.prediction_view.sort_mode != self.values[0]:
+            self.prediction_view.team_filter = None
+        self.prediction_view.sort_mode = self.values[0]
+        self.prediction_view.rebuild_items()
+        await interaction.response.edit_message(embed=self.prediction_view.build_embed(), view=self.prediction_view)
+
+
+class PredictionTeamFilterSelect(discord.ui.Select):
+    def __init__(self, view):
+        self.prediction_view = view
+        options = [
+            discord.SelectOption(label=team[:100], value=team[:100], default=view.team_filter == team)
+            for team in view.team_filter_options[:25]
+        ]
+        super().__init__(
+            placeholder="Filter by team",
+            options=options,
+            min_values=1,
+            max_values=1,
+            row=1,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.prediction_view.team_filter = self.values[0]
+        self.prediction_view.rebuild_items()
+        await interaction.response.edit_message(embed=self.prediction_view.build_embed(), view=self.prediction_view)
+
+
+class PredictionRegionFilterSelect(discord.ui.Select):
+    def __init__(self, view):
+        self.prediction_view = view
+        options = [
+            discord.SelectOption(label=region[:100], value=region[:100], default=view.team_filter == region)
+            for region in view.region_filter_options[:25]
+        ]
+        super().__init__(
+            placeholder="Filter by region",
+            options=options,
+            min_values=1,
+            max_values=1,
+            row=1,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.prediction_view.team_filter = self.values[0]
+        self.prediction_view.rebuild_items()
+        await interaction.response.edit_message(embed=self.prediction_view.build_embed(), view=self.prediction_view)
+
+
+class PredictionGameFilterSelect(discord.ui.Select):
+    def __init__(self, view):
+        self.prediction_view = view
+        options = [
+            discord.SelectOption(label=game[:100], value=game[:100], default=view.team_filter == game)
+            for game in view.game_filter_options[:25]
+        ]
+        super().__init__(
+            placeholder="Filter by game",
+            options=options,
+            min_values=1,
+            max_values=1,
+            row=1,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.prediction_view.team_filter = self.values[0]
+        self.prediction_view.rebuild_items()
+        await interaction.response.edit_message(embed=self.prediction_view.build_embed(), view=self.prediction_view)
+
+
 class PredictionView(discord.ui.View):
-    def __init__(self, cog, author_id, sort_mode=SORT_START):
+    def __init__(self, cog, author_id, sort_mode=SORT_START, team_filter=None, show_all_matches=False):
         super().__init__(timeout=180)
         self.cog = cog
         self.author_id = author_id
         self.sort_mode = sort_mode
+        self.team_filter = team_filter
+        self.show_all_matches = show_all_matches
         self.matches = []
+        self.team_filter_options = []
+        self.region_filter_options = []
+        self.game_filter_options = []
         self.message = None
         self.rebuild_items()
 
@@ -119,38 +227,69 @@ class PredictionView(discord.ui.View):
 
     def rebuild_items(self):
         self.clear_items()
-        self.matches = self.cog.sorted_prediction_matches(self.sort_mode)
-        self.nearest_button.style = discord.ButtonStyle.primary if self.sort_mode == SORT_START else discord.ButtonStyle.secondary
-        self.pool_button.style = discord.ButtonStyle.primary if self.sort_mode == SORT_POOL else discord.ButtonStyle.secondary
-        self.add_item(self.nearest_button)
-        self.add_item(self.pool_button)
+        if self.show_all_matches:
+            base_matches = self.cog.sorted_available_prediction_matches(self.sort_mode)
+        else:
+            base_matches = self.cog.sorted_prediction_matches(self.sort_mode)
+        self.team_filter_options = self.cog.team_filter_options(base_matches)
+        self.region_filter_options = self.cog.region_filter_options(base_matches)
+        self.game_filter_options = self.cog.game_filter_options(base_matches)
+        if self.sort_mode == SORT_REGION:
+            if self.team_filter not in self.region_filter_options:
+                self.team_filter = None
+            self.matches = self.cog.filter_matches_by_region(base_matches, self.team_filter)
+        elif self.sort_mode == SORT_GAME:
+            if self.team_filter not in self.game_filter_options:
+                self.team_filter = None
+            self.matches = self.cog.filter_matches_by_game(base_matches, self.team_filter)
+        elif self.sort_mode == SORT_TEAM:
+            if self.team_filter not in self.team_filter_options:
+                self.team_filter = None
+            self.matches = self.cog.filter_matches_by_team(base_matches, self.team_filter)
+        else:
+            self.team_filter = None
+            self.matches = base_matches
+        self.clear_button.disabled = not self.team_filter and self.sort_mode == SORT_START and not self.show_all_matches
+        self.view_more_button.label = "Active Bids Only" if self.show_all_matches else "View More Matches"
+        self.add_item(PredictionSortSelect(self))
+        if self.sort_mode == SORT_REGION and self.region_filter_options:
+            self.add_item(PredictionRegionFilterSelect(self))
+        elif self.sort_mode == SORT_GAME and self.game_filter_options:
+            self.add_item(PredictionGameFilterSelect(self))
+        elif self.sort_mode == SORT_TEAM and self.team_filter_options:
+            self.add_item(PredictionTeamFilterSelect(self))
+        self.add_item(self.clear_button)
+        self.add_item(self.view_more_button)
         self.add_item(self.mine_button)
         if self.matches:
             self.add_item(PredictionMatchSelect(self))
 
     def build_embed(self):
-        return self.cog.build_prediction_embed(self.matches, self.sort_mode)
+        return self.cog.build_prediction_embed(self.matches, self.sort_mode, self.team_filter, self.show_all_matches)
 
     async def refresh_message(self):
         self.rebuild_items()
         if self.message:
             await self.message.edit(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="Nearest Start", style=discord.ButtonStyle.primary, row=0)
-    async def nearest_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="Clear", style=discord.ButtonStyle.danger, row=3)
+    async def clear_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.sort_mode = SORT_START
+        self.team_filter = None
+        self.show_all_matches = False
         self.rebuild_items()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="Biggest Pool", style=discord.ButtonStyle.secondary, row=0)
-    async def pool_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.sort_mode = SORT_POOL
+    @discord.ui.button(label="View More Matches", style=discord.ButtonStyle.primary, row=3)
+    async def view_more_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.show_all_matches = not self.show_all_matches
+        self.team_filter = None
         self.rebuild_items()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="My Predictions", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="My Predictions", style=discord.ButtonStyle.secondary, row=3)
     async def mine_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = MyPredictionsView(self.cog, interaction.user.id, interaction.user.display_name)
+        view = MyPredictionsView(self.cog, interaction.user.id, interaction.user.name)
         await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
 
     async def on_timeout(self):
@@ -258,6 +397,18 @@ class Predictions(commands.Cog):
 
     def save_predictions(self):
         save_json(DATA_PATH, self.data)
+
+    def load_team_emojis(self):
+        data = load_json(TEAM_EMOJIS_PATH, default={})
+        if not isinstance(data, dict):
+            return {}
+        if isinstance(data.get("teams"), dict):
+            data = data["teams"]
+        return {
+            self.normalize_key(team_name): str(emoji).strip()
+            for team_name, emoji in data.items()
+            if str(team_name).strip() and str(emoji).strip()
+        }
 
     def load_users(self):
         users_cog = self.bot.get_cog("Users") if self.bot else None
@@ -458,10 +609,126 @@ class Predictions(commands.Cog):
         matches.sort(key=lambda match: self.parse_time(match.get("start_time")) or now)
         return matches
 
-    def sorted_prediction_matches(self, sort_mode=SORT_START):
+    def sorted_available_prediction_matches(self, sort_mode=SORT_START):
         matches = self.sorted_matches()
         if sort_mode == SORT_POOL:
             matches.sort(key=lambda match: (-self.total_pool(match["id"]), self.parse_time(match.get("start_time")) or self.utc_now()))
+        elif sort_mode == SORT_TEAM:
+            matches.sort(key=self.team_sort_key)
+        elif sort_mode == SORT_GAME:
+            matches.sort(key=self.game_sort_key)
+        elif sort_mode == SORT_REGION:
+            matches.sort(key=self.region_sort_key)
+        return matches
+
+    def team_sort_key(self, match):
+        teams = sorted([
+            str(match.get("team1", {}).get("name") or ""),
+            str(match.get("team2", {}).get("name") or ""),
+        ], key=lambda name: name.lower())
+        return (
+            teams[0].lower() if teams else "",
+            teams[1].lower() if len(teams) > 1 else "",
+            self.parse_time(match.get("start_time")) or self.utc_now(),
+        )
+
+    def game_label(self, match):
+        return match.get("game") or GAME_LEAGUE
+
+    def game_sort_key(self, match):
+        return (
+            str(self.game_label(match)).lower(),
+            self.parse_time(match.get("start_time")) or self.utc_now(),
+            self.match_label(match).lower(),
+        )
+
+    def region_label(self, match):
+        return match.get("region") or match.get("league") or "Unknown Region"
+
+    def region_sort_key(self, match):
+        return (
+            str(self.region_label(match)).lower(),
+            self.parse_time(match.get("start_time")) or self.utc_now(),
+            self.match_label(match).lower(),
+        )
+
+    def team_names_for_match(self, match):
+        return [
+            str(team.get("name") or "").strip()
+            for team in (match.get("team1", {}), match.get("team2", {}))
+            if str(team.get("name") or "").strip()
+        ]
+
+    def team_filter_options(self, matches):
+        teams = {}
+        for match in matches:
+            for name in self.team_names_for_match(match):
+                teams[name.lower()] = name
+        return sorted(teams.values(), key=str.lower)
+
+    def region_filter_options(self, matches):
+        regions = {}
+        for match in matches:
+            region = str(self.region_label(match)).strip()
+            if region:
+                regions[region.lower()] = region
+        return sorted(regions.values(), key=str.lower)
+
+    def game_filter_options(self, matches):
+        games = {}
+        for match in matches:
+            game = str(self.game_label(match)).strip()
+            if game:
+                games[game.lower()] = game
+        return sorted(games.values(), key=str.lower)
+
+    def filter_matches_by_team(self, matches, team_filter):
+        if not team_filter:
+            return matches
+        wanted = str(team_filter).lower()
+        return [
+            match
+            for match in matches
+            if any(name.lower() == wanted for name in self.team_names_for_match(match))
+        ]
+
+    def filter_matches_by_region(self, matches, region_filter):
+        if not region_filter:
+            return matches
+        wanted = str(region_filter).lower()
+        return [
+            match
+            for match in matches
+            if str(self.region_label(match)).lower() == wanted
+        ]
+
+    def filter_matches_by_game(self, matches, game_filter):
+        if not game_filter:
+            return matches
+        wanted = str(game_filter).lower()
+        return [
+            match
+            for match in matches
+            if str(self.game_label(match)).lower() == wanted
+        ]
+
+    def is_match_open(self, match_id):
+        match_id = str(match_id)
+        return any(match["id"] == match_id for match in self.sorted_matches())
+
+    def match_has_active_predictions(self, match_id):
+        match_id = str(match_id)
+        return any(
+            prediction.get("match_id") == match_id and prediction.get("status") == "active"
+            for prediction in self.data.get("predictions", [])
+        )
+
+    def sorted_prediction_matches(self, sort_mode=SORT_START):
+        matches = [
+            match
+            for match in self.sorted_available_prediction_matches(sort_mode)
+            if self.match_has_active_predictions(match["id"])
+        ]
         return matches
 
     def format_match_time(self, match):
@@ -470,19 +737,93 @@ class Predictions(commands.Cog):
             return "Time TBD"
         return start_time.strftime("%b %d %H:%M UTC")
 
+    def format_starts_in(self, match):
+        start_time = self.parse_time(match.get("start_time"))
+        if not start_time:
+            return "TBD"
+        now = self.utc_now()
+        if start_time <= now:
+            return "Locked"
+
+        total_seconds = max(0, int((start_time - now).total_seconds()))
+        days, remainder = divmod(total_seconds, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, _seconds = divmod(remainder, 60)
+
+        if days:
+            return f"{days}d {hours}h"
+        if hours:
+            return f"{hours}h {minutes}m"
+        return f"{minutes}m"
+
+    def format_cash(self, amount):
+        return f"{int(amount or 0):,}"
+
+    def pool_percent(self, amount, total):
+        if total <= 0:
+            return "0%"
+        return f"{round((int(amount or 0) / total) * 100)}%"
+
     def match_label(self, match):
         team1 = match["team1"]["name"]
         team2 = match["team2"]["name"]
         best_of = f" Bo{match['best_of']}" if match.get("best_of") else ""
         return f"{team1} vs {team2}{best_of}"
 
+    def team_emoji(self, team):
+        team_name = team.get("name")
+        configured = self.load_team_emojis().get(self.normalize_key(team_name))
+        if configured:
+            return configured
+
+        wanted_names = {
+            self.normalize_key(team_name),
+            self.normalize_key(team.get("code")),
+            self.normalize_key(team.get("source_name")),
+        }
+        wanted_names.discard("")
+
+        for emoji in getattr(self.bot, "emojis", []):
+            if self.normalize_key(getattr(emoji, "name", "")) in wanted_names:
+                return str(emoji)
+        return None
+
+    def team_name_with_emoji(self, team):
+        emoji = self.team_emoji(team)
+        name = team.get("name", "Unknown")
+        return f"{emoji} {name}" if emoji else name
+
+    def match_label_with_emojis(self, match):
+        team1 = self.team_name_with_emoji(match["team1"])
+        team2 = self.team_name_with_emoji(match["team2"])
+        best_of = f" Bo{match['best_of']}" if match.get("best_of") else ""
+        return f"{team1} vs {team2}{best_of}"
+
+    def format_team_pool_line(self, team, pool, total):
+        amount = int(pool.get(team.get("key"), 0))
+        return (
+            f"{self.team_name_with_emoji(team)}: "
+            f"**{self.format_cash(amount)} cash** ({self.pool_percent(amount, total)})"
+        )
+
+    def prediction_status_text(self, match, total):
+        start_time = self.parse_time(match.get("start_time"))
+        tags = []
+        if total <= 0:
+            tags.append("No bets yet")
+        if start_time:
+            remaining = start_time - self.utc_now()
+            if timedelta(0) < remaining <= timedelta(hours=6):
+                tags.append("Starts soon")
+        return " | ".join(tags) if tags else "Open"
+
     def build_matches_embed(self, matches):
         embed = discord.Embed(
-            title="LoL Predictions",
+            title="Predictions",
             color=discord.Color.dark_grey(),
         )
         if not matches:
-            embed.description = "No upcoming card-team LoL predictions are available right now."
+            embed.description = "No upcoming predictions are available right now."
             return embed
 
         lines = []
@@ -490,7 +831,7 @@ class Predictions(commands.Cog):
             pool = self.match_pool(match["id"])
             lines.append(
                 f"`{index}` **{self.match_label(match)}**\n"
-                f"{match.get('league', 'LoL Esports')} - {self.format_match_time(match)}\n"
+                f"{match.get('league', 'Esports')} - {self.format_match_time(match)}\n"
                 f"Pool: {match['team1']['name']} {pool.get(match['team1']['key'], 0)} - "
                 f"{match['team2']['name']} {pool.get(match['team2']['key'], 0)}"
             )
@@ -498,15 +839,21 @@ class Predictions(commands.Cog):
         embed.set_footer(text="Use .prediction to select a match. Fictional ProPulse cash only.")
         return embed
 
-    def build_prediction_embed(self, matches, sort_mode=SORT_START):
-        sort_label = "Biggest prize pool" if sort_mode == SORT_POOL else "Nearest start time"
+    def build_prediction_embed(self, matches, sort_mode=SORT_START, team_filter=None, show_all_matches=False):
+        sort_label = PREDICTION_SORT_LABELS.get(sort_mode, "Start Time")
+        mode_text = "Showing: **All upcoming matches**" if show_all_matches else "Showing: **Matches with active bids**"
         embed = discord.Embed(
-            title="LoL Predictions",
-            description=f"Sorted by **{sort_label}**.",
+            title="Predictions",
+            description=f"{mode_text}\n{self.prediction_filter_text(sort_label, team_filter)}",
             color=discord.Color.dark_grey(),
         )
         if not matches:
-            embed.description = "No upcoming card-team LoL predictions are available right now."
+            filter_text = self.prediction_filter_text(sort_label, team_filter)
+            if show_all_matches:
+                empty_text = "No upcoming predictions are available right now."
+            else:
+                empty_text = "No matches have active bids right now. Use **View More Matches** to start one."
+            embed.description = f"{mode_text}\n{filter_text}\n{empty_text}"
             return embed
 
         for index, match in enumerate(matches[:10], start=1):
@@ -514,19 +861,28 @@ class Predictions(commands.Cog):
             team1 = match["team1"]
             team2 = match["team2"]
             total = self.total_pool(match["id"])
+            best_of = f"Bo{match['best_of']}" if match.get("best_of") else "Best of TBD"
             embed.add_field(
-                name=f"{index}. {self.match_label(match)}",
+                name=f"{index}. {self.match_label_with_emojis(match)}",
                 value=(
-                    f"{match.get('league', 'LoL Esports')} - {self.format_match_time(match)}\n"
-                    f"Prize pool: **{total} cash**\n"
-                    f"{team1['name']}: {pool.get(team1['key'], 0)} | "
-                    f"{team2['name']}: {pool.get(team2['key'], 0)}"
+                    f"{self.game_label(match)} - {self.region_label(match)} - {best_of}\n"
+                    f"Starts: **{self.format_match_time(match)}** ({self.format_starts_in(match)})\n"
+                    f"Pool: **{self.format_cash(total)} cash** - {self.prediction_status_text(match, total)}\n"
+                    f"{self.format_team_pool_line(team1, pool, total)}\n"
+                    f"{self.format_team_pool_line(team2, pool, total)}"
                 ),
                 inline=False,
             )
 
         embed.set_footer(text="Select a match to predict. Predictions use fictional ProPulse cash only.")
         return embed
+
+    def prediction_filter_text(self, sort_label, team_filter=None):
+        parts = [f"Sort: **{sort_label}**"]
+        if team_filter:
+            filter_label = sort_label if sort_label in {"Team", "Game", "Region"} else "Filter"
+            parts.append(f"{filter_label}: **{team_filter}**")
+        return " - ".join(parts)
 
     def resolve_match_arg(self, value):
         text = str(value).strip()
@@ -866,7 +1222,7 @@ class Predictions(commands.Cog):
         return embed
 
     @commands.command(aliases=["predictions", "pred", "preds"])
-    async def prediction(self, ctx):
+    async def prediction(self, ctx, _option: str = None):
         async with ctx.typing():
             _, message = await self.refresh_matches(force=False)
         if message and message.startswith("No League of Legends"):

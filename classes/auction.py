@@ -64,6 +64,21 @@ class Auction(commands.Cog):
     def save_history(self, history):
         save_json(HISTORY_PATH, history)
 
+    def build_sold_history_entry(self, auction, final_price, sale_method):
+        card_instance = auction.get("card_instance") or {}
+        card_id = card_instance.get("card_id")
+        rarity = card_instance.get("rarity")
+        if auction.get("item_type") != "card" or not card_id:
+            return None
+        return {
+            "card_id": card_id,
+            "rarity": rarity,
+            "seller_id": auction.get("seller_id"),
+            "sale_method": sale_method,
+            "final_price": final_price,
+            "ended_at": datetime.utcnow().isoformat()
+        }
+
     # -----------------
     # Helpers
     # -----------------
@@ -121,7 +136,7 @@ class Auction(commands.Cog):
             user = self.bot.get_user(int(seller_id)) if self.bot else None
         except (TypeError, ValueError):
             user = None
-        return user.display_name if user else f"User {seller_id[-4:]}"
+        return user.name if user else f"User {seller_id[-4:]}"
 
     async def notify_auction_sale(self, auction, winner_id, final_price, item_name=None):
         users_cog = self.bot.get_cog("Users")
@@ -347,17 +362,9 @@ class Auction(commands.Cog):
         users_cog.save_users()
         self.save_auctions(remaining)
         history = self.load_history()
-        history.append({
-            "auction_id": target["auction_id"],
-            "item_type": target["item_type"],
-            "card_instance": target["card_instance"],
-            "pack_name": target["pack_name"],
-            "seller_id": target["seller_id"],
-            "winner_id": str(buyer_id),
-            "final_price": price,
-            "sold": True,
-            "ended_at": datetime.utcnow().isoformat()
-        })
+        history_entry = self.build_sold_history_entry(target, price, "buy_now")
+        if history_entry:
+            history.append(history_entry)
         self.save_history(history)
         self.queue_auction_summary(users_cog, target["seller_id"], "sold", item_name, price)
         return item_name, None
@@ -455,17 +462,9 @@ class Auction(commands.Cog):
             completed.append(item_name)
             total_spent += price
             self.queue_auction_summary(users_cog, auction["seller_id"], "sold", item_name, price, save=False)
-            history.append({
-                "auction_id": auction["auction_id"],
-                "item_type": auction["item_type"],
-                "card_instance": auction["card_instance"],
-                "pack_name": auction["pack_name"],
-                "seller_id": auction["seller_id"],
-                "winner_id": buyer_id,
-                "final_price": price,
-                "sold": True,
-                "ended_at": datetime.utcnow().isoformat()
-            })
+            history_entry = self.build_sold_history_entry(auction, price, "buy_now")
+            if history_entry:
+                history.append(history_entry)
 
         users_cog.save_users()
         self.save_auctions(remaining)
@@ -551,6 +550,57 @@ class Auction(commands.Cog):
 
         self.save_auctions(remaining)
         return item_name, None
+
+    def cancel_no_bid_auctions(self, seller_id):
+        users_cog = self.bot.get_cog("Users")
+        cards_cog = self.bot.get_cog("Cards")
+        if users_cog is None or cards_cog is None:
+            return [], 0, "Auction takedowns are unavailable right now."
+
+        seller_id = str(seller_id)
+        auctions = self.load_auctions()
+        targets = [
+            auction for auction in auctions
+            if auction.get("seller_id") == seller_id and not auction.get("highest_bidder")
+        ]
+        skipped_count = sum(
+            1 for auction in auctions
+            if auction.get("seller_id") == seller_id and auction.get("highest_bidder")
+        )
+        if not targets:
+            return [], skipped_count, "No no-bid auctions are available to take down."
+
+        profile = users_cog.get_profile_by_id(seller_id)
+        if profile is None:
+            return [], skipped_count, "Seller profile not found."
+
+        users = users_cog.users
+        users.setdefault(seller_id, profile)
+        remaining = []
+        completed = []
+        target_ids = {auction.get("auction_id") for auction in targets}
+
+        for auction in auctions:
+            if auction.get("auction_id") not in target_ids:
+                remaining.append(auction)
+                continue
+
+            item_name = self.get_auction_item_name(auction, cards_cog)
+            if auction.get("item_type") == "card":
+                profile.setdefault("cards", [])
+                cards_cog.add_card_instance_to_slots(profile, auction["card_instance"])
+            else:
+                users_cog.add_pack_to_first_slot(profile, auction["pack_name"])
+            completed.append(item_name)
+
+        users_cog.save_users()
+        self.save_auctions(remaining)
+        history = [
+            entry for entry in self.load_history()
+            if entry.get("auction_id") not in target_ids
+        ]
+        self.save_history(history)
+        return completed, skipped_count, None
 
     # -----------------
     # Filters
@@ -824,6 +874,25 @@ class Auction(commands.Cog):
             for rarity in RARITY_ORDER
         }
 
+    def normalize_autosell_list_values(self, values):
+        if isinstance(values, str):
+            values = [values]
+        if not isinstance(values, list):
+            return []
+
+        normalized = []
+        seen = set()
+        for value in values:
+            value = str(value).strip()
+            if not value:
+                continue
+            key = " ".join(value.split()).casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized.append(" ".join(value.split()))
+        return normalized
+
     def normalize_autosell_settings(self, settings):
         autosell = settings.get("autosell")
         if not isinstance(autosell, dict):
@@ -836,6 +905,13 @@ class Auction(commands.Cog):
         except (TypeError, ValueError):
             duration_days = DEFAULT_AUCTION_DAYS
         autosell["duration_days"] = min(max(duration_days, 1), MAX_AUCTION_DAYS)
+
+        dont_sell = autosell.get("dont_sell")
+        if not isinstance(dont_sell, dict):
+            dont_sell = {}
+            autosell["dont_sell"] = dont_sell
+        dont_sell["teams"] = self.normalize_autosell_list_values(dont_sell.get("teams", []))
+        dont_sell["player_ids"] = self.normalize_autosell_list_values(dont_sell.get("player_ids", []))
 
         legacy_enabled = {
             "master": bool(settings.get("autosell_master", defaults["master"]["enabled"])),
@@ -868,6 +944,62 @@ class Auction(commands.Cog):
 
         return autosell
 
+    def autosell_dont_sell_sets(self, settings):
+        autosell = self.normalize_autosell_settings(settings)
+        dont_sell = autosell.get("dont_sell", {})
+        teams = {
+            value.casefold()
+            for value in dont_sell.get("teams", [])
+            if str(value).strip()
+        }
+        player_ids = {
+            value.casefold()
+            for value in dont_sell.get("player_ids", [])
+            if str(value).strip()
+        }
+        return teams, player_ids
+
+    def autosell_card_context(self, card, cards_cog):
+        card_data = cards_cog.get_card_by_id(card.get("card_id")) or card.get("snapshot", {})
+        player = cards_cog.get_player_for_card(card_data)
+        return card_data, player
+
+    def is_autosell_dont_sell_card(self, card, cards_cog, settings):
+        blocked_teams, blocked_player_ids = self.autosell_dont_sell_sets(settings)
+        if not blocked_teams and not blocked_player_ids:
+            return False
+
+        card_data, player = self.autosell_card_context(card, cards_cog)
+        team = str((card_data or {}).get("team", "")).strip().casefold()
+        if team and team in blocked_teams:
+            return True
+
+        candidate_ids = {
+            card.get("card_id"),
+            (card_data or {}).get("card_id"),
+            (card_data or {}).get("id"),
+            (card_data or {}).get("player_id"),
+            (player or {}).get("id"),
+        }
+        return any(str(player_id).strip().casefold() in blocked_player_ids for player_id in candidate_ids if player_id)
+
+    def format_autosell_dont_sell_summary(self, autosell):
+        dont_sell = autosell.get("dont_sell", {})
+        teams = dont_sell.get("teams", [])
+        player_ids = dont_sell.get("player_ids", [])
+
+        def summarize(values):
+            if not values:
+                return "None"
+            preview = ", ".join(values[:5])
+            remaining = len(values) - 5
+            return f"{preview} (+{remaining} more)" if remaining > 0 else preview
+
+        return (
+            f"**Dont Sell Teams**: {summarize(teams)}\n"
+            f"**Dont Sell Player IDs**: {summarize(player_ids)}"
+        )
+
     def autosell_duration_days(self, settings):
         autosell = self.normalize_autosell_settings(settings)
         return autosell.get("duration_days", DEFAULT_AUCTION_DAYS)
@@ -890,6 +1022,8 @@ class Auction(commands.Cog):
             if not isinstance(card, dict):
                 continue
             if cards_cog.is_card_in_user_team(user_id, card):
+                continue
+            if self.is_autosell_dont_sell_card(card, cards_cog, settings):
                 continue
             prices = self.autosell_prices(card, settings)
             if prices is None:
@@ -943,7 +1077,11 @@ class Auction(commands.Cog):
         autosell = self.normalize_autosell_settings(settings)
         duration_days = self.autosell_duration_days(settings)
         selected_rarity = selected_rarity or RARITY_ORDER[0]
-        lines = [f"**Auction Duration**: {duration_days} day(s)", ""]
+        lines = [
+            f"**Auction Duration**: {duration_days} day(s)",
+            self.format_autosell_dont_sell_summary(autosell),
+            "",
+        ]
         for rarity in RARITY_ORDER:
             rarity_key = rarity.lower()
             config = autosell[rarity_key]
@@ -1056,8 +1194,6 @@ class Auction(commands.Cog):
         users_cog = self.bot.get_cog("Users")
         cards_cog = self.bot.get_cog("Cards")
 
-        history = self.load_history()
-
         winner = auction["highest_bidder"]
         sold = winner is not None
         final_owner = winner if sold else auction["seller_id"]
@@ -1078,22 +1214,13 @@ class Auction(commands.Cog):
             seller["cash"] += auction["current_bid"]
             users_cog.save_users()
             await self.notify_auction_sale(auction, winner, auction["current_bid"])
+            history_entry = self.build_sold_history_entry(auction, auction["current_bid"], "bid")
+            if history_entry:
+                history = self.load_history()
+                history.append(history_entry)
+                self.save_history(history)
         else:
             await self.notify_auction_returned(auction)
-
-        history.append({
-            "auction_id": auction["auction_id"],
-            "item_type": auction["item_type"],
-            "card_instance": auction["card_instance"],
-            "pack_name": auction["pack_name"],
-            "seller_id": auction["seller_id"],
-            "winner_id": winner,
-            "final_price": auction["current_bid"] if sold else None,
-            "sold": sold,
-            "ended_at": datetime.utcnow().isoformat()
-        })
-
-        self.save_history(history)
 
     # -----------------
     # Command
@@ -1185,7 +1312,7 @@ class Auction(commands.Cog):
             await ctx.send("No duplicate cards are eligible for autosell.")
             return
 
-        view = AutosellReviewView(self, ctx.author.id, ctx.author.display_name, sell_cards)
+        view = AutosellReviewView(self, ctx.author.id, ctx.author.name, sell_cards)
         await ctx.send(embed=view.build_embed(), view=view)
 
 
@@ -1262,6 +1389,10 @@ class AutosellSettingsView(discord.ui.View):
     async def edit_duration_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(AutosellDurationModal(self))
 
+    @discord.ui.button(label="Dont Sell List", style=discord.ButtonStyle.secondary)
+    async def dont_sell_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(AutosellDontSellModal(self))
+
 
 class AutosellPriceModal(discord.ui.Modal, title="Edit Autosell Prices"):
     def __init__(self, view: AutosellSettingsView):
@@ -1337,6 +1468,46 @@ class AutosellDurationModal(discord.ui.Modal, title="Edit Autosell Duration"):
 
         autosell = self.settings_view.autosell_settings()
         autosell["duration_days"] = duration
+        self.settings_view.cog.bot.get_cog("Users").save_users()
+        await interaction.response.edit_message(embed=self.settings_view.build_embed(), view=self.settings_view)
+
+
+class AutosellDontSellModal(discord.ui.Modal, title="Autosell Dont Sell List"):
+    def __init__(self, view: AutosellSettingsView):
+        self.settings_view = view
+        autosell = view.autosell_settings()
+        dont_sell = autosell.get("dont_sell", {})
+        super().__init__(title="Autosell Dont Sell List")
+        self.team_names.default = "\n".join(dont_sell.get("teams", []))
+        self.player_ids.default = "\n".join(dont_sell.get("player_ids", []))
+
+    team_names = discord.ui.TextInput(
+        label="Team Names",
+        placeholder="One team per line, or separate with commas",
+        required=False,
+        style=discord.TextStyle.paragraph,
+        max_length=1000,
+    )
+    player_ids = discord.ui.TextInput(
+        label="Player IDs",
+        placeholder="One player ID per line, or separate with commas",
+        required=False,
+        style=discord.TextStyle.paragraph,
+        max_length=1000,
+    )
+
+    def parse_values(self, value):
+        values = []
+        for line in str(value).splitlines():
+            values.extend(part.strip() for part in line.split(","))
+        return self.settings_view.cog.normalize_autosell_list_values(values)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        autosell = self.settings_view.autosell_settings()
+        autosell["dont_sell"] = {
+            "teams": self.parse_values(self.team_names.value),
+            "player_ids": self.parse_values(self.player_ids.value),
+        }
         self.settings_view.cog.bot.get_cog("Users").save_users()
         await interaction.response.edit_message(embed=self.settings_view.build_embed(), view=self.settings_view)
 
@@ -2011,6 +2182,8 @@ class AuctionView(discord.ui.View):
             self.my_bids.row = 0
             self.add_item(self.my_bids)
             self.add_item(AuctionSelect(self.get_page_items(), self.cog, self.page_start()))
+            if self.show_mine:
+                self.add_item(self.take_down_no_bids)
             return
 
         self.clear.row = 0
@@ -2100,6 +2273,9 @@ class AuctionView(discord.ui.View):
         self.clear.disabled = not self.filters and not self.sort
         self.buy_page.disabled = self.in_personal_view() or not self.get_page_bulk_candidates("buy")
         self.bid_page.disabled = self.in_personal_view() or not self.get_page_bulk_candidates("bid")
+        self.take_down_no_bids.disabled = not (
+            self.show_mine and any(not auction.get("highest_bidder") for auction in self.auctions)
+        )
 
     @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary, row=0)
     async def previous(self, interaction, button):
@@ -2167,6 +2343,24 @@ class AuctionView(discord.ui.View):
     @discord.ui.button(label="Bid Page", style=discord.ButtonStyle.blurple, row=4)
     async def bid_page(self, interaction, button):
         await self.send_bulk_confirmation(interaction, "bid")
+
+    @discord.ui.button(label="Take Down No-Bid", style=discord.ButtonStyle.red, row=4)
+    async def take_down_no_bids(self, interaction, button):
+        completed, skipped_count, error = self.cog.cancel_no_bid_auctions(interaction.user.id)
+        if error and not completed:
+            await interaction.response.send_message(error, ephemeral=True)
+            return
+
+        self.reload_auctions()
+        self.rebuild_items()
+
+        embed = self.build_embed()
+        message = f"Took down {len(completed)} no-bid auction(s) and returned them to your inventory."
+        if skipped_count:
+            message += f" Skipped {skipped_count} auction(s) with bids."
+
+        await interaction.response.send_message(message, ephemeral=True)
+        await interaction.message.edit(embed=embed, view=self)
 
 
 async def setup(bot):

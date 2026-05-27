@@ -323,7 +323,7 @@ class TradeView(discord.ui.View):
 
     def display_name(self, uid):
         user = self.cog.bot.get_user(int(uid))
-        return user.display_name if user else f"User {uid}"
+        return user.name if user else f"User {uid}"
 
     def shorten_lines(self, lines, limit=1024):
         text = "\n".join(lines)

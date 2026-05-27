@@ -1,0 +1,35 @@
+{
+    "submissions": [
+        {
+            "id": 1,
+            "event": "Valorant Masters London 2026",
+            "team": "G2 Esports",
+            "player": "babybay",
+            "user_id": "272473699909763072",
+            "username": "chauncey612",
+            "attachment_url": "https://cdn.discordapp.com/attachments/1365857575706558496/1509245472689094787/maxresdefault.png?ex=6a1879e1&is=6a172861&hm=939e90ff01463b8a6cfc8826c371b2a06b93151ab460da4b56b4d3b60077e84e&",
+            "filename": "maxresdefault.png",
+            "status": "pending",
+            "reward_cash": 50,
+            "submitted_at": "2026-05-27T17:22:37.686747+00:00",
+            "reviewed_at": null,
+            "reviewer_id": null
+        },
+        {
+            "id": 2,
+            "event": "Valorant Masters London 2026",
+            "team": "G2 Esports",
+            "player": "babybay",
+            "user_id": "272473699909763072",
+            "username": "chauncey612",
+            "attachment_url": "https://cdn.discordapp.com/attachments/1365857575706558496/1509245799140167710/maxresdefault.png?ex=6a187a2e&is=6a1728ae&hm=0ad56f73ccd47448c0dac8838ed7b4e4a39c3e15e87168dac4e17e5c5e20475e&",
+            "filename": "maxresdefault.png",
+            "status": "deleted",
+            "reward_cash": 50,
+            "submitted_at": "2026-05-27T17:23:55.358705+00:00",
+            "reviewed_at": null,
+            "reviewer_id": null,
+            "deleted_at": "2026-05-27T17:28:54.930263+00:00"
+        }
+    ]
+}

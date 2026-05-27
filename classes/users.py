@@ -1014,6 +1014,7 @@ class Users(commands.Cog):
                 "`.help -mod` - Show moderator commands.\n"
                 "`.backupdata` - Send a zip of the current data files.\n"
                 "`.syncrankroles` or `.syncranks` - Sync ranked Discord roles.\n"
+                "`.pred -settings` - Choose which predictions appear on `.pred`.\n"
                 "`.mods` - List bot moderators.\n"
                 "`.addmod @user` - Add a bot moderator. Admins, bot owners, and manager IDs only.\n"
                 "`.removemod @user` - Remove a bot moderator. Admins, bot owners, and manager IDs only."
@@ -1063,6 +1064,7 @@ class Users(commands.Cog):
                 "`.info [filters]` or `.info <CID>` - List or inspect bot cards.\n"
                 "`.view <inventory #>` - View one inventory card.\n"
                 "`.packs` - View unopened packs.\n"
+                "`.images` - Submit player images for review.\n"
                 "`.open <pack #|pack id|pack name>` - Open a pack.\n"
                 "`.open all [-set set name]` - Open your packs one at a time from lowest index."
             ),
@@ -1096,7 +1098,7 @@ class Users(commands.Cog):
         profile = self.get_profile(member)
 
         embed = discord.Embed(
-            title=f"{PROFILE_EMOJI} {member.display_name}'s Profile"
+            title=f"{PROFILE_EMOJI} {member.name}'s Profile"
         )
 
         embed.set_thumbnail(url=member.display_avatar.url)
@@ -1270,7 +1272,7 @@ class Users(commands.Cog):
             vote_cd = "Vote link ready"
 
         embed = discord.Embed(
-            title=f"{COOLDOWN_EMOJI} {ctx.author.display_name}'s Cooldowns",
+            title=f"{COOLDOWN_EMOJI} {ctx.author.name}'s Cooldowns",
             description=(
                 f"{PRACTICE_EMOJI} **Practice:** {practice_cd}\n"
                 f"{RANKED_EMOJI} **Ranked:** {ranked_cd}\n"

@@ -36,6 +36,7 @@ initial_extensions = [
     "classes.trades",
     "classes.predictions",
     "classes.reaction_roles",
+    "classes.images",
 ]
 
 

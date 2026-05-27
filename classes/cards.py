@@ -1437,7 +1437,7 @@ class Cards(commands.Cog):
                     yield owned_card
 
     def get_user_display_name(self, user_id, user_data):
-        for key in ("discord_username", "display_name", "username", "name"):
+        for key in ("discord_username", "username", "name"):
             value = user_data.get(key) if isinstance(user_data, dict) else None
             if value:
                 return str(value)
@@ -1448,7 +1448,7 @@ class Cards(commands.Cog):
             except (TypeError, ValueError):
                 cached_user = None
             if cached_user:
-                return getattr(cached_user, "display_name", None) or cached_user.name
+                return cached_user.name
 
         return str(user_id)
 
@@ -1572,6 +1572,16 @@ class Cards(commands.Cog):
         if card_number < 1 or card_number > len(cards):
             return None
         return card_number, cards[card_number - 1]
+
+    def get_card_info_number_for_id(self, card_id):
+        if not card_id:
+            return None
+
+        for index, card in enumerate(self.get_sorted_card_definitions(), start=1):
+            if card.get("card_id", card.get("id")) == card_id:
+                return index
+
+        return None
 
     def resolve_card_definition(self, value):
         text = str(value).strip().lstrip("#")
@@ -1703,6 +1713,13 @@ class Cards(commands.Cog):
 
         return completed_rarity, target_rarity, target_owned_ids, missing_cards
 
+    def progress_percentage(self, owned_count, total_count):
+        if not total_count:
+            return 0
+        if owned_count >= total_count:
+            return 100
+        return min(round((owned_count / total_count) * 100), 99)
+
     def get_collection_progress(self, user_id, args):
         users, user_data = self.get_user_data(user_id)
 
@@ -1739,9 +1756,9 @@ class Cards(commands.Cog):
             if card.get("card_id", card.get("id")) in best_rarities
         }
         overall_owned_count = len(overall_owned_ids)
-        overall_percentage = round((overall_owned_count / total_count) * 100)
+        overall_percentage = self.progress_percentage(overall_owned_count, total_count)
         owned_count = len(target_owned_ids)
-        percentage = round((owned_count / total_count) * 100)
+        percentage = self.progress_percentage(owned_count, total_count)
         collection_name = self.get_progress_collection_name(filters, matching_cards)
 
         return {
@@ -1826,8 +1843,8 @@ class Cards(commands.Cog):
             for card in matching_cards
             if card.get("card_id", card.get("id")) in best_rarities
         })
-        percentage = round((len(target_owned_ids) / total_count) * 100) if total_count else 0
-        overall_percentage = round((overall_owned_count / total_count) * 100) if total_count else 0
+        percentage = self.progress_percentage(len(target_owned_ids), total_count)
+        overall_percentage = self.progress_percentage(overall_owned_count, total_count)
 
         return {
             "game": completion_set["game"],
@@ -1896,6 +1913,14 @@ class Cards(commands.Cog):
             "Challenger": "🔵"
         }
         return symbols.get(rarity, "⚫")
+
+    def format_card_version_count(self, card_instance):
+        card_id = card_instance.get("card_id")
+        rarity = card_instance.get("rarity", "Unknown")
+        count = self.get_all_pulled_rarity_counts().get(card_id, {}).get(rarity, 0)
+        version_word = "version" if count == 1 else "versions"
+        verb = "is" if count == 1 else "are"
+        return f"There {verb} {count} {rarity} {version_word} of this card."
 
     def get_filtered_inventory(self, user_id, args):
         users, user_data = self.get_user_data(user_id)
@@ -2301,6 +2326,19 @@ class Cards(commands.Cog):
     def build_team_embeds(self, user_id, user_display_name, game_name=None):
         return [self.build_team_embed(user_id, user_display_name, game_name)]
 
+    def build_team_title(self, user_display_name, game_name, is_default=False):
+        possessive_name = f"{user_display_name}'s"
+        if game_name == GAME_LEAGUE:
+            title = f"{possessive_name} LoL Team"
+        elif game_name == GAME_VALORANT:
+            title = f"{possessive_name} Valorant Team"
+        else:
+            title = f"{possessive_name} {TEAM_GAME_LABELS.get(game_name, game_name)} Team"
+
+        if is_default:
+            title = f"{title} | Default"
+        return title
+
     def format_team_set_label(self, card_data):
         league = str(card_data.get("league", "")).strip()
         set_name = str(card_data.get("set", "")).strip()
@@ -2449,7 +2487,6 @@ class Cards(commands.Cog):
         canvas = Image.new("RGB", (width, height), (15, 19, 29))
         draw = ImageDraw.Draw(canvas)
         name_font = self.get_card_font(28, bold=True)
-        team_font = self.get_card_font(16)
         meta_font = self.get_card_font(14, bold=True)
         small_font = self.get_card_font(12)
 
@@ -2494,12 +2531,10 @@ class Cards(commands.Cog):
         self.draw_badge_asset(canvas, draw, role_icon, (x + card_width - 88, y + 24, x + card_width - 24, y + 88), outline=rarity_color)
 
         player_label = self.fit_line(draw, (player or {}).get("name", card_data.get("ign", "Unknown")), card_width - 48, font=name_font)
-        team_label = self.fit_line(draw, card_data.get("team", "Unknown"), card_width - 48, font=team_font)
         set_label = self.fit_line(draw, self.format_team_set_label(card_data), card_width - 48, font=small_font)
 
         self.draw_centered_text(draw, (x + 24, y + card_height - 104, x + card_width - 24, y + card_height - 70), player_label, (248, 250, 253), font=name_font)
-        self.draw_centered_text(draw, (x + 24, y + card_height - 74, x + card_width - 24, y + card_height - 52), team_label, (202, 208, 218), font=team_font)
-        self.draw_centered_text(draw, (x + 24, y + card_height - 54, x + card_width - 24, y + card_height - 32), set_label, (164, 173, 188), font=small_font)
+        self.draw_centered_text(draw, (x + 24, y + card_height - 68, x + card_width - 24, y + card_height - 42), set_label, (164, 173, 188), font=small_font)
 
         buffer = io.BytesIO()
         canvas.save(buffer, format="PNG")
@@ -2553,7 +2588,6 @@ class Cards(commands.Cog):
         canvas = Image.new("RGB", (width, height), (15, 19, 29))
         draw = ImageDraw.Draw(canvas)
         name_font = self.get_card_font(15, bold=True)
-        team_font = self.get_card_font(10)
         meta_font = self.get_card_font(11, bold=True)
         small_font = self.get_card_font(9)
 
@@ -2642,10 +2676,8 @@ class Cards(commands.Cog):
 
             if has_card:
                 player_label = self.fit_line(draw, slot["player_name"], card_width - 28, font=name_font)
-                team_label = self.fit_line(draw, slot["card_data"].get("team", "Unknown"), card_width - 28, font=team_font)
             else:
                 player_label = role_label
-                team_label = "Open slot"
 
             self.draw_centered_text(
                 draw,
@@ -2656,14 +2688,7 @@ class Cards(commands.Cog):
             )
             self.draw_centered_text(
                 draw,
-                (x + 12, y + card_height - 40, x + card_width - 12, y + card_height - 25),
-                team_label,
-                (202, 208, 218),
-                font=team_font
-            )
-            self.draw_centered_text(
-                draw,
-                (x + 12, y + card_height - 26, x + card_width - 12, y + card_height - 12),
+                (x + 12, y + card_height - 34, x + card_width - 12, y + card_height - 14),
                 meta_label,
                 (164, 173, 188),
                 font=small_font
@@ -2732,12 +2757,11 @@ class Cards(commands.Cog):
         elo = int(user_data.get("elo", DEFAULT_ELO))
         rank = self.rank_for_elo(elo)
         default_game = self.get_default_team_game(user_data)
-        default_text = "Default" if game_name == default_game else f"Default: {TEAM_GAME_LABELS[default_game]}"
 
         self.save_users(users)
 
         embed = discord.Embed(
-            title=f"{user_display_name}'s {TEAM_GAME_LABELS[game_name]} Team",
+            title=self.build_team_title(user_display_name, game_name, game_name == default_game),
             color=discord.Color.dark_grey()
         )
         embed.add_field(
@@ -2747,10 +2771,6 @@ class Cards(commands.Cog):
         )
         embed.add_field(name=f"{RANKED_EMOJI} Power", value=str(total_power), inline=True)
         embed.add_field(name="ELO", value=str(elo), inline=True)
-        embed.add_field(name=f"{TEAM_EMOJI} Ranked Team", value=default_text, inline=True)
-        bonus_lines = self.team_completion_bonus_lines(image_slots)
-        if bonus_lines:
-            embed.add_field(name=f"{SET_EMOJI} Set Bonuses", value="\n".join(bonus_lines), inline=False)
         file = self.make_team_lineup_file(image_slots, user_id, game_name)
         if file:
             embed.set_image(url=f"attachment://{file.filename}")
@@ -3321,8 +3341,7 @@ class Cards(commands.Cog):
         card_name = player.get("name") if player else card_data.get("ign", "Unknown")
         puller = getattr(ctx, "author", None) or getattr(ctx, "user", None)
         puller_name = (
-            getattr(puller, "display_name", None)
-            or getattr(puller, "name", None)
+            getattr(puller, "name", None)
             or "A player"
         )
         puller_name = discord.utils.escape_mentions(str(puller_name))
@@ -3926,7 +3945,7 @@ class Cards(commands.Cog):
             return {"error": error}
 
         has_more_packs = self.has_unopened_packs(user_packs, set_filter)
-        display_name = getattr(pulled_by_user, "display_name", str(user_id))
+        display_name = getattr(pulled_by_user, "name", str(user_id))
         embed = self.build_open_pack_embed(display_name, pack_id, results, has_more_packs)
         return {
             "embed": embed,
@@ -4014,7 +4033,7 @@ class Cards(commands.Cog):
 
         view = self.build_inventory_view(
             author_id=ctx.author.id,
-            user_display_name=ctx.author.display_name,
+            user_display_name=ctx.author.name,
             owned_cards=filtered_cards,
             filters=filters
         )
@@ -4034,7 +4053,7 @@ class Cards(commands.Cog):
         view = ProgressView(
             cog=self,
             author_id=ctx.author.id,
-            user_display_name=ctx.author.display_name,
+            user_display_name=ctx.author.name,
             progress_data=progress_data
         )
 
@@ -4051,7 +4070,7 @@ class Cards(commands.Cog):
         view = CompletionView(
             cog=self,
             author_id=ctx.author.id,
-            user_display_name=ctx.author.display_name,
+            user_display_name=ctx.author.name,
             completion_data=completion_data
         )
 
@@ -4072,7 +4091,7 @@ class Cards(commands.Cog):
         self.normalize_ranked_profile(user_data)
         self.save_users(users)
 
-        view = TeamView(self, ctx.author.id, ctx.author.display_name)
+        view = TeamView(self, ctx.author.id, ctx.author.name)
         embed, file = view.build_message()
         if file:
             message = await ctx.send(embed=embed, file=file, view=view)
@@ -4186,7 +4205,10 @@ class Cards(commands.Cog):
             show_card_details=False,
             show_image=False,
         )
-        embed.title = f"Inv #: {inventory_number}"
+        card_id = card_data.get("card_id", card_data.get("id"))
+        cid = self.get_card_info_number_for_id(card_id)
+        embed.title = f"Inv #: {inventory_number} | CID: {cid}" if cid else f"Inv #: {inventory_number} | CID: ?"
+        embed.description = self.format_card_version_count(owned_card)
 
         pulled_by = owned_card.get("pulled_by_username", ctx.author.name)
         pulled_date = self.format_pull_date(owned_card.get("pulled_on"))
@@ -4284,7 +4306,7 @@ class Cards(commands.Cog):
             await ctx.send(error)
             return
 
-        embed = self.build_open_pack_embed(ctx.author.display_name, pack_id, results)
+        embed = self.build_open_pack_embed(ctx.author.name, pack_id, results)
         await ctx.send(embed=embed)
 
         for inst, card, player in results:
@@ -4315,7 +4337,7 @@ class Cards(commands.Cog):
             lines.append(f"{i}. {display_name} ({pack_id})")
 
         embed = discord.Embed(
-            title=f"{ctx.author.display_name}'s Packs",
+            title=f"{ctx.author.name}'s Packs",
             description="\n".join(lines),
             color=discord.Color.dark_grey()
         )
