@@ -2388,7 +2388,13 @@ class Cards(commands.Cog):
         return colors.get(rarity, (128, 136, 148))
 
     def get_card_font(self, size=12, bold=False):
-        font_names = ["arialbd.ttf" if bold else "arial.ttf", "segoeuib.ttf" if bold else "segoeui.ttf"]
+        font_names = [
+            "arialbd.ttf" if bold else "arial.ttf",
+            "segoeuib.ttf" if bold else "segoeui.ttf",
+            "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+        ]
         for font_name in font_names:
             try:
                 return ImageFont.truetype(font_name, size)
@@ -2486,7 +2492,7 @@ class Cards(commands.Cog):
 
         canvas = Image.new("RGB", (width, height), (15, 19, 29))
         draw = ImageDraw.Draw(canvas)
-        name_font = self.get_card_font(28, bold=True)
+        name_font = self.get_card_font(32, bold=True)
         meta_font = self.get_card_font(14, bold=True)
         small_font = self.get_card_font(12)
 
@@ -2587,7 +2593,7 @@ class Cards(commands.Cog):
 
         canvas = Image.new("RGB", (width, height), (15, 19, 29))
         draw = ImageDraw.Draw(canvas)
-        name_font = self.get_card_font(15, bold=True)
+        name_font = self.get_card_font(17, bold=True)
         meta_font = self.get_card_font(11, bold=True)
         small_font = self.get_card_font(9)
 

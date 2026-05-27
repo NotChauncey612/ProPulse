@@ -74,7 +74,13 @@ def submission_safe_name(value):
 
 
 def preview_font(size=12, bold=False):
-    font_names = ["arialbd.ttf" if bold else "arial.ttf", "segoeuib.ttf" if bold else "segoeui.ttf"]
+    font_names = [
+        "arialbd.ttf" if bold else "arial.ttf",
+        "segoeuib.ttf" if bold else "segoeui.ttf",
+        "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+    ]
     for font_name in font_names:
         try:
             return ImageFont.truetype(font_name, size)
@@ -308,7 +314,7 @@ class Images(commands.Cog):
             card = self.valorant_player_card(team_name, player_name)
             role = str(card.get("role", "Unknown")).upper()
             role_label = VALORANT_ROLE_LABELS.get(role, role.title())
-            player_label = fit_preview_line(draw, player_name, PREVIEW_CARD_WIDTH - 48, preview_font(28, bold=True))
+            player_label = fit_preview_line(draw, player_name, PREVIEW_CARD_WIDTH - 48, preview_font(32, bold=True))
             set_label = fit_preview_line(draw, f"{role_label} - {VALORANT_EVENT_NAME}", PREVIEW_CARD_WIDTH - 48, preview_font(12))
 
             x = PREVIEW_PADDING
