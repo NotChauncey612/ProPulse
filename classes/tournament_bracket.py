@@ -81,9 +81,7 @@ def render_bracket(event, report_day, title=None):
     width = max(1100 if event["groups"] else 900, 80 + len(rounds) * 350)
     bracket_height = max(250, len(initial) * 112 + 100)
     group_height = 110 + max(map(len, event["groups"].values())) * 32 if event["groups"] else 0
-    champion_visible = bool(event.get("winner")) and datetime.fromisoformat(
-        event["stage_times"]["final"]).astimezone(zone).date() <= cutoff
-    height = 160 + bracket_height + group_height + (80 if champion_visible else 20)
+    height = 160 + bracket_height + group_height + 20
     canvas = Image.new("RGB", (width, height), BG)
     draw = ImageDraw.Draw(canvas)
 
@@ -171,9 +169,6 @@ def render_bracket(event, report_day, title=None):
                 text(x, group_y + 68 + (rank - 1) * 32,
                      f"{rank}. {name(row['uid'])}  {row['wins']}–{row['losses']}", 15,
                      ACCENT if rank <= 2 else MUTED, rank <= 2, max_width=group_width - 16)
-    champion = previous[0]["winner"] if previous else None
-    if champion:
-        text(40, height - 50, f"CHAMPION: {name(champion)}", 19, GOLD, True)
     output = io.BytesIO()
     canvas.save(output, format="PNG")
     output.seek(0)
