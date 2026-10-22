@@ -6,7 +6,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from PIL import Image
 import discord
@@ -421,16 +421,18 @@ class TournamentIntegrationTests(unittest.IsolatedAsyncioTestCase):
         recovered_match = recovered["matches"][0]
         channel = SimpleNamespace(send=AsyncMock(return_value=SimpleNamespace(id=998)))
         self.bot.get_channel = lambda channel_id: channel
+        artwork = Mock(return_value=None)
         with patch.object(self.cards, "roll_ranked_gold_from_stats", side_effect=AssertionError("must reuse saved gold")), \
-                patch.object(self.cards, "make_ranked_battle_file", return_value=None) as artwork:
+                patch.dict(Tournaments.publish_game.__globals__, render_match=artwork):
             await restarted.publish_game(recovered, recovered_match, 0)
         posted = channel.send.await_args.kwargs["embed"]
         fields = {field.name: field.value for field in posted.fields}
         self.assertNotIn("⚔️ Power", fields)
         self.assertNotIn("🪙 Gold", fields)
         self.assertEqual(set(fields), {"Games so far"})
-        self.assertEqual(artwork.call_args.kwargs["user_power"], 625)
-        self.assertEqual(artwork.call_args.kwargs["opponent_power"], 625)
+        rendered_match = artwork.call_args.args[2]
+        self.assertEqual(rendered_match["games"][0]["left_power"], 625)
+        self.assertEqual(rendered_match["games"][0]["right_power"], 625)
         self.assertEqual(recovered_match["games"][0]["left_gold"], 125000)
         with patch("classes.cards.random.uniform", return_value=300):
             next_gold = self.cog.roll_game_gold(event, match)

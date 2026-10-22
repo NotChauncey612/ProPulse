@@ -13,6 +13,7 @@ from . import tournament_engine as engine
 from .tournament_engine import FINALS_GAME_INTERVAL, GAME_INTERVAL
 from .cards import GAME_LEAGUE, GAME_VALORANT, RARITY_TEAM_MULTIPLIERS
 from .tournament_bracket import render_bracket
+from .tournament_match import render_match
 from .storage import load_json, save_json
 
 
@@ -359,27 +360,14 @@ class Tournaments(commands.Cog):
         channel = await self.channel(event)
         embed = self.match_embed(event, match, index)
         cards = self.bot.get_cog("Cards")
-        left, right = (event["entrants"][match[key]] for key in ("left", "right"))
         file = None
         try:
-            image_slots = []
-            for side, entrant in (("left", left), ("right", right)):
-                slots = copy.deepcopy(entrant["slots"])
-                if f"{side}_gold_rolls" in game:
-                    cards.apply_ranked_gold_to_image_slots(slots, game[f"{side}_gold_rolls"])
-                image_slots.append(slots)
-            file = await asyncio.to_thread(cards.make_ranked_battle_file,
-                image_slots[0], image_slots[1], f"tournament_{event['week']}_{match['id']}",
-                seeded_name(event, match["left"], False), seeded_name(event, match["right"], False), event["game"], event["game"],
-                title_font_size=24,
-                user_power=game.get("left_power", left["power"]),
-                opponent_power=game.get("right_power", right["power"]))
+            file = await asyncio.to_thread(render_match, cards, event, match, index, STAGE_LABELS[match["stage"]])
         except Exception:
             log.exception("Tournament artwork failed; posting the game summary without artwork")
         try:
             if file:
-                embed.set_image(url=f"attachment://{file.filename}")
-                message = await channel.send(embed=embed, file=file, allowed_mentions=discord.AllowedMentions.none())
+                message = await channel.send(file=file, allowed_mentions=discord.AllowedMentions.none())
             else:
                 message = await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
         finally:
