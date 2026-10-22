@@ -5,3 +5,4 @@ requests
 playwright
 boto3
 deep-translator
+tzdata
