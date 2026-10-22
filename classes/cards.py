@@ -2715,9 +2715,6 @@ class Cards(commands.Cog):
         opponent_team_name,
         game_name=None,
         opponent_game_name=None,
-        title_font_size=None,
-        user_power=None,
-        opponent_power=None,
     ):
         user_file = self.make_team_lineup_file(user_slots, f"{user_id}_you", game_name)
         opponent_file = self.make_team_lineup_file(
@@ -2731,8 +2728,7 @@ class Cards(commands.Cog):
         with Image.open(user_file.fp) as user_image, Image.open(opponent_file.fp) as opponent_image:
             user_image = user_image.convert("RGB")
             opponent_image = opponent_image.convert("RGB")
-            title_height = 48 if title_font_size else 32
-            title_font = self.get_card_font(title_font_size, bold=True) if title_font_size else None
+            title_height = 32
             gap = 14
             padding = 12
             width = max(user_image.width, opponent_image.width) + padding * 2
@@ -2740,35 +2736,13 @@ class Cards(commands.Cog):
             canvas = Image.new("RGB", (width, height), (31, 34, 40))
             draw = ImageDraw.Draw(canvas)
 
-            def draw_title(y, name, power):
-                if power is None:
-                    if title_font:
-                        name = self.fit_line(draw, name, width - 24, font=title_font)
-                    self.draw_centered_text(draw, (0, y, width, y + title_height), name, (238, 240, 244), font=title_font)
-                    return
-                face = title_font or self.get_card_font(24, bold=True)
-                power_label = str(power)
-                power_width = draw.textlength(power_label, font=face)
-                name = self.fit_line(draw, name, width - 24 - power_width - 48, font=face)
-                name_width = draw.textlength(name, font=face)
-                x = (width - name_width - power_width - 48) / 2
-                self.draw_centered_text(draw, (x, y, x + name_width, y + title_height), name, (238, 240, 244), font=face)
-                icon_x, icon_y = x + name_width + 14, y + title_height / 2
-                # Draw crossed swords directly so the power icon also works on Linux without emoji fonts.
-                draw.line((icon_x, icon_y - 8, icon_x + 17, icon_y + 9), fill=(225, 231, 239), width=3)
-                draw.line((icon_x + 17, icon_y - 8, icon_x, icon_y + 9), fill=(225, 231, 239), width=3)
-                draw.line((icon_x - 2, icon_y + 4, icon_x + 5, icon_y + 11), fill=(240, 203, 114), width=3)
-                draw.line((icon_x + 12, icon_y + 11, icon_x + 19, icon_y + 4), fill=(240, 203, 114), width=3)
-                power_x = x + name_width + 48
-                self.draw_centered_text(draw, (power_x, y, power_x + power_width, y + title_height), power_label, (238, 240, 244), font=face)
-
-            draw_title(padding, user_team_name, user_power)
+            self.draw_centered_text(draw, (0, padding, width, padding + title_height), user_team_name, (238, 240, 244))
             user_x = (width - user_image.width) // 2
             user_y = padding + title_height
             canvas.paste(user_image, (user_x, user_y))
 
             enemy_title_y = user_y + user_image.height + gap
-            draw_title(enemy_title_y, opponent_team_name, opponent_power)
+            self.draw_centered_text(draw, (0, enemy_title_y, width, enemy_title_y + title_height), opponent_team_name, (238, 240, 244))
             opponent_x = (width - opponent_image.width) // 2
             opponent_y = enemy_title_y + title_height
             canvas.paste(opponent_image, (opponent_x, opponent_y))

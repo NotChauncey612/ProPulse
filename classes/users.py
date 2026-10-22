@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import asyncio
-import copy
 import math
 import os
 import random
@@ -131,32 +130,6 @@ class Users(commands.Cog):
 
     def save_users(self):
         save_json(DATA_PATH, self.users)
-
-    def award_tournament_prizes(self, receipt_key, prizes):
-        """Save balances and their receipts together, so retrying cannot double-credit."""
-        ids = [str(prize["user_id"]) for prize in prizes]
-        if len(ids) != len(set(ids)) or any(not isinstance(self.users.get(uid), dict) for uid in ids):
-            raise ValueError("Tournament prize recipients must have distinct existing profiles")
-        before = {uid: copy.deepcopy(self.users[uid]) for uid in ids}
-        changed = False
-        try:
-            for prize, uid in zip(prizes, ids):
-                profile = self.users[uid]
-                receipts = profile.setdefault("tournament_rewards", {})
-                if receipt_key in receipts:
-                    continue
-                self.normalize_profile_currency(profile)
-                profile["gold"] = int(profile.get("gold", 0)) + prize["gold"]
-                profile["cash"] = int(profile.get("cash", 0)) + prize["cash"]
-                receipts[receipt_key] = {key: prize[key] for key in ("place", "gold", "cash")}
-                changed = True
-            if changed:
-                self.save_users()
-        except Exception:
-            for uid, snapshot in before.items():
-                self.users[uid].clear()
-                self.users[uid].update(snapshot)
-            raise
 
     def load_moderators(self):
         data = load_json(MODERATORS_PATH, default=[])
@@ -1098,15 +1071,6 @@ class Users(commands.Cog):
             inline=False
         )
         embed.add_field(
-            name="Weekly tournaments",
-            value=(
-                "`.tournament` or `.tourney` - Sign up Monday–Wednesday; view the bracket after Wednesday.\n"
-                "`.tournament join` / `.tournament leave` - Sign up or withdraw Monday–Wednesday.\n"
-                "`.tournament help` - Tournament rules and moderator setup."
-            ),
-            inline=False
-        )
-        embed.add_field(
             name="Predictions",
             value="`.prediction`, `.predictions`, `.pred`, or `.preds` - View matches and manage your picks.",
             inline=False
@@ -1168,9 +1132,7 @@ class Users(commands.Cog):
     @commands.command(aliases=["lb"])
     async def leaderboard(self, ctx):
         entries = self.get_leaderboard_entries()
-        tournaments = self.bot.get_cog("Tournaments")
-        seeds = tournaments.seeds_for_guild(ctx.guild.id) if tournaments and ctx.guild else {}
-        view = LeaderboardView(self, entries, tournament_seeds=seeds)
+        view = LeaderboardView(self, entries)
         await ctx.send(embed=view.build_embed(), view=view)
 
     @commands.command(aliases=["addmoderator", "modadd"])
@@ -1451,11 +1413,10 @@ class VoteView(discord.ui.View):
 
 
 class LeaderboardView(discord.ui.View):
-    def __init__(self, users_cog: Users, entries, tournament_seeds=None):
+    def __init__(self, users_cog: Users, entries):
         super().__init__(timeout=120)
         self.users_cog = users_cog
         self.entries = entries
-        self.tournament_seeds = dict(tournament_seeds or {})
         self.page = 0
         self.update_buttons()
 
@@ -1475,11 +1436,9 @@ class LeaderboardView(discord.ui.View):
         lines = []
         for index, entry in enumerate(self.get_page_entries(), start=self.page_start() + 1):
             rank_symbol = RANK_SYMBOLS.get(entry["rank"], "⚫")
-            seed = self.tournament_seeds.get(str(entry["user_id"]))
-            seed_label = f" | Tournament seed: `#{seed}`" if seed else ""
             lines.append(
                 f"`#{index:>2}` {rank_symbol} **{entry['ign']}** | "
-                f"ELO: `{entry['elo']}` | {RANKED_EMOJI}: `{entry['total_power']}`{seed_label}"
+                f"ELO: `{entry['elo']}` | {RANKED_EMOJI}: `{entry['total_power']}`"
             )
 
         description = "\n".join(lines) if lines else "No users are on the leaderboard yet."
