@@ -31,6 +31,7 @@ install_discord_translation(bot)
 initial_extensions = [
     "classes.users",
     "classes.cards",
+    "classes.tournaments",
     "classes.auction",
     "classes.shop",
     "classes.trades",

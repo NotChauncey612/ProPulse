@@ -13,6 +13,7 @@ data/trades.json
 data/active_trades.json
 data/moderators.json
 data/reaction_roles.json
+data/tournaments.json
 
 # Backup/export artifacts.
 *.zip
