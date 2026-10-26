@@ -85,12 +85,14 @@ Using `.tournament` again while already entered confirms the existing signup and
 players again, sorted by provisional seed; it does not add a duplicate. Signup-list seeds
 follow current leaderboard order until Wednesday ends, when the final seeds lock. After
 Wednesday the command returns the bracket PNG instead of accepting signups. If groups have
-not finished yet, the image shows group standings and qualifier placeholders for the knockout
-rounds. Viewing a bracket never plays a game or pays prizes.
+not finished yet, Thursday shows a separate group standings image. Friday onward shows only
+the knockout bracket. Events without groups always show the knockout bracket.
+Viewing a board never plays a game or pays prizes.
 
 The bot posts a series scoreboard and a **new message for every game**, including the winning
-player, updated series score, game history, and existing card artwork for both lineups. Games
-include match-point, game-five, and series-winner callouts. The
+player, updated series score, and existing card artwork for both lineups. Each game post is
+one broadcast image with the names and seeds once, power, three series-win markers per side,
+and a highlighted winning lineup. A text result is used if artwork cannot be generated. The
 main tournament board updates separately. Match titles, scores, winner announcements, and
 artwork identify both entrants by their Discord display names, captured when lineups lock.
 Posts do not ping players automatically. Group, preliminary, and quarterfinal games appear
@@ -98,21 +100,23 @@ Posts do not ping players automatically. Group, preliminary, and quarterfinal ga
 start, then announce each subsequent game **30 minutes apart** (for example, 17:00, 17:30,
 18:00, and, if needed, 18:30 and 19:00). Semifinal series run sequentially, with a short
 30-second break between series. Game posts omit series IDs and repeated next-game reminders;
-the lineup artwork uses larger player names and seeds above each team.
+the artwork uses one scoreboard above both teams, with no repeated names or center caption.
 
 After all matches scheduled for a match day finish, the bot automatically posts a PNG picture
-of the updated bracket in the same channel. Friday's picture waits for both preliminaries
+of the updated standings or bracket in the same channel. Thursday uses a separate group
+board with seeds, series records, game differences, and highlights for confirmed qualifiers.
+Friday's picture waits for both preliminaries
 and quarterfinals when both are needed. The picture includes entrants' display names, BO5
-scores, byes, advancement connectors, future-round placeholders, and group standings when
-applicable. Sunday's completed bracket highlights the champion. Days without matches do
+scores, byes, advancement connectors, and future-round placeholders, with no group tables
+or bottom captions. Sunday's completed bracket highlights the winning final row. Days without matches do
 not generate a picture. Estimated start times appear beneath each matchup, rather than
 under the round headings. Estimates allow five games per series and skip byes; later
 matches may start earlier when preceding series finish in fewer games. Posted recap message IDs are saved, preventing repeat pictures on
 normal restarts; failed sends are retried, including after the final and before a new week opens.
 
 Game announcements focus on the matchup artwork and score, without separate power/gold
-comparison fields or a duplicate text lineup. Each team heading in the artwork shows its
-seed, name, and power (for example, `#1 Chauncey ⚔️ 925`). Gold is rolled per role from that game's rarity-only power using the ranked gold calculation;
+comparison fields or a duplicate text lineup. The scoreboard shows each entrant's
+seed, name, and power. Gold is rolled per role from that game's rarity-only power using the ranked gold calculation;
 the lineup artwork also shows each role's gold. Each game's power, gold totals, and role rolls
 are saved before the result is posted, so recovery reuses them. As in ranked, displayed gold
 does not change the power-based win probability or count as wallet gold; tournament placement

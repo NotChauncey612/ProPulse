@@ -13,6 +13,7 @@ from . import tournament_engine as engine
 from .tournament_engine import FINALS_GAME_INTERVAL, GAME_INTERVAL
 from .cards import GAME_LEAGUE, GAME_VALORANT, RARITY_TEAM_MULTIPLIERS
 from .tournament_bracket import render_bracket
+from .tournament_layout import show_groups
 from .tournament_match import render_match
 from .storage import load_json, save_json
 
@@ -399,8 +400,9 @@ class Tournaments(commands.Cog):
             buffer = await asyncio.to_thread(render_bracket, event, day)
             filename = f"tournament-bracket-{event['week']}-{day}.png"
             file = discord.File(buffer, filename=filename)
-            embed = discord.Embed(title=f"{datetime.fromisoformat(day):%A} complete · Tournament bracket",
-                                  description="All scheduled matches for this day are finished. Here is the updated bracket.",
+            board_label = "Group standings" if show_groups(event, day) else "Tournament bracket"
+            embed = discord.Embed(title=f"{datetime.fromisoformat(day):%A} complete · {board_label}",
+                                  description="All scheduled matches for this day are finished.",
                                   color=discord.Color.gold())
             embed.set_image(url=f"attachment://{filename}")
             try:
@@ -565,9 +567,10 @@ class Tournaments(commands.Cog):
                 await ctx.send(event.get("reason", "This week's tournament was cancelled."))
                 return
             day = now.astimezone(ZoneInfo(event["timezone"])).date().isoformat()
-            buffer = await asyncio.to_thread(render_bracket, event, day, title="Tournament bracket")
+            buffer = await asyncio.to_thread(render_bracket, event, day)
             file = discord.File(buffer, filename=f"tournament-bracket-{event['week']}.png")
-            embed = discord.Embed(title=f"{event['game']} tournament bracket", color=discord.Color.gold())
+            board_label = "group standings" if show_groups(event, day) else "tournament bracket"
+            embed = discord.Embed(title=f"{event['game']} {board_label}", color=discord.Color.gold())
             embed.set_image(url=f"attachment://{file.filename}")
             try:
                 await ctx.send(embed=embed, file=file, allowed_mentions=discord.AllowedMentions.none())

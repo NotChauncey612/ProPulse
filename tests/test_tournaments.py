@@ -17,6 +17,8 @@ from classes.cards import Cards, GAME_LEAGUE, GAME_VALORANT, RARITY_TEAM_MULTIPL
 from classes.users import LeaderboardView, Users
 from classes.tournaments import FINALS_GAME_INTERVAL, GAME_INTERVAL, Tournaments, game_interval
 from classes.tournament_bracket import estimated_match_times, render_bracket
+from classes.tournament_board import Board
+from classes.tournament_layout import show_groups
 
 
 MONDAY = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
@@ -662,6 +664,35 @@ class TournamentIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
 
 class DailyBracketTests(unittest.TestCase):
+    def test_groups_and_knockouts_are_separate_and_do_not_leak_future_results(self):
+        event = event_with(16)
+        engine.lock_registration(event, leaderboard_order=list(event["entrants"]))
+        now = datetime(2026, 10, 26, tzinfo=timezone.utc)
+        while match := engine.next_match(event, now):
+            engine.play_game(event, match, now, GAME_INTERVAL, SimpleNamespace(random=lambda: 0))
+        self.assertTrue(show_groups(event, "2026-10-22"))
+        self.assertFalse(show_groups(event, "2026-10-23"))
+        original_text = Board.text
+        texts = []
+
+        def capture(board, x, y, value, *args, **kwargs):
+            texts.append(str(value))
+            return original_text(board, x, y, value, *args, **kwargs)
+
+        with patch.object(Board, "text", capture):
+            render_bracket(event, "2026-10-22")
+            self.assertIn("GROUP A", texts)
+            self.assertNotIn("QUARTERFINALS", texts)
+            texts.clear()
+            render_bracket(event, "2026-10-23")
+            self.assertIn("QUARTERFINALS", texts)
+            self.assertNotIn("GROUP A", texts)
+            self.assertIn("To be decided", texts)
+            self.assertNotIn("TOURNAMENT COMPLETE", texts)
+        small = event_with(4)
+        engine.lock_registration(small, leaderboard_order=list(small["entrants"]))
+        self.assertFalse(show_groups(small, "2026-10-22"))
+
     def test_group_stage_bracket_is_available_before_qualifiers_are_known(self):
         for count in (12, 32):
             event = event_with(count)
